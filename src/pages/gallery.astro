@@ -1,0 +1,151 @@
+---
+import NekoLayout from '../layouts/NekoLayout.astro';
+---
+
+<NekoLayout title="艺术作品 - Radiozed">
+  <section class="gallery-page">
+    <h1 class="page-title">艺术作品</h1>
+    <p class="page-subtitle">一些喜欢的创作作品~</p>
+
+    <div class="gallery-grid">
+      <div class="gallery-item fade-in">
+        <img src="/gallery1.jpg" alt="猫娘插画 1" loading="lazy" />
+        <div class="gallery-overlay">
+          <h4>♥ Nekomimi ♡</h4>
+          <p>~ 猫耳少女 ~</p>
+        </div>
+      </div>
+      <div class="gallery-item fade-in">
+        <img src="/gallery2.jpg" alt="猫娘插画 2" loading="lazy" />
+        <div class="gallery-overlay">
+          <h4>♡ Neko ♡</h4>
+          <p>~ 可爱的猫娘 ~</p>
+        </div>
+      </div>
+      <div class="gallery-item fade-in">
+        <img src="/gallery3.jpg" alt="猫娘插画 3" loading="lazy" />
+        <div class="gallery-overlay">
+          <h4>✦ Meow ✦</h4>
+          <p>~ 喵~ 🐾</p>
+        </div>
+      </div>
+      <div class="gallery-item fade-in">
+        <img src="/gallery4.jpg" alt="猫娘插画 4" loading="lazy" />
+        <div class="gallery-overlay">
+          <h4>★ Neko ★</h4>
+          <p>~ 二次元猫娘 ~</p>
+        </div>
+      </div>
+    </div>
+
+    <a href="/" class="back-link">← 返回首页</a>
+  </section>
+</NekoLayout>
+
+<style>
+  .gallery-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 120px 40px 80px;
+    position: relative;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--text-light), var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .page-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 50px;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+  }
+
+  .gallery-item {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    aspect-ratio: 3/4;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    border: 1px solid rgba(255, 105, 180, 0.15);
+  }
+
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .gallery-item:hover img {
+    transform: scale(1.08);
+  }
+
+  .gallery-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 25px;
+    background: linear-gradient(transparent, rgba(13, 11, 20, 0.95) 40%);
+    transform: translateY(60px);
+    transition: all 0.4s ease;
+    text-align: center;
+  }
+
+  .gallery-item:hover .gallery-overlay {
+    transform: translateY(0);
+  }
+
+  .gallery-overlay h4 {
+    color: var(--accent);
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+  }
+
+  .gallery-overlay p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 60px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .back-link:hover {
+    color: var(--primary);
+    transform: translateX(-5px);
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeIn 0.8s ease forwards;
+  }
+
+  .fade-in:nth-child(1) { animation-delay: 0.1s; }
+  .fade-in:nth-child(2) { animation-delay: 0.2s; }
+  .fade-in:nth-child(3) { animation-delay: 0.3s; }
+  .fade-in:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

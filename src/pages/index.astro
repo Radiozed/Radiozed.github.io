@@ -11,16 +11,16 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     <div class="hero-avatar">
       <img src="/nekomusume.jpg" alt="猫娘头像" />
     </div>
-    <h1>喵的创作小屋</h1>
-    <p class="subtitle">欢迎来到 Radiozed 的小天地~ 这里是存放创意作品和想法的地方</p>
-    <p class="greeting">希望你能喜欢喵！🐾</p>
+    <h1>我是 Radiozed~</h1>
+    <p class="subtitle">一个热爱技术&二次元的普通大学生</p>
+    <p class="greeting">喜欢嵌入式开发、动漫和音乐，欢迎来到我的小世界！🐾</p>
     <div class="hero-buttons">
-      <a href="#posts" class="btn btn-primary">开始浏览 ✦</a>
-      <a href="#gallery" class="btn btn-secondary">看看作品</a>
+      <a href="/posts" class="btn btn-primary">查看文章 ✦</a>
+      <a href="/gallery" class="btn btn-secondary">艺术作品 ♡</a>
     </div>
   </section>
 
-  <section class="posts-section" id="posts">
+  <section class="posts-section" id="posts" style="display:none;">
     <h2 class="section-title"><span>✦</span> 全部文章</h2>
     <p class="section-subtitle">记录一些有趣的想法和创作过程~</p>
 
@@ -42,7 +42,7 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     </div>
   </section>
 
-  <section class="gallery-section" id="gallery">
+  <section class="gallery-section" id="gallery" style="display:none;">
     <h2 class="section-title"><span>✦</span> 艺术作品</h2>
     <p class="section-subtitle">一些喜欢的创作作品~</p>
     <div class="gallery-grid">
