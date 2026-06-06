@@ -50,37 +50,45 @@ const { Content } = await post.render();
   </article>
 </NekoLayout>
 
-<script>
-  // 代码块复制功能 - 适配Shiki生成的代码块
-  document.querySelectorAll('pre.astro-code').forEach(pre => {
-    // 创建包装器
-    const wrapper = document.createElement('div');
-    wrapper.className = 'code-wrapper';
-    pre.parentNode?.insertBefore(wrapper, pre);
-    wrapper.appendChild(pre);
+<script is:inline>
+  // 代码块复制功能 - 内联脚本确保执行
+  (function() {
+    var preBlocks = document.querySelectorAll('pre.astro-code');
+    console.log('Found code blocks:', preBlocks.length);
 
-    // 创建复制按钮
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
-    copyBtn.textContent = '📋 复制';
-    copyBtn.addEventListener('click', async () => {
-      // 获取纯文本代码
-      const codeEl = pre.querySelector('code');
-      const code = codeEl ? codeEl.textContent : pre.textContent;
-      try {
-        await navigator.clipboard.writeText(code);
-        copyBtn.textContent = '✅ 已复制!';
-        copyBtn.classList.add('copied');
-        setTimeout(() => {
-          copyBtn.textContent = '📋 复制';
-          copyBtn.classList.remove('copied');
-        }, 2000);
-      } catch {
-        copyBtn.textContent = '❌ 失败';
-      }
+    preBlocks.forEach(function(pre) {
+      // 创建包装器
+      var wrapper = document.createElement('div');
+      wrapper.className = 'code-wrapper';
+      wrapper.style.cssText = 'position:relative !important;display:block;';
+      pre.parentNode.insertBefore(wrapper, pre);
+      wrapper.appendChild(pre);
+
+      // 创建复制按钮
+      var copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '📋 复制';
+      copyBtn.style.cssText = 'position:absolute;top:8px;right:8px;padding:6px 12px;background:rgba(255,20,147,0.8)!important;border:2px solid rgba(255,105,180,0.8);border-radius:8px;color:#fff!important;font-size:12px;cursor:pointer;z-index:99999;display:flex;align-items:center;gap:4px;';
+
+      copyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var codeEl = pre.querySelector('code');
+        var code = codeEl ? codeEl.textContent : pre.textContent;
+        navigator.clipboard.writeText(code).then(function() {
+          copyBtn.textContent = '✅ 已复制!';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = '📋 复制';
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        }).catch(function() {
+          copyBtn.textContent = '❌ 失败';
+        });
+      });
+
+      wrapper.appendChild(copyBtn);
     });
-    wrapper.appendChild(copyBtn);
-  });
+  })();
 </script>
 
 <style>
