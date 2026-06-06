@@ -51,16 +51,14 @@ const { Content } = await post.render();
 </NekoLayout>
 
 <script is:inline>
-  // 代码块复制功能 - 内联脚本确保执行
+  // 代码块复制功能
   (function() {
     var preBlocks = document.querySelectorAll('pre.astro-code');
-    console.log('Found code blocks:', preBlocks.length);
 
     preBlocks.forEach(function(pre) {
       // 创建包装器
       var wrapper = document.createElement('div');
       wrapper.className = 'code-wrapper';
-      wrapper.style.cssText = 'position:relative !important;display:block;';
       pre.parentNode.insertBefore(wrapper, pre);
       wrapper.appendChild(pre);
 
@@ -68,7 +66,6 @@ const { Content } = await post.render();
       var copyBtn = document.createElement('button');
       copyBtn.className = 'copy-btn';
       copyBtn.textContent = '📋 复制';
-      copyBtn.style.cssText = 'position:absolute;top:8px;right:8px;padding:6px 12px;background:rgba(255,20,147,0.8)!important;border:2px solid rgba(255,105,180,0.8);border-radius:8px;color:#fff!important;font-size:12px;cursor:pointer;z-index:99999;display:flex;align-items:center;gap:4px;';
 
       copyBtn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -153,6 +150,7 @@ const { Content } = await post.render();
     border: 1px solid rgba(255, 105, 180, 0.3);
     border-radius: 16px;
     padding: 20px;
+    padding-top: 40px;
     overflow-x: auto;
     position: relative;
     margin: 20px 0;
@@ -160,21 +158,39 @@ const { Content } = await post.render();
 
   .post-content :global(code) {
     font-family: 'Fira Code', 'Consolas', monospace;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     line-height: 1.7;
     color: #e0d4f7;
   }
 
   :global(.code-wrapper) {
-    position: relative !important;
-    display: block;
-  }
-
-  :global(.code-wrapper pre) {
-    overflow: visible !important;
+    position: relative;
   }
 
   :global(.copy-btn) {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    background: rgba(255, 20, 147, 0.3);
+    border: 1px solid rgba(255, 105, 180, 0.5);
+    border-radius: 8px;
+    color: #FFB6C1;
+    font-size: 0.75rem;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  :global(.copy-btn:hover) {
+    background: rgba(255, 20, 147, 0.5);
+    transform: scale(1.05);
+  }
+
+  :global(.copy-btn.copied) {
+    background: rgba(72, 187, 120, 0.3);
+    border-color: rgba(72, 187, 120, 0.5);
+    color: #68D391;
+  }
     position: absolute;
     top: 8px;
     right: 8px;
