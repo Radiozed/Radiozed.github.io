@@ -163,8 +163,20 @@ const { Content } = await post.render();
     background: var(--bg-card);
     border: 1px solid var(--glass-border);
     border-radius: 30px;
-    padding: 50px;
+    padding: 50px 60px;
     backdrop-filter: blur(15px);
+    position: relative;
+  }
+
+  .post-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), transparent);
+    border-radius: 30px 30px 0 0;
   }
 
   /* 代码块样式 */
@@ -253,29 +265,52 @@ const { Content } = await post.render();
   .post-content :global(h2) {
     font-size: 1.5rem;
     color: var(--primary);
-    margin: 30px 0 15px;
+    margin: 35px 0 20px;
+    padding-left: 15px;
+    border-left: 4px solid var(--secondary);
+  }
+
+  .post-content :global(h3) {
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin: 25px 0 15px;
   }
 
   .post-content :global(p) {
     color: var(--text-muted);
-    line-height: 2;
-    margin-bottom: 15px;
+    line-height: 2.2;
+    margin-bottom: 20px;
   }
 
   .post-content :global(ul), .post-content :global(ol) {
     color: var(--text-muted);
-    margin: 15px 0 15px 30px;
-    line-height: 2;
+    margin: 15px 0 20px 30px;
+    line-height: 2.2;
   }
 
   .post-content :global(li) {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    padding-left: 5px;
+  }
+
+  .post-content :global(li)::marker {
+    color: var(--secondary);
   }
 
   .post-content :global(hr) {
     border: none;
     border-top: 1px solid var(--glass-border);
-    margin: 30px 0;
+    margin: 40px 0;
+  }
+
+  .post-content :global(blockquote) {
+    background: linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(255, 105, 180, 0.1));
+    border-left: 4px solid var(--primary);
+    border-radius: 0 12px 12px 0;
+    padding: 20px 25px;
+    margin: 25px 0;
+    color: var(--accent);
+    font-style: italic;
   }
 
   .post-content :global(em) {
@@ -285,6 +320,38 @@ const { Content } = await post.render();
 
   .post-content :global(strong) {
     color: var(--primary);
+    font-weight: 600;
+  }
+
+  .post-content :global(a) {
+    color: var(--secondary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .post-content :global(a:hover) {
+    color: var(--primary);
+  }
+
+  .post-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+  }
+
+  .post-content :global(th), .post-content :global(td) {
+    padding: 12px 15px;
+    border: 1px solid var(--glass-border);
+    text-align: left;
+  }
+
+  .post-content :global(th) {
+    background: rgba(255, 20, 147, 0.15);
+    color: var(--accent);
+  }
+
+  .post-content :global(tr:hover) {
+    background: rgba(255, 20, 147, 0.05);
   }
 
   .back-link {
