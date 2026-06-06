@@ -399,7 +399,3 @@ void callback(char* topic, byte* payload, unsigned int length)
 - 记得修改token时要按照OneNET的规则生成签名
 - WiFi信息要改成你自己的
 - LED引脚可以根据需要修改
-
----
-
-*有问题欢迎留言讨论喵！🐾*

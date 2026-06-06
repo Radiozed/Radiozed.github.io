@@ -1,0 +1,489 @@
+<!DOCTYPE html><html lang="zh-CN" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>STM32F103C8T6 + MAX31865 读取PT100温度 - Radiozed</title><meta name="description" content="Radiozed 的小天地~ 喵~ 🐾"><link rel="icon" type="image/jpeg" href="/nekomusume.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/index.QPj6zeHZ.css">
+<link rel="stylesheet" href="/_astro/_slug_.Nw5h_aT8.css"><script type="module">function g(){const e=document.createElement("div");e.className="sakura-container",document.body.appendChild(e),setInterval(()=>{const t=document.createElement("div");t.className="sakura-petal",t.innerHTML=["🌸","💮","✿","❀"][Math.floor(Math.random()*4)],t.style.left=Math.random()*100+"vw",t.style.fontSize=Math.random()*10+10+"px",t.style.animationDuration=Math.random()*5+8+"s",t.style.opacity=Math.random()*.5+.3,e.appendChild(t),setTimeout(()=>t.remove(),13e3)},800)}g();const f={threshold:.1,rootMargin:"0px 0px -50px 0px"},v=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&t.target.classList.add("visible")})},f);document.querySelectorAll(".fade-in").forEach(e=>v.observe(e));document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(t){t.preventDefault();const n=document.querySelector(this.getAttribute("href"));n&&n.scrollIntoView({behavior:"smooth",block:"start"})})});(function(){if(window.bgMusicInitialized)return;window.bgMusicInitialized=!0;const e=document.getElementById("bgmAudio"),t=document.getElementById("bgmToggle"),n=document.getElementById("bgmIcon"),m=document.getElementById("volumeSlider"),l=localStorage.getItem("bgmVolume");e.volume=l?parseFloat(l):.5,m.value=e.volume*100;const r=sessionStorage.getItem("bgmTime"),c=sessionStorage.getItem("bgmPlaying");r&&(e.currentTime=parseFloat(r));let a=!1;function i(o){o?(n.textContent="🎶",t.classList.add("playing")):(n.textContent="🎵",t.classList.remove("playing"))}function d(){const o=e.play();o!==void 0&&o.then(()=>{a=!0,i(!0),sessionStorage.setItem("bgmPlaying","true")}).catch(()=>{a=!1,i(!1)})}function u(){e.pause(),a=!1,i(!1),sessionStorage.setItem("bgmPlaying","false")}e.addEventListener("timeupdate",()=>{sessionStorage.setItem("bgmTime",e.currentTime.toString())}),c==="true"||c===null?d():i(!1),t.addEventListener("click",o=>{o.stopPropagation(),o.preventDefault(),a?u():d()})})();const s=document.getElementById("lightbox"),p=document.getElementById("lightboxImg"),b=document.getElementById("lightboxClose");document.querySelectorAll(".gallery-item img").forEach(e=>{e.addEventListener("click",()=>{p.src=e.src.replace("/thumbs/","/original/").replace("_p0.jpg","_p0.jpg"),s.classList.add("active"),document.body.style.overflow="hidden"})});b.addEventListener("click",()=>{s.classList.remove("active"),document.body.style.overflow=""});s.addEventListener("click",e=>{e.target===s&&(s.classList.remove("active"),document.body.style.overflow="")});
+</script></head> <body style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <!-- 猫娘大背景 --> <div class="neko-bg" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <img src="/bg-hero.jpg" alt="" class="bg-image" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="bg-overlay" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> </div> <!-- 装饰光效 --> <div class="glow-effects" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="glow glow-1" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> <div class="glow glow-2" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> <div class="glow glow-3" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> </div> <!-- 导航栏 --> <nav class="glass-nav" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <a href="/" class="nav-logo" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="logo-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="logo-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Radiozed</span> </a> <ul class="nav-links" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <li style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"><a href="#posts" class="nav-link" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="link-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> 文章
+</a></li> <li style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"><a href="#gallery" class="nav-link" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="link-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">♡</span> 作品
+</a></li> <li style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"><a href="#about" class="nav-link" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="link-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">☆</span> 关于
+</a></li> </ul> </nav> <main style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">   <div class="side-decor left" data-astro-cid-egg7nqdx> <div class="side-date" data-astro-cid-egg7nqdx> <div class="date-year" data-astro-cid-egg7nqdx>2026</div> <div class="date-day" data-astro-cid-egg7nqdx>6</div> <div class="date-month" data-astro-cid-egg7nqdx>6月</div> </div> <div class="side-decoration" data-astro-cid-egg7nqdx> <span class="deco-line" data-astro-cid-egg7nqdx></span> <span class="deco-icon" data-astro-cid-egg7nqdx>✦</span> <span class="deco-line" data-astro-cid-egg7nqdx></span> </div> <div class="side-extra" data-astro-cid-egg7nqdx> <span class="extra-icon" data-astro-cid-egg7nqdx>🌸</span> <span class="extra-icon" data-astro-cid-egg7nqdx>💫</span> <span class="extra-icon" data-astro-cid-egg7nqdx>⭐</span> </div> </div>  <div class="side-decor right" data-astro-cid-egg7nqdx> <div class="side-info" data-astro-cid-egg7nqdx> <div class="info-label" data-astro-cid-egg7nqdx>文章</div> <div class="info-value" data-astro-cid-egg7nqdx>34字</div> </div> <div class="side-decoration" data-astro-cid-egg7nqdx> <span class="deco-line" data-astro-cid-egg7nqdx></span> <span class="deco-icon" data-astro-cid-egg7nqdx>♡</span> <span class="deco-line" data-astro-cid-egg7nqdx></span> </div> <div class="side-extra" data-astro-cid-egg7nqdx> <span class="extra-icon" data-astro-cid-egg7nqdx>🎵</span> <span class="extra-icon" data-astro-cid-egg7nqdx>✨</span> <span class="extra-icon" data-astro-cid-egg7nqdx>🌙</span> </div> </div> <article class="post-page" data-astro-cid-egg7nqdx> <div class="post-header" data-astro-cid-egg7nqdx> <h1 class="post-title" data-astro-cid-egg7nqdx>STM32F103C8T6 + MAX31865 读取PT100温度</h1> <div class="post-meta" data-astro-cid-egg7nqdx> <span class="post-date" data-astro-cid-egg7nqdx>📅 2026年6月6日</span> <div class="post-tags" data-astro-cid-egg7nqdx> <span class="tag" data-astro-cid-egg7nqdx>STM32</span><span class="tag" data-astro-cid-egg7nqdx>MAX31865</span><span class="tag" data-astro-cid-egg7nqdx>PT100</span><span class="tag" data-astro-cid-egg7nqdx>温度传感器</span> </div> </div> </div> <div class="post-content" data-astro-cid-egg7nqdx> <h1 id="stm32f103c8t6--max31865-读取pt100温度">STM32F103C8T6 + MAX31865 读取PT100温度</h1>
+<p>今天来教大家如何使用 STM32F103C8T6 通过 MAX31865 模块读取 PT100 铂电阻温度传感器~</p>
+<h2 id="硬件准备">硬件准备</h2>
+<h3 id="1-所需硬件">1. 所需硬件</h3>
+<ul>
+<li>STM32F103C8T6 开发板</li>
+<li>MAX31865 模块</li>
+<li>PT100 铂电阻传感器</li>
+<li>杜邦线若干</li>
+</ul>
+<h3 id="2-接线说明">2. 接线说明</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>MAX31865</th><th>STM32F103 (PA引脚)</th></tr></thead><tbody><tr><td>SDO</td><td>PA0</td></tr><tr><td>CS</td><td>PA1</td></tr><tr><td>SCLK</td><td>PA2</td></tr><tr><td>SDI</td><td>PA3</td></tr><tr><td>DRDY</td><td>PA15</td></tr></tbody></table>
+<h2 id="工作原理">工作原理</h2>
+<h3 id="max31865-简介">MAX31865 简介</h3>
+<p>MAX31865 是专门用于 PT100/PT1000 铂电阻温度传感器的数字转换芯片，主要特点：</p>
+<ul>
+<li>内置 ADC 转换</li>
+<li>支持 2/3/4 线制</li>
+<li>故障检测</li>
+<li>SPI 接口</li>
+</ul>
+<h3 id="温度计算">温度计算</h3>
+<p>使用 Callendar-Van Dusen 公式计算温度：</p>
+<ul>
+<li><strong>正温区</strong>：使用简化公式</li>
+<li><strong>负温区</strong>：使用 IEC751 多项式拟合</li>
+</ul>
+<h2 id="标准库代码">标准库代码</h2>
+<h3 id="max31865h">max31865.h</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#ifndef __MAX31865_H</span></span>
+<span class="line"><span>#define __MAX31865_H</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#include "stm32f10x.h"</span></span>
+<span class="line"><span>#include "math.h"</span></span>
+<span class="line"><span>#include &#x3C;stddef.h></span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 硬件配置宏 **************************/</span></span>
+<span class="line"><span>#define MAX31865_PORT             GPIOA</span></span>
+<span class="line"><span>#define MAX31865_PIN_SDO          GPIO_Pin_0</span></span>
+<span class="line"><span>#define MAX31865_PIN_CS           GPIO_Pin_1</span></span>
+<span class="line"><span>#define MAX31865_PIN_SCLK         GPIO_Pin_2</span></span>
+<span class="line"><span>#define MAX31865_PIN_SDI          GPIO_Pin_3</span></span>
+<span class="line"><span>#define MAX31865_PIN_DRDY         GPIO_Pin_15</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#define RTD_TYPE_PT100            1</span></span>
+<span class="line"><span>#define RTD_WIRE_3LINE            1</span></span>
+<span class="line"><span>#define RTD_RREF_VALUE            400.0f</span></span>
+<span class="line"><span>#define RTD_R0_VALUE              100.0f</span></span>
+<span class="line"><span>#define RTD_FILTER_50HZ           1</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 驱动状态枚举 **************************/</span></span>
+<span class="line"><span>typedef enum</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    MAX31865_OK       = 0x00,</span></span>
+<span class="line"><span>    MAX31865_ERROR    = 0x01,</span></span>
+<span class="line"><span>    MAX31865_COMM_ERR = 0x02,</span></span>
+<span class="line"><span>    MAX31865_RTD_OPEN = 0x03,</span></span>
+<span class="line"><span>    MAX31865_RTD_SHORT= 0x04,</span></span>
+<span class="line"><span>    MAX31865_PARAM_ERR= 0x05</span></span>
+<span class="line"><span>}MAX31865_StatusTypeDef;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 对外接口函数 **************************/</span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_Init(void);</span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_GetTemperature(float *temp);</span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_SoftReset(void);</span></span>
+<span class="line"><span>uint8_t MAX31865_ReadFaultStatus(void);</span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_SetConvertMode(uint8_t autoMode);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#endif</span></span>
+<span class="line"><span></span></span></code></pre>
+<h3 id="max31865c">max31865.c</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#include "max31865.h"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 底层引脚操作 **************************/</span></span>
+<span class="line"><span>#define CS_LOW()     GPIO_ResetBits(MAX31865_PORT, MAX31865_PIN_CS)</span></span>
+<span class="line"><span>#define CS_HIGH()   GPIO_SetBits(MAX31865_PORT, MAX31865_PIN_CS)</span></span>
+<span class="line"><span>#define SCLK_LOW()  GPIO_ResetBits(MAX31865_PORT, MAX31865_PIN_SCLK)</span></span>
+<span class="line"><span>#define SCLK_HIGH() GPIO_SetBits(MAX31865_PORT, MAX31865_PIN_SCLK)</span></span>
+<span class="line"><span>#define SDI_LOW()   GPIO_ResetBits(MAX31865_PORT, MAX31865_PIN_SDI)</span></span>
+<span class="line"><span>#define SDI_HIGH()  GPIO_SetBits(MAX31865_PORT, MAX31865_PIN_SDI)</span></span>
+<span class="line"><span>#define SDO_READ()  GPIO_ReadInputDataBit(MAX31865_PORT, MAX31865_PIN_SDO)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 寄存器定义 **************************/</span></span>
+<span class="line"><span>#define MAX31865_REG_CONFIG        0x00</span></span>
+<span class="line"><span>#define MAX31865_REG_RTD_MSB       0x01</span></span>
+<span class="line"><span>#define MAX31865_REG_RTD_LSB       0x02</span></span>
+<span class="line"><span>#define MAX31865_REG_FAULT         0x07</span></span>
+<span class="line"><span>#define MAX31865_WRITE_MASK        0x80</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#define CFG_VBIAS_ON               (1&#x3C;&#x3C;7)</span></span>
+<span class="line"><span>#define CFG_AUTO_CONVERT           (1&#x3C;&#x3C;6)</span></span>
+<span class="line"><span>#define CFG_3WIRE_MODE             (1&#x3C;&#x3C;5)</span></span>
+<span class="line"><span>#define CFG_FILTER_50HZ            (1&#x3C;&#x3C;0)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** SPI读写函数 **************************/</span></span>
+<span class="line"><span>static void MAX31865_WriteByte(uint8_t data)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    for(uint8_t i = 0; i &#x3C; 8; i++)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        SCLK_LOW();</span></span>
+<span class="line"><span>        if(data &#x26; 0x80) SDI_HIGH();</span></span>
+<span class="line"><span>        else SDI_LOW();</span></span>
+<span class="line"><span>        SCLK_HIGH();</span></span>
+<span class="line"><span>        data &#x3C;&#x3C;= 1;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>static uint8_t MAX31865_ReadByte(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    uint8_t data = 0;</span></span>
+<span class="line"><span>    for(uint8_t i = 0; i &#x3C; 8; i++)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        SCLK_LOW();</span></span>
+<span class="line"><span>        data &#x3C;&#x3C;= 1;</span></span>
+<span class="line"><span>        SCLK_HIGH();</span></span>
+<span class="line"><span>        if(SDO_READ()) data |= 0x01;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    return data;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 寄存器操作 **************************/</span></span>
+<span class="line"><span>static MAX31865_StatusTypeDef MAX31865_WriteReg(uint8_t addr, uint8_t data)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    CS_LOW();</span></span>
+<span class="line"><span>    MAX31865_WriteByte(addr | MAX31865_WRITE_MASK);</span></span>
+<span class="line"><span>    MAX31865_WriteByte(data);</span></span>
+<span class="line"><span>    CS_HIGH();</span></span>
+<span class="line"><span>    return MAX31865_OK;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>static MAX31865_StatusTypeDef MAX31865_ReadReg(uint8_t addr, uint8_t *data)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    if(data == NULL) return MAX31865_PARAM_ERR;</span></span>
+<span class="line"><span>    CS_LOW();</span></span>
+<span class="line"><span>    MAX31865_WriteByte(addr);</span></span>
+<span class="line"><span>    *data = MAX31865_ReadByte();</span></span>
+<span class="line"><span>    CS_HIGH();</span></span>
+<span class="line"><span>    return MAX31865_OK;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 初始化 **************************/</span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_Init(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    MAX31865_StatusTypeDef status;</span></span>
+<span class="line"><span>    uint8_t cfgValue = 0;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // GPIO初始化（略）</span></span>
+<span class="line"><span>    // 软件复位</span></span>
+<span class="line"><span>    status = MAX31865_SoftReset();</span></span>
+<span class="line"><span>    if(status != MAX31865_OK) return status;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 组装配置</span></span>
+<span class="line"><span>    cfgValue |= CFG_VBIAS_ON;</span></span>
+<span class="line"><span>    cfgValue |= CFG_AUTO_CONVERT;</span></span>
+<span class="line"><span>    #if RTD_WIRE_3LINE</span></span>
+<span class="line"><span>    cfgValue |= CFG_3WIRE_MODE;</span></span>
+<span class="line"><span>    #endif</span></span>
+<span class="line"><span>    #if RTD_FILTER_50HZ</span></span>
+<span class="line"><span>    cfgValue |= CFG_FILTER_50HZ;</span></span>
+<span class="line"><span>    #endif</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    return MAX31865_WriteReg(MAX31865_REG_CONFIG, cfgValue);</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 获取温度 **************************/</span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_GetTemperature(float *temp)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    if(temp == NULL) return MAX31865_PARAM_ERR;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    uint8_t regH, regL, fault;</span></span>
+<span class="line"><span>    uint16_t adcData;</span></span>
+<span class="line"><span>    float Rt, temperature;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 读故障状态</span></span>
+<span class="line"><span>    fault = MAX31865_ReadFaultStatus();</span></span>
+<span class="line"><span>    if(fault &#x26; 0x04) return MAX31865_RTD_OPEN;</span></span>
+<span class="line"><span>    if(fault &#x26; 0x02) return MAX31865_RTD_SHORT;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 读RTD数据</span></span>
+<span class="line"><span>    MAX31865_ReadReg(MAX31865_REG_RTD_MSB, &#x26;regH);</span></span>
+<span class="line"><span>    MAX31865_ReadReg(MAX31865_REG_RTD_LSB, &#x26;regL);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 计算温度</span></span>
+<span class="line"><span>    adcData = ((uint16_t)regH &#x3C;&#x3C; 8 | regL) >> 1;</span></span>
+<span class="line"><span>    if(adcData == 0 || adcData >= 32767) return MAX31865_ERROR;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    Rt = (float)adcData / 32768.0f * RTD_RREF_VALUE;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // Callendar-Van Dusen公式</span></span>
+<span class="line"><span>    const float a = 3.9083e-3f;</span></span>
+<span class="line"><span>    const float b = -5.775e-7f;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    float Z1 = -a;</span></span>
+<span class="line"><span>    float Z2 = a * a - 4 * b;</span></span>
+<span class="line"><span>    float Z3 = 4 * b / RTD_R0_VALUE;</span></span>
+<span class="line"><span>    float Z4 = 2 * b;</span></span>
+<span class="line"><span>    temperature = Z2 + Z3 * Rt;</span></span>
+<span class="line"><span>    temperature = (sqrtf(temperature) + Z1) / Z4;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    if(temperature >= 0.0f)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        *temp = temperature;</span></span>
+<span class="line"><span>        return MAX31865_OK;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 负温多项式</span></span>
+<span class="line"><span>    float rpoly = Rt;</span></span>
+<span class="line"><span>    temperature = -242.02f;</span></span>
+<span class="line"><span>    temperature += 2.2228f * rpoly;</span></span>
+<span class="line"><span>    rpoly *= Rt;</span></span>
+<span class="line"><span>    temperature += 2.5859e-3f * rpoly;</span></span>
+<span class="line"><span>    rpoly *= Rt;</span></span>
+<span class="line"><span>    temperature -= 4.8260e-6f * rpoly;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    *temp = temperature;</span></span>
+<span class="line"><span>    return MAX31865_OK;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_SoftReset(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    return MAX31865_WriteReg(MAX31865_REG_CONFIG, 0x80);</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>uint8_t MAX31865_ReadFaultStatus(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    uint8_t fault = 0;</span></span>
+<span class="line"><span>    MAX31865_ReadReg(MAX31865_REG_FAULT, &#x26;fault);</span></span>
+<span class="line"><span>    return fault;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span></code></pre>
+<h3 id="mainc">main.c</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#include "max31865.h"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>int main(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    float temp;</span></span>
+<span class="line"><span>    MAX31865_StatusTypeDef status;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    status = MAX31865_Init();</span></span>
+<span class="line"><span>    if(status != MAX31865_OK)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        while(1);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    while(1)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        status = MAX31865_GetTemperature(&#x26;temp);</span></span>
+<span class="line"><span>        if(status == MAX31865_OK)</span></span>
+<span class="line"><span>        {</span></span>
+<span class="line"><span>            // 温度有效</span></span>
+<span class="line"><span>        }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>        MAX31865_Delay(0xFFFFF);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span></code></pre>
+<h2 id="hal库代码">HAL库代码</h2>
+<h3 id="max31865h-1">MAX31865.h</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#ifndef __MAX31865_H</span></span>
+<span class="line"><span>#define __MAX31865_H</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#include "main.h"</span></span>
+<span class="line"><span>#include "math.h"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#define RREF                    430</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#define MAX31865_CONTROL_PORT     GPIOA</span></span>
+<span class="line"><span>#define MAX31865_SDO              GPIO_PIN_0</span></span>
+<span class="line"><span>#define MAX31865_CS               GPIO_PIN_1</span></span>
+<span class="line"><span>#define MAX31865_SCLK             GPIO_PIN_2</span></span>
+<span class="line"><span>#define MAX31865_SDI              GPIO_PIN_3</span></span>
+<span class="line"><span>#define MAX31865_DRDY             GPIO_PIN_15</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#define MAX31865_CS_SET     HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_CS, GPIO_PIN_SET)</span></span>
+<span class="line"><span>#define MAX31865_CS_CLR    HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_CS, GPIO_PIN_RESET)</span></span>
+<span class="line"><span>#define MAX31865_SCLK_SET HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_SCLK, GPIO_PIN_SET)</span></span>
+<span class="line"><span>#define MAX31865_SCLK_CLR HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_SCLK, GPIO_PIN_RESET)</span></span>
+<span class="line"><span>#define MAX31865_SDI_SET HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_SDI, GPIO_PIN_SET)</span></span>
+<span class="line"><span>#define MAX31865_SDI_CLR  HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_SDI, GPIO_PIN_RESET)</span></span>
+<span class="line"><span>#define MAX31865_SDO_READ HAL_GPIO_ReadPin(MAX31865_CONTROL_PORT, MAX31865_SDO)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>void MAX31865_Init(void);</span></span>
+<span class="line"><span>void MAX31865_Write(unsigned char addr, unsigned char data);</span></span>
+<span class="line"><span>unsigned char MAX31865_Read(unsigned char addr);</span></span>
+<span class="line"><span>float MAX31865_GetTemp(void);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>#endif</span></span>
+<span class="line"><span></span></span></code></pre>
+<h3 id="max31865c-1">MAX31865.c</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#include "MAX31865.h"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>void MAX31865_Init(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    GPIO_InitTypeDef GPIO_InitStruct = {0};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    __HAL_RCC_GPIOA_CLK_ENABLE();</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    GPIO_InitStruct.Pin = MAX31865_CS | MAX31865_SCLK | MAX31865_SDI;</span></span>
+<span class="line"><span>    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;</span></span>
+<span class="line"><span>    GPIO_InitStruct.Pull = GPIO_NOPULL;</span></span>
+<span class="line"><span>    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;</span></span>
+<span class="line"><span>    HAL_GPIO_Init(MAX31865_CONTROL_PORT, &#x26;GPIO_InitStruct);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    GPIO_InitStruct.Pin = MAX31865_SDO;</span></span>
+<span class="line"><span>    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;</span></span>
+<span class="line"><span>    HAL_GPIO_Init(MAX31865_CONTROL_PORT, &#x26;GPIO_InitStruct);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    MAX31865_CS_SET;</span></span>
+<span class="line"><span>    MAX31865_SCLK_SET;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>void MAX31865_Write(unsigned char addr, unsigned char data)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    unsigned char i;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    MAX31865_CS_CLR;</span></span>
+<span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
+<span class="line"><span>        if(addr &#x26; 0x80) MAX31865_SDI_SET;</span></span>
+<span class="line"><span>        else MAX31865_SDI_CLR;</span></span>
+<span class="line"><span>        MAX31865_SCLK_SET;</span></span>
+<span class="line"><span>        addr &#x3C;&#x3C;= 1;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
+<span class="line"><span>        if(data &#x26; 0x80) MAX31865_SDI_SET;</span></span>
+<span class="line"><span>        else MAX31865_SDI_CLR;</span></span>
+<span class="line"><span>        MAX31865_SCLK_SET;</span></span>
+<span class="line"><span>        data &#x3C;&#x3C;= 1;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    MAX31865_CS_SET;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>unsigned char MAX31865_Read(unsigned char addr)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    unsigned char i;</span></span>
+<span class="line"><span>    unsigned char data = 0;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    MAX31865_CS_CLR;</span></span>
+<span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
+<span class="line"><span>        if(addr &#x26; 0x80) MAX31865_SDI_SET;</span></span>
+<span class="line"><span>        else MAX31865_SDI_CLR;</span></span>
+<span class="line"><span>        MAX31865_SCLK_SET;</span></span>
+<span class="line"><span>        addr &#x3C;&#x3C;= 1;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
+<span class="line"><span>        data &#x3C;&#x3C;= 1;</span></span>
+<span class="line"><span>        MAX31865_SCLK_SET;</span></span>
+<span class="line"><span>        if(MAX31865_SDO_READ) data |= 0x01;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    MAX31865_CS_SET;</span></span>
+<span class="line"><span>    return data;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>float MAX31865_GetTemp(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    unsigned int data;</span></span>
+<span class="line"><span>    float Rt;</span></span>
+<span class="line"><span>    float Rt0 = 100;</span></span>
+<span class="line"><span>    float Z1, Z2, Z3, Z4, temp;</span></span>
+<span class="line"><span>    float a = 3.9083e-3;</span></span>
+<span class="line"><span>    float b = -5.775e-7;</span></span>
+<span class="line"><span>    float rpoly;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    data = MAX31865_Read(0x01) &#x3C;&#x3C; 8;</span></span>
+<span class="line"><span>    data |= MAX31865_Read(0x02);</span></span>
+<span class="line"><span>    data >>= 1;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    Rt = (float)data / 32768.0 * RREF;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    Z1 = -a;</span></span>
+<span class="line"><span>    Z2 = a * a - 4 * b;</span></span>
+<span class="line"><span>    Z3 = 4 * b / Rt0;</span></span>
+<span class="line"><span>    Z4 = 2 * b;</span></span>
+<span class="line"><span>    temp = Z2 + Z3 * Rt;</span></span>
+<span class="line"><span>    temp = (sqrt(temp) + Z1) / Z4;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    if(temp >= 0)</span></span>
+<span class="line"><span>    {</span></span>
+<span class="line"><span>        return temp;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    rpoly = Rt;</span></span>
+<span class="line"><span>    temp = -242.02;</span></span>
+<span class="line"><span>    temp += 2.2228 * rpoly;</span></span>
+<span class="line"><span>    rpoly *= Rt;</span></span>
+<span class="line"><span>    temp += 2.5859e-3 * rpoly;</span></span>
+<span class="line"><span>    rpoly *= Rt;</span></span>
+<span class="line"><span>    temp -= 4.8260e-6 * rpoly;</span></span>
+<span class="line"><span>    rpoly *= Rt;</span></span>
+<span class="line"><span>    temp -= 2.8183e-8 * rpoly;</span></span>
+<span class="line"><span>    rpoly *= Rt;</span></span>
+<span class="line"><span>    temp += 1.5243e-10 * rpoly;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    return temp;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span></code></pre>
+<h3 id="mainc-使用">main.c 使用</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>// 配置</span></span>
+<span class="line"><span>MAX31865_Write(0x80, 0xD1);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 获取温度</span></span>
+<span class="line"><span>Temp1 = MAX31865_GetTemp() * 10;</span></span>
+<span class="line"><span></span></span></code></pre>
+<h2 id="使用说明">使用说明</h2>
+<ol>
+<li><strong>硬件连接</strong>：按表格接线，注意��线��需要短接</li>
+<li><strong>参考电阻</strong>：PT100 常用 400Ω，代码中已配置</li>
+<li><strong>滤波选择</strong>：50Hz 滤波适合国内电网</li>
+<li><strong>故障检测</strong>：内置开路/短路检测</li>
+</ol>
+<hr>
+<p><em>有问题欢迎留言讨论喵！🐾</em></p> </div> <a href="/" class="back-link" data-astro-cid-egg7nqdx>← 返回首页</a> </article>  </main> <!-- BGM播放器 - 使用iframe保持播放不中断 --> <iframe id="bgmFrame" src="/player.html" style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;; --primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;" allow="autoplay"></iframe> <!-- 图片查看器 --> <div class="lightbox" id="lightbox" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <button class="lightbox-close" id="lightboxClose" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✕</button> <img class="lightbox-img" id="lightboxImg" src="" alt="" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> </div> <!-- 页脚 --> <footer class="footer" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="footer-decoration" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="deco-star" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> </div> <p class="footer-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Made with ♥ by <span class="highlight" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Lidure</span></p> <p class="footer-sub" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">~ 喵~ 🐾</p> </footer>   </body> </html> <script>
+  // 代码块复制功能
+  (function() {
+    var preBlocks = document.querySelectorAll('pre.astro-code');
+
+    preBlocks.forEach(function(pre) {
+      // 创建包装器
+      var wrapper = document.createElement('div');
+      wrapper.className = 'code-wrapper';
+      pre.parentNode.insertBefore(wrapper, pre);
+      wrapper.appendChild(pre);
+
+      // 创建复制按钮
+      var copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '📋 复制';
+
+      copyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var codeEl = pre.querySelector('code');
+        var code = codeEl ? codeEl.textContent : pre.textContent;
+        navigator.clipboard.writeText(code).then(function() {
+          copyBtn.textContent = '✅ 已复制!';
+          copyBtn.classList.add('copied');
+          setTimeout(function() {
+            copyBtn.textContent = '📋 复制';
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        }).catch(function() {
+          copyBtn.textContent = '❌ 失败';
+        });
+      });
+
+      wrapper.appendChild(copyBtn);
+    });
+  })();
+</script> 
