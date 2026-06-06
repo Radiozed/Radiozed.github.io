@@ -24,26 +24,33 @@ if (uncategorized.length > 0) {
 
 <script is:inline>
   // 分类切换功能
-  document.querySelectorAll('.category-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var category = this.dataset.category;
+  (function() {
+    var buttons = document.querySelectorAll('.category-btn');
+    var groups = document.querySelectorAll('.posts-group');
 
-      // 更新按钮状态
-      document.querySelectorAll('.category-btn').forEach(function(b) {
-        b.classList.remove('active');
-      });
-      this.classList.add('active');
+    buttons.forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var category = this.dataset.posts;
 
-      // 显示对应的文章组
-      document.querySelectorAll('.posts-group').forEach(function(group) {
-        if (group.dataset.posts === category) {
-          group.classList.add('active');
-        } else {
-          group.classList.remove('active');
-        }
+        // 更新按钮状态
+        buttons.forEach(function(b) {
+          b.classList.remove('active');
+        });
+        this.classList.add('active');
+
+        // 显示对应的文章组
+        groups.forEach(function(group) {
+          if (group.dataset.posts === category) {
+            group.classList.add('active');
+          } else {
+            group.classList.remove('active');
+          }
+        });
       });
     });
-  });
+  })();
 </script>
 
 <NekoLayout title="Radiozed - 喵的小屋">
@@ -67,7 +74,7 @@ if (uncategorized.length > 0) {
     <!-- 分类导航 -->
     <div class="category-nav">
       {Object.keys(postsByTag).map((tag, index) => (
-        <button class={`category-btn ${index === 0 ? 'active' : ''}`} data-category={tag}>
+        <button type="button" class={`category-btn ${index === 0 ? 'active' : ''}`} data-posts={tag}>
           {tag}
           <span class="category-count">{postsByTag[tag].length}</span>
         </button>
