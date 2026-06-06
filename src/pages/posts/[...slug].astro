@@ -51,18 +51,22 @@ const { Content } = await post.render();
 </NekoLayout>
 
 <script>
-  // 代码块复制功能
-  document.querySelectorAll('.post-content pre').forEach(pre => {
+  // 代码块复制功能 - 适配Shiki生成的代码块
+  document.querySelectorAll('.post-content .astro-code').forEach(pre => {
+    // 创建包装器
     const wrapper = document.createElement('div');
     wrapper.className = 'code-wrapper';
     pre.parentNode?.insertBefore(wrapper, pre);
     wrapper.appendChild(pre);
 
+    // 创建复制按钮
     const copyBtn = document.createElement('button');
     copyBtn.className = 'copy-btn';
     copyBtn.textContent = '📋 复制';
     copyBtn.addEventListener('click', async () => {
-      const code = pre.querySelector('code')?.textContent || pre.textContent;
+      // 获取纯文本代码
+      const codeEl = pre.querySelector('code');
+      const code = codeEl ? codeEl.textContent : pre.textContent;
       try {
         await navigator.clipboard.writeText(code);
         copyBtn.textContent = '✅ 已复制!';
