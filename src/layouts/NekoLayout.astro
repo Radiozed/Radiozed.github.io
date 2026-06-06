@@ -14,24 +14,41 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{title}</title>
   <meta name="description" content={description}>
-  <link rel="icon" type="image/svg+xml" href="/neko.svg">
+  <link rel="icon" type="image/jpeg" href="/nekomusume.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- 浮动粒子背景 -->
-  <div class="particles" id="particles"></div>
-
-  <!-- 猫耳朵装饰 -->
-  <div class="cat-ears">
-    <div class="cat-ear left"></div>
-    <div class="cat-ear right"></div>
+  <!-- 猫娘大背景 -->
+  <div class="neko-bg">
+    <img src="/bg-hero.jpg" alt="" class="bg-image" />
+    <div class="bg-overlay"></div>
+  </div>
+  
+  <!-- 装饰光效 -->
+  <div class="glow-effects">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
   </div>
 
-  <!-- 导航 -->
-  <nav>
-    <a href="/" class="logo">🐱 Radiozed</a>
+  <!-- 导航栏 -->
+  <nav class="glass-nav">
+    <a href="/" class="nav-logo">
+      <span class="logo-icon">🌸</span>
+      <span class="logo-text">Radiozed</span>
+    </a>
     <ul class="nav-links">
-      <li><a href="#posts">文章</a></li>
-      <li><a href="#about">关于</a></li>
+      <li><a href="#posts" class="nav-link">
+        <span class="link-icon">✦</span> 文章
+      </a></li>
+      <li><a href="#gallery" class="nav-link">
+        <span class="link-icon">♡</span> 作品
+      </a></li>
+      <li><a href="#about" class="nav-link">
+        <span class="link-icon">☆</span> 关于
+      </a></li>
     </ul>
   </nav>
 
@@ -39,336 +56,796 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
     <slot />
   </main>
 
-  <!-- 猫尾巴 -->
-  <div class="cat-tail"></div>
+<!-- BGM播放器 - 使用iframe保持播放不中断 -->
+  <iframe 
+    id="bgmFrame" 
+    src="/player.html" 
+    style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;" 
+    allow="autoplay"
+  ></iframe>
+
+  <!-- 图片查看器 -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">✕</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+  </div>
 
   <!-- 页脚 -->
-  <footer>
-    <div class="social-links">
-      <a href="https://github.com/Radiozed" target="_blank" title="GitHub">🐱</a>
+  <footer class="footer">
+    <div class="footer-decoration">
+      <span class="deco-flower">🌸</span>
+      <span class="deco-star">✦</span>
+      <span class="deco-flower">🌸</span>
     </div>
-    <p>Made with ♥ by <span>Lidure</span> · 喵~ 🐾</p>
+    <p class="footer-text">Made with ♥ by <span class="highlight">Radiozed</span></p>
+    <p class="footer-sub">~ 喵~ 🐾</p>
   </footer>
 
-  <style define:vars={{ primary: '#FF6B9D', secondary: '#9B59B6', accent: '#FFB6C1' }}>
+  <script>
+    // 樱花飘落效果
+    function createSakura() {
+      const container = document.createElement('div');
+      container.className = 'sakura-container';
+      document.body.appendChild(container);
+      
+      setInterval(() => {
+        const petal = document.createElement('div');
+        petal.className = 'sakura-petal';
+        petal.innerHTML = ['🌸', '💮', '✿', '❀'][Math.floor(Math.random() * 4)];
+        petal.style.left = Math.random() * 100 + 'vw';
+        petal.style.fontSize = (Math.random() * 10 + 10) + 'px';
+        petal.style.animationDuration = (Math.random() * 5 + 8) + 's';
+        petal.style.opacity = Math.random() * 0.5 + 0.3;
+        container.appendChild(petal);
+        setTimeout(() => petal.remove(), 13000);
+      }, 800);
+    }
+    createSakura();
+
+    // 滚动动画
+    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+    
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // BGM播放器 - 使用单例模式，页面切换不中断
+    (function() {
+      // 检查是否已有播放器实例
+      if (window.bgMusicInitialized) return;
+      window.bgMusicInitialized = true;
+      
+      const audio = document.getElementById('bgmAudio');
+      const bgmToggle = document.getElementById('bgmToggle');
+      const bgmIcon = document.getElementById('bgmIcon');
+      const volumeSlider = document.getElementById('volumeSlider');
+      
+      // 恢复音量设置
+      const savedVolume = localStorage.getItem('bgmVolume');
+      audio.volume = savedVolume ? parseFloat(savedVolume) : 0.5;
+      volumeSlider.value = audio.volume * 100;
+
+      // 恢复之前的播放时间和状态
+      const savedTime = sessionStorage.getItem('bgmTime');
+      const savedPlaying = sessionStorage.getItem('bgmPlaying');
+      
+      if (savedTime) {
+        audio.currentTime = parseFloat(savedTime);
+      }
+
+      let isPlaying = false;
+
+      function updateUI(playing) {
+        if (playing) {
+          bgmIcon.textContent = '🎶';
+          bgmToggle.classList.add('playing');
+        } else {
+          bgmIcon.textContent = '🎵';
+          bgmToggle.classList.remove('playing');
+        }
+      }
+
+      function playAudio() {
+        const promise = audio.play();
+        if (promise !== undefined) {
+          promise.then(() => {
+            isPlaying = true;
+            updateUI(true);
+            sessionStorage.setItem('bgmPlaying', 'true');
+          }).catch(() => {
+            isPlaying = false;
+            updateUI(false);
+          });
+        }
+      }
+
+      function pauseAudio() {
+        audio.pause();
+        isPlaying = false;
+        updateUI(false);
+        sessionStorage.setItem('bgmPlaying', 'false');
+      }
+
+      // 定期保存播放时间
+      audio.addEventListener('timeupdate', () => {
+        sessionStorage.setItem('bgmTime', audio.currentTime.toString());
+      });
+
+      // 页面加载完成后恢复播放状态
+      if (savedPlaying === 'true' || savedPlaying === null) {
+        playAudio();
+      } else {
+        updateUI(false);
+      }
+
+      bgmToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (isPlaying) {
+          pauseAudio();
+        } else {
+          playAudio();
+        }
+      });
+    })();
+
+    // 图片查看器
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxClose = document.getElementById('lightboxClose');
+
+    document.querySelectorAll('.gallery-item img').forEach(img => {
+      img.addEventListener('click', () => {
+        lightboxImg.src = img.src.replace('/thumbs/', '/original/').replace('_p0.jpg', '_p0.jpg');
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    lightboxClose.addEventListener('click', () => {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  </script>
+
+  <style is:global define:vars={{ 
+    primary: '#FF69B4', 
+    secondary: '#FF1493', 
+    accent: '#FFB6C1',
+    bgDark: '#0D0B14',
+    bgCard: 'rgba(30, 27, 46, 0.8)',
+    textLight: '#FDF2F8',
+    textMuted: '#FFB6C1'
+  }}>
     :root {
-      --primary: #FF6B9D;
-      --primary-dark: #E85A8A;
-      --secondary: #9B59B6;
+      --primary: #FF1493;
+      --primary-dark: #C71585;
+      --secondary: #FF69B4;
       --accent: #FFB6C1;
-      --bg-dark: #1a1a2e;
-      --bg-card: #16213e;
-      --text-light: #F8F9F9;
-      --text-muted: #B8B8B8;
+      --accent-light: #FFF0F5;
+      --bg-dark: #0D0B14;
+      --bg-card: rgba(30, 27, 46, 0.8);
+      --glass: rgba(255, 20, 147, 0.08);
+      --glass-border: rgba(255, 105, 180, 0.2);
+      --text-light: #FFF0F5;
+      --text-muted: #FFB6C1;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
-      font-family: 'Segoe UI', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 50%, #1f1f3d 100%);
-      background-attachment: fixed;
-      min-height: 100vh;
+      font-family: 'Zen Maru Gothic', 'Noto Sans SC', -apple-system, sans-serif;
+      background: var(--bg-dark);
       color: var(--text-light);
-      line-height: 1.7;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.8;
     }
 
-    .particles {
+    /* 猫娘大背景 */
+    .neko-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -3;
+      overflow: hidden;
+    }
+
+    .bg-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      opacity: 0.4;
+      filter: blur(2px) brightness(0.6) saturate(1.2);
+      transform: scale(1.1);
+    }
+
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: 
+        linear-gradient(180deg, rgba(13, 11, 20, 0.7) 0%, rgba(13, 11, 20, 0.3) 30%, rgba(13, 11, 20, 0.5) 70%, rgba(13, 11, 20, 0.95) 100%),
+        radial-gradient(ellipse at center, transparent 0%, rgba(13, 11, 20, 0.8) 100%);
+    }
+
+    /* 装饰光效 */
+    .glow-effects {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
+      z-index: -2;
     }
 
-    .particle {
+    .glow {
       position: absolute;
       border-radius: 50%;
-      animation: float 20s linear infinite;
+      filter: blur(100px);
+      animation: pulse 8s ease-in-out infinite;
     }
 
-    @keyframes float {
-      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+    .glow-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255, 105, 180, 0.3) 0%, transparent 70%);
+      top: 10%;
+      left: -10%;
+      animation-delay: 0s;
     }
 
-    .cat-ears {
+    .glow-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(232, 121, 249, 0.25) 0%, transparent 70%);
+      bottom: 10%;
+      right: -5%;
+      animation-delay: -3s;
+    }
+
+    .glow-3 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: -6s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* 毛玻璃导航 */
+    .glass-nav {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: 0;
-      z-index: 1000;
-      pointer-events: none;
-    }
-
-    .cat-ear {
-      position: absolute;
-      width: 80px;
-      height: 100px;
-      background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-      top: -20px;
-    }
-
-    .cat-ear.left { left: 10%; transform: rotate(-15deg); animation: earWiggle 2s ease-in-out infinite; }
-    .cat-ear.right { right: 10%; transform: rotate(15deg); animation: earWiggle 2s ease-in-out infinite 0.3s; }
-
-    .cat-ear::before {
-      content: '';
-      position: absolute;
-      width: 50px;
-      height: 60px;
-      background: var(--accent);
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-      top: 30px;
-      left: 15px;
-    }
-
-    @keyframes earWiggle {
-      0%, 100% { transform: rotate(-15deg); }
-      50% { transform: rotate(-10deg); }
-    }
-
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 15px 40px;
-      background: rgba(26, 26, 46, 0.85);
+      padding: 18px 40px;
+      background: rgba(13, 11, 20, 0.7);
       backdrop-filter: blur(20px);
-      z-index: 999;
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(155, 89, 182, 0.3);
+      z-index: 1000;
     }
 
-    .logo {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--primary);
-      text-decoration: none;
-    }
-
-    .nav-links {
+    .nav-logo {
       display: flex;
-      gap: 30px;
-      list-style: none;
-    }
-
-    .nav-links a {
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
       color: var(--text-light);
-      text-decoration: none;
-      font-size: 1rem;
-      transition: all 0.3s ease;
     }
 
-    .nav-links a:hover {
-      color: var(--primary);
+    .logo-icon {
+      font-size: 1.5rem;
     }
 
-    main {
-      padding-top: 80px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero {
-      min-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 40px 20px;
-    }
-
-    .hero-avatar {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 100px;
-      margin-bottom: 30px;
-      position: relative;
-      animation: avatarFloat 3s ease-in-out infinite;
-      box-shadow: 0 0 80px rgba(255, 107, 157, 0.4);
-    }
-
-    .hero-avatar::before {
-      content: '🐱';
-    }
-
-    .hero-avatar::after {
-      content: '';
-      position: absolute;
-      width: 25px;
-      height: 40px;
-      background: var(--primary);
-      border-radius: 50% 50% 0 0;
-      top: -15px;
-      left: 30px;
-      transform: rotate(-25deg);
-      box-shadow: 105px 0 0 var(--primary);
-    }
-
-    @keyframes avatarFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-    }
-
-    .hero h1 {
-      font-size: 3.5rem;
-      margin-bottom: 15px;
-      background: linear-gradient(90deg, var(--primary), var(--accent), var(--secondary));
+    .logo-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .hero .subtitle {
-      font-size: 1.4rem;
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       color: var(--text-muted);
-      max-width: 600px;
-      line-height: 1.8;
-      margin-bottom: 10px;
+      text-decoration: none;
+      font-size: 1rem;
+      padding: 8px 16px;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      opacity: 0;
+      border-radius: 25px;
+      transition: opacity 0.3s ease;
+    }
+
+    .nav-link:hover::before {
+      opacity: 0.15;
+    }
+
+    .nav-link:hover {
+      color: var(--text-light);
+    }
+
+    .link-icon {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: all 0.3s ease;
+    }
+
+    .nav-link:hover .link-icon {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+
+    /* 主内容 */
+    main {
+      padding-top: 100px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero区域 */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 20px;
+      position: relative;
+    }
+
+    .hero-avatar {
+      width: 420px;
+      max-width: 80vw;
+      margin-bottom: 50px;
+      position: relative;
+      animation: gentleFloat 6s ease-in-out infinite;
+    }
+
+    .hero-avatar img {
+      width: 100%;
+      height: auto;
+      border-radius: 40px;
+      object-fit: cover;
+      box-shadow: 
+        0 30px 100px rgba(236, 72, 153, 0.4),
+        0 15px 60px rgba(168, 85, 247, 0.3),
+        0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+
+    .hero-avatar::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent), var(--primary));
+      border-radius: 44px;
+      z-index: -1;
+      opacity: 0.8;
+      animation: borderGlow 4s linear infinite;
+    }
+
+    @keyframes gentleFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    @keyframes borderGlow {
+      0%, 100% { filter: hue-rotate(0deg); }
+      50% { filter: hue-rotate(30deg); }
+    }
+
+    .hero h1 {
+      font-size: 3.8rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, var(--text-light) 0%, var(--primary) 50%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+
+    .hero .subtitle {
+      font-size: 1.35rem;
+      color: var(--text-muted);
+      max-width: 550px;
+      line-height: 2;
+      margin-bottom: 15px;
+      font-weight: 400;
     }
 
     .hero .greeting {
       font-size: 1.2rem;
       color: var(--accent);
-      margin-bottom: 30px;
+      margin-bottom: 40px;
     }
 
     .hero-buttons {
       display: flex;
       gap: 20px;
-      margin-top: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .btn {
-      padding: 15px 40px;
+      padding: 16px 42px;
       border-radius: 50px;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
+      font-weight: 500;
       text-decoration: none;
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover::before {
+      left: 100%;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
-      box-shadow: 0 5px 30px rgba(255, 107, 157, 0.4);
+      box-shadow: 
+        0 8px 30px rgba(236, 72, 153, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
     }
 
     .btn-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 40px rgba(255, 107, 157, 0.6);
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 
+        0 15px 50px rgba(236, 72, 153, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset;
     }
 
-    .cat-tail {
-      position: fixed;
-      bottom: 0;
-      right: 8%;
-      width: 25px;
-      height: 180px;
-      background: linear-gradient(180deg, var(--primary), var(--secondary));
-      border-radius: 15px;
-      transform-origin: bottom center;
-      animation: tailWag 2.5s ease-in-out infinite;
-      z-index: 50;
-      opacity: 0.8;
+    .btn-secondary {
+      background: var(--glass);
+      color: var(--text-light);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
     }
 
-    .cat-tail::before {
-      content: '';
-      position: absolute;
-      top: -25px;
-      left: 2px;
-      width: 20px;
-      height: 35px;
-      background: var(--accent);
-      border-radius: 50%;
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-4px);
+      border-color: var(--secondary);
     }
 
-    @keyframes tailWag {
-      0%, 100% { transform: rotate(-15deg); }
-      50% { transform: rotate(15deg); }
-    }
-
-    footer {
-      padding: 60px 20px;
+    /* 页脚 */
+    .footer {
+      padding: 80px 20px;
       text-align: center;
-      background: rgba(22, 33, 62, 0.8);
-      border-top: 1px solid rgba(155, 89, 182, 0.3);
-      margin-top: 50px;
+      position: relative;
     }
 
-    .social-links {
+    .footer-decoration {
       display: flex;
       justify-content: center;
-      gap: 30px;
+      gap: 20px;
       margin-bottom: 25px;
+      font-size: 1.5rem;
     }
 
-    .social-links a {
-      font-size: 2rem;
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: all 0.3s ease;
+    .deco-flower {
+      animation: spin 10s linear infinite;
     }
 
-    .social-links a:hover {
-      color: var(--primary);
-      transform: scale(1.2);
+    .deco-star {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
     }
 
     .footer-text {
       color: var(--text-muted);
-      font-size: 0.95rem;
+      font-size: 1.1rem;
     }
 
-    .footer-text span {
+    .footer-text .highlight {
       color: var(--primary);
+      font-weight: 600;
     }
 
+    .footer-sub {
+      color: var(--text-muted);
+      opacity: 0.6;
+      font-size: 0.95rem;
+      margin-top: 8px;
+    }
+
+    /* 樱花飘落 */
+    .sakura-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .sakura-petal {
+      position: absolute;
+      top: -50px;
+      animation: sakuraFall linear forwards;
+      text-shadow: 0 0 10px rgba(255, 182, 193, 0.5);
+    }
+
+    @keyframes sakuraFall {
+      0% {
+        transform: translateY(0) rotate(0deg) translateX(0);
+        opacity: 0;
+      }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% {
+        transform: translateY(100vh) rotate(720deg) translateX(100px);
+        opacity: 0;
+      }
+    }
+
+    /* 滚动淡入 */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* BGM播放器 */
+    .bgm-player {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .bgm-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3);
+    }
+
+    .bgm-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 30px rgba(255, 20, 147, 0.5);
+    }
+
+    .bgm-btn.playing {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3); }
+      50% { box-shadow: 0 4px 30px rgba(255, 20, 147, 0.6); }
+    }
+
+    .bgm-icon {
+      font-size: 1.3rem;
+    }
+
+    .bgm-volume {
+      background: rgba(30, 27, 46, 0.9);
+      border-radius: 25px;
+      padding: 8px 15px;
+      border: 1px solid var(--glass-border);
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+
+    .bgm-player:hover .bgm-volume {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .bgm-volume input[type="range"] {
+      width: 80px;
+      height: 6px;
+      -webkit-appearance: none;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .bgm-volume input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    /* 图片查看器 */
+    .lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .lightbox.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .lightbox-img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 20px;
+      box-shadow: 0 0 100px rgba(255, 20, 147, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .lightbox.active .lightbox-img {
+      transform: scale(1);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .lightbox-close:hover {
+      background: var(--primary);
+      transform: rotate(90deg);
+    }
+
+    /* 响应式 */
     @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .hero h1 { font-size: 2.5rem; }
-      .hero-buttons { flex-direction: column; }
-      .cat-ear { display: none; }
+      .glass-nav {
+        padding: 15px 20px;
+      }
+      
+      .nav-links {
+        gap: 15px;
+      }
+      
+      .nav-link {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+      }
+      
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      
+      .hero .subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .hero-avatar {
+        width: 300px;
+      }
+      
+      .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .bgm-volume {
+        display: none;
+      }
     }
   </style>
-
-  <script>
-    // 生成浮动粒子
-    (function() {
-      const container = document.getElementById('particles');
-      for (let i = 0; i < 50; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.width = (Math.random() * 6 + 2) + 'px';
-        p.style.height = p.style.width;
-        p.style.background = Math.random() > 0.7
-          ? 'rgba(255,107,157,' + (Math.random()*0.5+0.3) + ')'
-          : 'rgba(155,89,182,' + (Math.random()*0.5+0.2) + ')';
-        p.style.animationDuration = (Math.random() * 20 + 15) + 's';
-        p.style.animationDelay = (Math.random() * 20) + 's';
-        container.appendChild(p);
-      }
-    })();
-  </script>
 </body>
 </html>

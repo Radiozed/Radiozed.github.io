@@ -6,6 +6,8 @@ export default defineConfig({
     format: 'file'
   },
   server: {
-    host: true
-  }
+    host: true,
+    port: 4333
+  },
+  integrations: []
 });

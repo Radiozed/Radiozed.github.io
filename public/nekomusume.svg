@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 380">
+  <defs>
+    <!-- 头发渐变 - 紫色系 -->
+    <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9333EA"/>
+      <stop offset="30%" style="stop-color:#A855F7"/>
+      <stop offset="60%" style="stop-color:#C084FC"/>
+      <stop offset="100%" style="stop-color:#E9D5FF"/>
+    </linearGradient>
+    
+    <!-- 高光渐变 -->
+    <linearGradient id="hairHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E9D5FF;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#C084FC;stop-opacity:0"/>
+    </linearGradient>
+    
+    <!-- 肤色 -->
+    <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FEF7ED"/>
+      <stop offset="50%" style="stop-color:#FDE8D8"/>
+      <stop offset="100%" style="stop-color:#FCD9C4"/>
+    </linearGradient>
+    
+    <!-- 腮红 -->
+    <radialGradient id="blushGrad">
+      <stop offset="0%" style="stop-color:#FFB5C5;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#FF69B4;stop-opacity:0"/>
+    </radialGradient>
+    
+    <!-- 眼睛瞳孔 -->
+    <radialGradient id="eyeGrad">
+      <stop offset="0%" style="stop-color:#7C3AED"/>
+      <stop offset="40%" style="stop-color:#5B21B6"/>
+      <stop offset="100%" style="stop-color:#2E1065"/>
+    </radialGradient>
+    
+    <!-- 柔和阴影 -->
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#7C3AED" flood-opacity="0.3"/>
+    </filter>
+    
+    <!-- 发光效果 -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- ===== 头发后部 ===== -->
+  <ellipse cx="150" cy="140" rx="130" ry="120" fill="url(#hairGrad)" filter="url(#softShadow)"/>
+  
+  <!-- 头发后部层次 -->
+  <path d="M 30 140 Q 20 250 40 340 Q 60 280 50 200 Z" fill="#9333EA"/>
+  <path d="M 270 140 Q 280 250 260 340 Q 240 280 250 200 Z" fill="#9333EA"/>
+  
+  <!-- ===== 脸部 ===== -->
+  <ellipse cx="150" cy="170" rx="85" ry="95" fill="url(#skinGrad)"/>
+  
+  <!-- ===== 刘海/前发 ===== -->
+  <!-- 中央刘海 -->
+  <path d="M 80 100 Q 150 60 220 100 Q 200 130 150 120 Q 100 130 80 100" fill="url(#hairGrad)"/>
+  
+  <!-- 左刘海 -->
+  <path d="M 65 120 Q 90 80 110 130 Q 95 145 70 155 Q 50 145 65 120" fill="url(#hairGrad)"/>
+  
+  <!-- 右刘海 -->
+  <path d="M 235 120 Q 210 80 190 130 Q 205 145 230 155 Q 250 145 235 120" fill="url(#hairGrad)"/>
+  
+  <!-- 发旋 -->
+  <path d="M 130 70 Q 150 50 170 70" stroke="#C084FC" stroke-width="3" fill="none" opacity="0.5"/>
+  
+  <!-- 头发高光 -->
+  <path d="M 90 90 Q 120 70 150 85" stroke="url(#hairHighlight)" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M 160 85 Q 190 70 210 90" stroke="url(#hairHighlight)" stroke-width="6" fill="none" stroke-linecap="round"/>
+  
+  <!-- ===== 猫耳 ===== -->
+  <!-- 左耳外 -->
+  <path d="M 55 130 L 20 30 L 100 100 Z" fill="url(#hairGrad)" filter="url(#glow)"/>
+  <!-- 左耳内 -->
+  <path d="M 58 125 L 35 45 L 90 100 Z" fill="#FBCFE8"/>
+  <path d="M 60 115 L 45 55 L 80 100 Z" fill="#F9A8D4"/>
+  
+  <!-- 右耳外 -->
+  <path d="M 245 130 L 280 30 L 200 100 Z" fill="url(#hairGrad)" filter="url(#glow)"/>
+  <!-- 右耳内 -->
+  <path d="M 242 125 L 265 45 L 210 100 Z" fill="#FBCFE8"/>
+  <path d="M 240 115 L 255 55 L 220 100 Z" fill="#F9A8D4"/>
+  
+  <!-- ===== 眼睛 ===== -->
+  <!-- 左眼 -->
+  <g transform="translate(115, 165)">
+    <!-- 眼眶 -->
+    <ellipse cx="0" cy="0" rx="22" ry="26" fill="white"/>
+    <ellipse cx="0" cy="2" rx="20" ry="24" fill="url(#eyeGrad)"/>
+    <!-- 瞳孔高光 -->
+    <ellipse cx="0" cy="-2" rx="12" ry="14" fill="#8B5CF6"/>
+    <ellipse cx="0" cy="0" rx="8" ry="10" fill="#A78BFA"/>
+    <!-- 眼睛高光 -->
+    <ellipse cx="-6" cy="-10" rx="5" ry="6" fill="white"/>
+    <ellipse cx="5" cy="-4" rx="3" ry="3" fill="white" opacity="0.7"/>
+    <!-- 睫毛 -->
+    <path d="M -18 -15 Q -10 -22 0 -18" stroke="#581C87" stroke-width="2" fill="none"/>
+    <path d="M -12 -20 Q -5 -26 5 -20" stroke="#581C87" stroke-width="1.5" fill="none"/>
+    <path d="M 18 -15 Q 10 -22 0 -18" stroke="#581C87" stroke-width="2" fill="none"/>
+    <path d="M 12 -20 Q 5 -26 -5 -20" stroke="#581C87" stroke-width="1.5" fill="none"/>
+  </g>
+  
+  <!-- 右眼 -->
+  <g transform="translate(185, 165)">
+    <ellipse cx="0" cy="0" rx="22" ry="26" fill="white"/>
+    <ellipse cx="0" cy="2" rx="20" ry="24" fill="url(#eyeGrad)"/>
+    <ellipse cx="0" cy="-2" rx="12" ry="14" fill="#8B5CF6"/>
+    <ellipse cx="0" cy="0" rx="8" ry="10" fill="#A78BFA"/>
+    <ellipse cx="-6" cy="-10" rx="5" ry="6" fill="white"/>
+    <ellipse cx="5" cy="-4" rx="3" ry="3" fill="white" opacity="0.7"/>
+    <path d="M -18 -15 Q -10 -22 0 -18" stroke="#581C87" stroke-width="2" fill="none"/>
+    <path d="M -12 -20 Q -5 -26 5 -20" stroke="#581C87" stroke-width="1.5" fill="none"/>
+    <path d="M 18 -15 Q 10 -22 0 -18" stroke="#581C87" stroke-width="2" fill="none"/>
+    <path d="M 12 -20 Q 5 -26 -5 -20" stroke="#581C87" stroke-width="1.5" fill="none"/>
+  </g>
+  
+  <!-- 眉毛 -->
+  <path d="M 95 138 Q 115 132 130 140" stroke="#7C3AED" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 205 138 Q 185 132 170 140" stroke="#7C3AED" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- 鼻子 -->
+  <ellipse cx="150" cy="200" rx="5" ry="3" fill="#F9A8D4"/>
+  
+  <!-- 嘴巴 - 微笑 -->
+  <path d="M 150 205 Q 142 215 132 210" stroke="#E879A9" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 150 205 Q 158 215 168 210" stroke="#E879A9" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- 腮红 -->
+  <ellipse cx="85" cy="195" rx="18" ry="10" fill="url(#blushGrad)"/>
+  <ellipse cx="215" cy="195" rx="18" ry="10" fill="url(#blushGrad)"/>
+  
+  <!-- ===== 头发两侧 ===== -->
+  <path d="M 65 170 Q 40 250 50 340 Q 65 280 70 220 Q 75 190 65 170" fill="url(#hairGrad)"/>
+  <path d="M 235 170 Q 260 250 250 340 Q 235 280 230 220 Q 225 190 235 170" fill="url(#hairGrad)"/>
+  
+  <!-- 头发高光 -->
+  <path d="M 55 200 Q 48 250 52 300" stroke="#E9D5FF" stroke-width="4" fill="none" opacity="0.4"/>
+  <path d="M 245 200 Q 252 250 248 300" stroke="#E9D5FF" stroke-width="4" fill="none" opacity="0.4"/>
+  
+  <!-- ===== 装饰 ===== -->
+  <!-- 头顶蝴蝶结 -->
+  <g transform="translate(150, 55)">
+    <path d="M 0 5 L -20 -10 L -12 5 L -20 20 Z" fill="#EC4899"/>
+    <path d="M 0 5 L 20 -10 L 12 5 L 20 20 Z" fill="#EC4899"/>
+    <circle cx="0" cy="5" r="6" fill="#F472B6"/>
+    <circle cx="0" cy="5" r="3" fill="#FBBF24"/>
+  </g>
+  
+  <!-- ===== 服装 ===== -->
+  <!-- 领口 -->
+  <path d="M 90 260 Q 150 290 210 260 L 200 320 Q 150 340 100 320 Z" fill="#7C3AED"/>
+  <path d="M 100 265 Q 150 285 200 265" stroke="#9333EA" stroke-width="2" fill="none"/>
+  
+  <!-- 领结 -->
+  <g transform="translate(150, 275)">
+    <path d="M 0 0 L -15 -8 L -10 0 L -15 8 Z" fill="#EC4899"/>
+    <path d="M 0 0 L 15 -8 L 10 0 L 15 8 Z" fill="#EC4899"/>
+    <circle cx="0" cy="0" r="4" fill="#F472B6"/>
+  </g>
+  
+  <!-- 衣服下摆装饰 -->
+  <path d="M 100 320 Q 150 340 200 320 Q 150 350 100 320" fill="#6D28D9"/>
+  
+  <!-- 装饰星星 -->
+  <text x="70" y="290" font-size="12" fill="#FDE047" opacity="0.8">✦</text>
+  <text x="230" y="295" font-size="10" fill="#FDE047" opacity="0.8">✦</text>
+  <text x="85" y="350" font-size="8" fill="#FDE047" opacity="0.6">✧</text>
+  <text x="215" y="345" font-size="8" fill="#FDE047" opacity="0.6">✧</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9B59B6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- 猫脸 -->
+  <circle cx="50" cy="55" r="40" fill="url(#grad)"/>
+  <!-- 左耳 -->
+  <polygon points="15,35 30,5 45,35" fill="url(#grad)"/>
+  <polygon points="22,32 30,15 38,32" fill="#FFB6C1"/>
+  <!-- 右耳 -->
+  <polygon points="55,35 70,5 85,35" fill="url(#grad)"/>
+  <polygon points="62,32 70,15 78,32" fill="#FFB6C1"/>
+  <!-- 左眼 -->
+  <ellipse cx="35" cy="50" rx="8" ry="10" fill="#1a1a2e"/>
+  <ellipse cx="35" cy="48" rx="4" ry="5" fill="white"/>
+  <!-- 右眼 -->
+  <ellipse cx="65" cy="50" rx="8" ry="10" fill="#1a1a2e"/>
+  <ellipse cx="65" cy="48" rx="4" ry="5" fill="white"/>
+  <!-- 鼻子 -->
+  <ellipse cx="50" cy="65" rx="5" ry="4" fill="#FFB6C1"/>
+  <!-- 嘴巴 -->
+  <path d="M 50 69 Q 45 75 40 72" stroke="#1a1a2e" stroke-width="2" fill="none"/>
+  <path d="M 50 69 Q 55 75 60 72" stroke="#1a1a2e" stroke-width="2" fill="none"/>
+</svg>

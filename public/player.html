@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: transparent; 
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .player {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 999999;
+    }
+    .btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FF1493, #FF69B4);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3);
+      font-size: 1.3rem;
+      color: white;
+    }
+    .btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 30px rgba(255, 20, 147, 0.5);
+    }
+    .btn.playing {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3); }
+      50% { box-shadow: 0 4px 30px rgba(255, 20, 147, 0.6); }
+    }
+    .volume {
+      background: rgba(30, 27, 46, 0.9);
+      border-radius: 25px;
+      padding: 8px 15px;
+      border: 1px solid rgba(255, 105, 180, 0.2);
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+    .player:hover .volume {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    input[type="range"] {
+      width: 80px;
+      height: 6px;
+      -webkit-appearance: none;
+      background: linear-gradient(90deg, #FF1493, #FF69B4);
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <audio id="audio" loop preload="auto">
+    <source src="bgm.mp3" type="audio/mpeg">
+  </audio>
+  
+  <div class="player">
+    <button class="btn playing" id="toggle">🎶</button>
+    <div class="volume">
+      <input type="range" id="volume" min="0" max="100" value="50">
+    </div>
+  </div>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const toggle = document.getElementById('toggle');
+    const volume = document.getElementById('volume');
+    
+    // 恢复状态
+    const savedVolume = localStorage.getItem('bgmVolume');
+    const savedPlaying = sessionStorage.getItem('bgmPlaying');
+    const savedTime = sessionStorage.getItem('bgmTime');
+    
+    audio.volume = savedVolume ? parseFloat(savedVolume) : 0.5;
+    volume.value = audio.volume * 100;
+    
+    if (savedTime) audio.currentTime = parseFloat(savedTime);
+    
+    let isPlaying = false;
+    
+    function updateUI(playing) {
+      toggle.textContent = playing ? '🎶' : '🎵';
+      toggle.classList.toggle('playing', playing);
+    }
+    
+    function play() {
+      const promise = audio.play();
+      if (promise !== undefined) {
+        promise.then(() => {
+          isPlaying = true;
+          updateUI(true);
+          sessionStorage.setItem('bgmPlaying', 'true');
+        }).catch(() => {
+          // 自动播放被阻止，等待用户交互
+          const tryPlay = () => {
+            audio.play().then(() => {
+              isPlaying = true;
+              updateUI(true);
+              sessionStorage.setItem('bgmPlaying', 'true');
+            });
+            document.removeEventListener('click', tryPlay);
+            document.removeEventListener('scroll', tryPlay);
+          };
+          document.addEventListener('click', tryPlay, { once: true });
+          document.addEventListener('scroll', tryPlay, { once: true });
+        });
+      }
+    }
+    
+    function pause() {
+      audio.pause();
+      isPlaying = false;
+      updateUI(false);
+      sessionStorage.setItem('bgmPlaying', 'false');
+    }
+    
+    // 默认自动播放
+    play();
+    
+    // 保存播放时间
+    audio.addEventListener('timeupdate', () => {
+      sessionStorage.setItem('bgmTime', audio.currentTime.toString());
+    });
+    
+    // 切换按钮
+    toggle.addEventListener('click', () => {
+      if (isPlaying) pause();
+      else play();
+    });
+    
+    // 音量控制
+    volume.addEventListener('input', () => {
+      audio.volume = volume.value / 100;
+      localStorage.setItem('bgmVolume', audio.volume.toString());
+    });
+  </script>
+</body>
+</html>
