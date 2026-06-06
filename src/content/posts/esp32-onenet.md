@@ -29,6 +29,8 @@ tags: ["ESP32", "物联网", "OneNET", "MQTT"]
 
 ## 代码详解
 
+### 1. 头文件和宏定义
+
 ```cpp
 #include <Arduino.h>
 #include <WiFi.h>
@@ -37,17 +39,33 @@ tags: ["ESP32", "物联网", "OneNET", "MQTT"]
 #include <ArduinoJson.h>
 
 #define LED 2 //LED灯连接到GPIO2,用LED灯指示设备状态
+```
 
+这里引入了必要的库文件，`LED 2` 表示开发板上的指示灯 GPIO2。
+
+### 2. OneNET 配置
+
+```cpp
 #define product_id "aGLGgWW0AG" //产品ID，改为自己的产品ID
 #define device_id "LED" //设备ID，改为自己的设备ID
-#define token "version=2018-10-31&res=products%2FaGLGgWW0AG%2Fdevices%2FLED&et=2058447118&method=md5&sign=8bE23XXVikhfzz%2BWDupxxg%3D%3D" //token，改为自己的token
+#define token "version=2018-10-31&res=products%2FaGLGgWW0AG%2Fdevices%2FLED&et=2058447118&method=md5&sign=8bE23XXVikhfzz%2BWDupxxg%3D%3D" //token
+```
 
-const char* ssid = "HONOR";//WiFi名称，改为自己的WiFi名称
-const char* password = "12345678";//WiFi密码，改为自己的WiFi密码
+需要到 OneNET 平台获取你自己的 `product_id`、`device_id` 和 `token`。
+
+### 3. WiFi 和 MQTT 配置
+
+```cpp
+const char* ssid = "HONOR";//WiFi名称
+const char* password = "12345678";//WiFi密码
 
 const char* mqtt_server = "mqtts.heclouds.com";//MQTT服务器地址
 const int mqtt_port = 1883;//MQTT服务器端口
+```
 
+### 4. MQTT 主题定义
+
+```cpp
 #define ONENET_TOPIC_PROP_POST "$sys/" product_id "/" device_id "/thing/property/post"
 //设备属性上报请求,设备---->OneNET
 #define ONENET_TOPIC_PROP_SET "$sys/" product_id "/" device_id "/thing/property/set"
@@ -56,67 +74,76 @@ const int mqtt_port = 1883;//MQTT服务器端口
 //设备属性上报响应,OneNET---->设备
 #define ONENET_TOPIC_PROP_SET_REPLY "$sys/" product_id "/" device_id "/thing/property/set_reply"
 //设备属性设置响应,设备---->OneNET
-#define ONENET_TOPIC_PROP_FORMAT "{\"id\":\"%u\",\"version\":\"1.0\",\"params\":%s}"
-//设备属性格式模板
-int postMsgId = 0;//消息ID,消息ID是需要改变的,每次上报属性时递增
+```
 
-//按照自己的设备属性定义，可以通过DHT11传感器获取温湿度，也可以通过开关控制LED，这里只是模拟
+这些是 OneNET MQTT 的标准主题格式。
+
+### 5. 变量定义
+
+```cpp
+int postMsgId = 0;//消息ID,每次上报属性时递增
+
 float temp = 28.0;//温度
 int humi = 60;//湿度
 bool LED_Status = false;//LED状态
 
-WiFiClient espClient;//创建一个WiFiClient对象
-PubSubClient client(espClient);//创建一个PubSubClient对象
-Ticker ticker;//创建一个定时器对象
+WiFiClient espClient;
+PubSubClient client(espClient);
+Ticker ticker;
+```
 
-void LED_Flash(int time);
-void WiFi_Connect();
-void OneNet_Connect();
-void OneNet_Prop_Post();
-void callback(char* topic, byte* payload, unsigned int length);
+### 6. setup() 初始化
 
+```cpp
 void setup() {
-  pinMode(LED, OUTPUT);//LED灯设置为输出模式
-  Serial.begin(9600);//串口初始化,波特率9600,用于输出调试信息，这里串口波特率要与串口监视器设置的一样，否则会乱码
-  WiFi_Connect();//连接WiFi
-  OneNet_Connect();//连接OneNet
-  ticker.attach(10, OneNet_Prop_Post);//定时器,每10ms执行一次OneNet_Prop_Post函数
+  pinMode(LED, OUTPUT);
+  Serial.begin(9600);
+  WiFi_Connect();
+  OneNet_Connect();
+  ticker.attach(10, OneNet_Prop_Post);//每10秒上报一次属性
 }
+```
 
+### 7. loop() 主循环
+
+```cpp
 void loop() {
-  if(WiFi.status() != WL_CONNECTED) {//如果WiFi连接断开
-    WiFi_Connect();//重新连接WiFi
+  if(WiFi.status() != WL_CONNECTED) {
+    WiFi_Connect();
   }
-  if (!client.connected()) {//如果MQTT连接断开
-    OneNet_Connect();//重新连接OneNet
+  if (!client.connected()) {
+    OneNet_Connect();
   }
-  client.loop();//保持MQTT连接
+  client.loop();
 }
+```
 
-void LED_Flash(int time) {
-  digitalWrite(LED, HIGH);//点亮LED
-  delay(time);//延时time
-  digitalWrite(LED, LOW);//熄灭LED
-  delay(time);//延时time
-}
+检测连接状态，断线自动重连。
 
+### 8. WiFi 连接函数
+
+```cpp
 void WiFi_Connect()
 {
-  WiFi.begin(ssid, password);//连接WiFi
-  while (WiFi.status() != WL_CONNECTED) {//等待WiFi连接,WiFI.status()返回当前WiFi连接状态,WL_CONNECTED为连接成功状态
-    LED_Flash(500);//LED闪烁,循环等待
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    LED_Flash(500);
     Serial.println("\nConnecting to WiFi...");
   }
-  Serial.println("Connected to the WiFi network");//WiFi连接成功
-  Serial.println(WiFi.localIP());//输出设备IP地址
-  digitalWrite(LED, HIGH);//点亮LED,表示WiFi连接成功
+  Serial.println("Connected to the WiFi network");
+  Serial.println(WiFi.localIP());
+  digitalWrite(LED, HIGH);
 }
+```
 
+### 9. OneNET 连接函数
+
+```cpp
 void OneNet_Connect()
 {
-  client.setServer(mqtt_server, mqtt_port);//设置MQTT服务器地址和端口
-  client.connect(device_id, product_id, token);//连接OneNet
-  if(client.connected()) //如果连接成功
+  client.setServer(mqtt_server, mqtt_port);
+  client.connect(device_id, product_id, token);
+  if(client.connected()) 
   {
     LED_Flash(500);
     Serial.println("Connected to OneNet!");
@@ -125,25 +152,185 @@ void OneNet_Connect()
   {
     Serial.println("Failed to connect to OneNet!");
   }
-  client.subscribe(ONENET_TOPIC_PROP_SET);//订阅设备属性设置请求, OneNET---->设备
-  client.subscribe(ONENET_TOPIC_PROP_POST_REPLY);//订阅设备属性上报响应,OneNET---->设备
-  client.setCallback(callback);//设置回调函数
+  client.subscribe(ONENET_TOPIC_PROP_SET);
+  client.subscribe(ONENET_TOPIC_PROP_POST_REPLY);
+  client.setCallback(callback);
 }
-//上报设备属性
+```
+
+### 10. 属性上报函数
+
+```cpp
 void OneNet_Prop_Post()
 {
   humi+=1;
-  if(humi==100)
-    humi=0;
+  if(humi==100) humi=0;
   if(client.connected()) 
   {
-    char parmas[256];//属性参数
-    char jsonBuf[256];//JSON格式数据,用于上报属性的缓冲区
-    sprintf(parmas, "{\"Temp\":{\"value\":%.1f},\"Humi\":{\"value\":%d},\"LED\":{\"value\":%s}}", temp, humi, LED_Status ? "true" : "false");//设置属性参数
+    char parmas[256];
+    char jsonBuf[256];
+    sprintf(parmas, "{\"Temp\":{\"value\":%.1f},\"Humi\":{\"value\":%d},\"LED\":{\"value\":%s}}", temp, humi, LED_Status ? "true" : "false");
+    sprintf(jsonBuf,ONENET_TOPIC_PROP_FORMAT,postMsgId++,parmas);
+    if(client.publish(ONENET_TOPIC_PROP_POST, jsonBuf))
+    {
+      LED_Flash(500);
+      Serial.println("Post property success!");
+    }
+  }
+}
+```
+
+### 11. 回调函数
+
+```cpp
+void callback(char* topic, byte* payload, unsigned int length)
+{
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  LED_Flash(500);
+  if(strcmp(topic, ONENET_TOPIC_PROP_SET) == 0)
+  {
+    DynamicJsonDocument doc(100);
+    DeserializationError error = deserializeJson(doc, payload);
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.c_str());
+      return;
+    }
+    JsonObject setAlinkMsgObj = doc.as<JsonObject>();
+    JsonObject params = setAlinkMsgObj["params"];
+    if(params.containsKey("LED"))
+    {
+      LED_Status = params["LED"];
+      Serial.print("Set LED:");
+      Serial.println(LED_Status);
+    }
+    // 发送响应
+    String str = setAlinkMsgObj["id"];
+    char SendBuf[100];
+    sprintf(SendBuf, "{\"id\":\"%s\",\"code\":200,\"msg\":\"success\"}", str.c_str());
+    client.publish(ONENET_TOPIC_PROP_SET_REPLY, SendBuf);
+  }
+}
+```
+
+## 完整代码
+
+把上面的所有部分组合在一起，就是完整的代码：
+
+```cpp
+#include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <Ticker.h>
+#include <ArduinoJson.h>
+
+#define LED 2
+
+#define product_id "aGLGgWW0AG"
+#define device_id "LED"
+#define token "version=2018-10-31&res=products%2FaGLGgWW0AG%2Fdevices%2FLED&et=2058447118&method=md5&sign=8bE23XXVikhfzz%2BWDupxxg%3D%3D"
+
+const char* ssid = "HONOR";
+const char* password = "12345678";
+
+const char* mqtt_server = "mqtts.heclouds.com";
+const int mqtt_port = 1883;
+
+#define ONENET_TOPIC_PROP_POST "$sys/" product_id "/" device_id "/thing/property/post"
+#define ONENET_TOPIC_PROP_SET "$sys/" product_id "/" device_id "/thing/property/set"
+#define ONENET_TOPIC_PROP_POST_REPLY "$sys/" product_id "/" device_id "/thing/property/post/reply"
+#define ONENET_TOPIC_PROP_SET_REPLY "$sys/" product_id "/" device_id "/thing/property/set_reply"
+#define ONENET_TOPIC_PROP_FORMAT "{\"id\":\"%u\",\"version\":\"1.0\",\"params\":%s}"
+
+int postMsgId = 0;
+
+float temp = 28.0;
+int humi = 60;
+bool LED_Status = false;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+Ticker ticker;
+
+void LED_Flash(int time);
+void WiFi_Connect();
+void OneNet_Connect();
+void OneNet_Prop_Post();
+void callback(char* topic, byte* payload, unsigned int length);
+
+void setup() {
+  pinMode(LED, OUTPUT);
+  Serial.begin(9600);
+  WiFi_Connect();
+  OneNet_Connect();
+  ticker.attach(10, OneNet_Prop_Post);
+}
+
+void loop() {
+  if(WiFi.status() != WL_CONNECTED) {
+    WiFi_Connect();
+  }
+  if (!client.connected()) {
+    OneNet_Connect();
+  }
+  client.loop();
+}
+
+void LED_Flash(int time) {
+  digitalWrite(LED, HIGH);
+  delay(time);
+  digitalWrite(LED, LOW);
+  delay(time);
+}
+
+void WiFi_Connect()
+{
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    LED_Flash(500);
+    Serial.println("\nConnecting to WiFi...");
+  }
+  Serial.println("Connected to the WiFi network");
+  Serial.println(WiFi.localIP());
+  digitalWrite(LED, HIGH);
+}
+
+void OneNet_Connect()
+{
+  client.setServer(mqtt_server, mqtt_port);
+  client.connect(device_id, product_id, token);
+  if(client.connected()) 
+  {
+    LED_Flash(500);
+    Serial.println("Connected to OneNet!");
+  }
+  else
+  {
+    Serial.println("Failed to connect to OneNet!");
+  }
+  client.subscribe(ONENET_TOPIC_PROP_SET);
+  client.subscribe(ONENET_TOPIC_PROP_POST_REPLY);
+  client.setCallback(callback);
+}
+
+void OneNet_Prop_Post()
+{
+  humi+=1;
+  if(humi==100) humi=0;
+  if(client.connected()) 
+  {
+    char parmas[256];
+    char jsonBuf[256];
+    sprintf(parmas, "{\"Temp\":{\"value\":%.1f},\"Humi\":{\"value\":%d},\"LED\":{\"value\":%s}}", temp, humi, LED_Status ? "true" : "false");
     Serial.println(parmas);
-    sprintf(jsonBuf,ONENET_TOPIC_PROP_FORMAT,postMsgId++,parmas);//设置JSON格式数据,包括消息ID和属性参数
+    sprintf(jsonBuf,ONENET_TOPIC_PROP_FORMAT,postMsgId++,parmas);
     Serial.println(jsonBuf);
-    if(client.publish(ONENET_TOPIC_PROP_POST, jsonBuf))//上报属性
+    if(client.publish(ONENET_TOPIC_PROP_POST, jsonBuf))
     {
       LED_Flash(500);
       Serial.println("Post property success!");
@@ -154,42 +341,41 @@ void OneNet_Prop_Post()
     }
   }
 }
-//回调函数，当订阅的主题有消息时，会调用此函数
+
 void callback(char* topic, byte* payload, unsigned int length)
 {
   Serial.print("Message arrived [");
-  Serial.print(topic);//打印主题
+  Serial.print(topic);
   Serial.print("] ");
   for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);//打印消息内容
+    Serial.print((char)payload[i]);
   }
-  Serial.println();//换行
-  LED_Flash(500);//LED闪烁,表示收到消息
+  Serial.println();
+  LED_Flash(500);
   if(strcmp(topic, ONENET_TOPIC_PROP_SET) == 0)
   {
-    DynamicJsonDocument doc(100);//创建一个JSON文档,用于解析消息内容
-
-    DeserializationError error = deserializeJson(doc, payload);//解析消息内容,将消息内容存储到doc中,返回解析结果,成功返回0,失败返回其他值
-    if (error) {//解析失败,打印错误信息,返回
+    DynamicJsonDocument doc(100);
+    DeserializationError error = deserializeJson(doc, payload);
+    if (error) {
       Serial.print(F("deserializeJson() failed: "));
       Serial.println(error.c_str());
       return;
     }
-    JsonObject setAlinkMsgObj = doc.as<JsonObject>();//获取JSON文档的根对象
-    JsonObject params = setAlinkMsgObj["params"];//获取params对象
-    if(params.containsKey("LED"))//判断params对象是否包含LED属性
+    JsonObject setAlinkMsgObj = doc.as<JsonObject>();
+    JsonObject params = setAlinkMsgObj["params"];
+    if(params.containsKey("LED"))
     {
-      LED_Status = params["LED"];//获取LED属性值
+      LED_Status = params["LED"];
       Serial.print("Set LED:");
       Serial.println(LED_Status);
     }
-    serializeJsonPretty(setAlinkMsgObj, Serial);//打印JSON文档
-    String str = setAlinkMsgObj["id"];//获取消息ID
-    char SendBuf[100];//发送缓冲区
-    sprintf(SendBuf, "{\"id\":\"%s\",\"code\":200,\"msg\":\"success\"}", str.c_str());//设置响应消息
+    serializeJsonPretty(setAlinkMsgObj, Serial);
+    String str = setAlinkMsgObj["id"];
+    char SendBuf[100];
+    sprintf(SendBuf, "{\"id\":\"%s\",\"code\":200,\"msg\":\"success\"}", str.c_str());
     Serial.println(SendBuf);
     delay(100);
-    if(client.publish(ONENET_TOPIC_SET_REPLY, SendBuf))//发送响���消��,不知道为什么，这里发送成功的，但是OneNET平台上没有收到
+    if(client.publish(ONENET_TOPIC_PROP_SET_REPLY, SendBuf))
     {
       Serial.println("Send set reply success!");
     }
@@ -200,15 +386,6 @@ void callback(char* topic, byte* payload, unsigned int length)
   }
 }
 ```
-
-## 代码功能说明
-
-| 函数 | 功能 |
-|------|------|
-| `WiFi_Connect()` | 连接WiFi网络 |
-| `OneNet_Connect()` | 连接OneNET MQTT服务器 |
-| `OneNet_Prop_Post()` | 定时上报设备属性（温湿度、LED状态） |
-| `callback()` | 接收并处理OneNET下发的指令 |
 
 ## 使用说明
 

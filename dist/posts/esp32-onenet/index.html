@@ -29,6 +29,7 @@
 <li>添加设备，记录 product_id、device_id 和 token</li>
 </ol>
 <h2 id="代码详解">代码详解</h2>
+<h3 id="1-头文件和宏定义">1. 头文件和宏定义</h3>
 <pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;Arduino.h></span></span>
 <span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;WiFi.h></span></span>
 <span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;PubSubClient.h></span></span>
@@ -36,18 +37,23 @@
 <span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;ArduinoJson.h></span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> LED</span><span style="color:#79B8FF"> 2</span><span style="color:#6A737D"> //LED灯连接到GPIO2,用LED灯指示设备状态</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> product_id</span><span style="color:#9ECBFF"> "aGLGgWW0AG"</span><span style="color:#6A737D"> //产品ID，改为自己的产品ID</span></span>
+<span class="line"></span></code></pre>
+<p>这里引入了必要的库文件，<code>LED 2</code> 表示开发板上的指示灯 GPIO2。</p>
+<h3 id="2-onenet-配置">2. OneNET 配置</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> product_id</span><span style="color:#9ECBFF"> "aGLGgWW0AG"</span><span style="color:#6A737D"> //产品ID，改为自己的产品ID</span></span>
 <span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> device_id</span><span style="color:#9ECBFF"> "LED"</span><span style="color:#6A737D"> //设备ID，改为自己的设备ID</span></span>
-<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> token</span><span style="color:#9ECBFF"> "version=2018-10-31&#x26;res=products</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">aGLGgWW0AG</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">devices</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">LED&#x26;et=2058447118&#x26;method=md5&#x26;sign=8bE23XXVikhfzz%2BWDupxxg</span><span style="color:#79B8FF">%3D%3D</span><span style="color:#9ECBFF">"</span><span style="color:#6A737D"> //token，改为自己的token</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> ssid </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "HONOR"</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//WiFi名称，改为自己的WiFi名称</span></span>
-<span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> password </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "12345678"</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//WiFi密码，改为自己的WiFi密码</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> token</span><span style="color:#9ECBFF"> "version=2018-10-31&#x26;res=products</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">aGLGgWW0AG</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">devices</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">LED&#x26;et=2058447118&#x26;method=md5&#x26;sign=8bE23XXVikhfzz%2BWDupxxg</span><span style="color:#79B8FF">%3D%3D</span><span style="color:#9ECBFF">"</span><span style="color:#6A737D"> //token</span></span>
+<span class="line"></span></code></pre>
+<p>需要到 OneNET 平台获取你自己的 <code>product_id</code>、<code>device_id</code> 和 <code>token</code>。</p>
+<h3 id="3-wifi-和-mqtt-配置">3. WiFi 和 MQTT 配置</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> ssid </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "HONOR"</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//WiFi名称</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> password </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "12345678"</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//WiFi密码</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> mqtt_server </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "mqtts.heclouds.com"</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//MQTT服务器地址</span></span>
 <span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> int</span><span style="color:#E1E4E8"> mqtt_port </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 1883</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//MQTT服务器端口</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_POST</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/post"</span></span>
+<span class="line"></span></code></pre>
+<h3 id="4-mqtt-主题定义">4. MQTT 主题定义</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_POST</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/post"</span></span>
 <span class="line"><span style="color:#6A737D">//设备属性上报请求,设备---->OneNET</span></span>
 <span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_SET</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/set"</span></span>
 <span class="line"><span style="color:#6A737D">//设备属性设置请求,OneNET---->设备</span></span>
@@ -55,67 +61,59 @@
 <span class="line"><span style="color:#6A737D">//设备属性上报响应,OneNET---->设备</span></span>
 <span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_SET_REPLY</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/set_reply"</span></span>
 <span class="line"><span style="color:#6A737D">//设备属性设置响应,设备---->OneNET</span></span>
-<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_FORMAT</span><span style="color:#9ECBFF"> "{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">id</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"%u\"</span><span style="color:#9ECBFF">,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">version</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">1.0</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">params</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%s</span><span style="color:#9ECBFF">}"</span></span>
-<span class="line"><span style="color:#6A737D">//设备属性格式模板</span></span>
-<span class="line"><span style="color:#F97583">int</span><span style="color:#E1E4E8"> postMsgId </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//消息ID,消息ID是需要改变的,每次上报属性时递增</span></span>
+<span class="line"></span></code></pre>
+<p>这些是 OneNET MQTT 的标准主题格式。</p>
+<h3 id="5-变量定义">5. 变量定义</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">int</span><span style="color:#E1E4E8"> postMsgId </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//消息ID,每次上报属性时递增</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#6A737D">//按照自己的设备属性定义，可以通过DHT11传感器获取温湿度，也可以通过开关控制LED，这里只是模拟</span></span>
 <span class="line"><span style="color:#F97583">float</span><span style="color:#E1E4E8"> temp </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 28.0</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//温度</span></span>
 <span class="line"><span style="color:#F97583">int</span><span style="color:#E1E4E8"> humi </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 60</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//湿度</span></span>
 <span class="line"><span style="color:#F97583">bool</span><span style="color:#E1E4E8"> LED_Status </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> false</span><span style="color:#E1E4E8">;</span><span style="color:#6A737D">//LED状态</span></span>
 <span class="line"></span>
-<span class="line"><span style="color:#E1E4E8">WiFiClient espClient;</span><span style="color:#6A737D">//创建一个WiFiClient对象</span></span>
-<span class="line"><span style="color:#B392F0">PubSubClient</span><span style="color:#B392F0"> client</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">espClient</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">//创建一个PubSubClient对象</span></span>
-<span class="line"><span style="color:#E1E4E8">Ticker ticker;</span><span style="color:#6A737D">//创建一个定时器对象</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">int</span><span style="color:#FFAB70"> time</span><span style="color:#E1E4E8">);</span></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> WiFi_Connect</span><span style="color:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Connect</span><span style="color:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Prop_Post</span><span style="color:#E1E4E8">();</span></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> callback</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">char*</span><span style="color:#FFAB70"> topic</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">byte</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> payload</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">unsigned</span><span style="color:#F97583"> int</span><span style="color:#FFAB70"> length</span><span style="color:#E1E4E8">);</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> setup</span><span style="color:#E1E4E8">() {</span></span>
-<span class="line"><span style="color:#B392F0">  pinMode</span><span style="color:#E1E4E8">(LED, OUTPUT);</span><span style="color:#6A737D">//LED灯设置为输出模式</span></span>
-<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">begin</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">9600</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">//串口初始化,波特率9600,用于输出调试信息，这里串口波特率要与串口监视器设置的一样，否则会乱码</span></span>
-<span class="line"><span style="color:#B392F0">  WiFi_Connect</span><span style="color:#E1E4E8">();</span><span style="color:#6A737D">//连接WiFi</span></span>
-<span class="line"><span style="color:#B392F0">  OneNet_Connect</span><span style="color:#E1E4E8">();</span><span style="color:#6A737D">//连接OneNet</span></span>
-<span class="line"><span style="color:#E1E4E8">  ticker.</span><span style="color:#B392F0">attach</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">10</span><span style="color:#E1E4E8">, OneNet_Prop_Post);</span><span style="color:#6A737D">//定时器,每10ms执行一次OneNet_Prop_Post函数</span></span>
+<span class="line"><span style="color:#E1E4E8">WiFiClient espClient;</span></span>
+<span class="line"><span style="color:#B392F0">PubSubClient</span><span style="color:#B392F0"> client</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">espClient</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">Ticker ticker;</span></span>
+<span class="line"></span></code></pre>
+<h3 id="6-setup-初始化">6. setup() 初始化</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> setup</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#B392F0">  pinMode</span><span style="color:#E1E4E8">(LED, OUTPUT);</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">begin</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">9600</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">  WiFi_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#B392F0">  OneNet_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  ticker.</span><span style="color:#B392F0">attach</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">10</span><span style="color:#E1E4E8">, OneNet_Prop_Post);</span><span style="color:#6A737D">//每10秒上报一次属性</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> loop</span><span style="color:#E1E4E8">() {</span></span>
-<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(WiFi.</span><span style="color:#B392F0">status</span><span style="color:#E1E4E8">() </span><span style="color:#F97583">!=</span><span style="color:#E1E4E8"> WL_CONNECTED) {</span><span style="color:#6A737D">//如果WiFi连接断开</span></span>
-<span class="line"><span style="color:#B392F0">    WiFi_Connect</span><span style="color:#E1E4E8">();</span><span style="color:#6A737D">//重新连接WiFi</span></span>
+<span class="line"></span></code></pre>
+<h3 id="7-loop-主循环">7. loop() 主循环</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> loop</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(WiFi.</span><span style="color:#B392F0">status</span><span style="color:#E1E4E8">() </span><span style="color:#F97583">!=</span><span style="color:#E1E4E8"> WL_CONNECTED) {</span></span>
+<span class="line"><span style="color:#B392F0">    WiFi_Connect</span><span style="color:#E1E4E8">();</span></span>
 <span class="line"><span style="color:#E1E4E8">  }</span></span>
-<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">()) {</span><span style="color:#6A737D">//如果MQTT连接断开</span></span>
-<span class="line"><span style="color:#B392F0">    OneNet_Connect</span><span style="color:#E1E4E8">();</span><span style="color:#6A737D">//重新连接OneNet</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">()) {</span></span>
+<span class="line"><span style="color:#B392F0">    OneNet_Connect</span><span style="color:#E1E4E8">();</span></span>
 <span class="line"><span style="color:#E1E4E8">  }</span></span>
-<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">loop</span><span style="color:#E1E4E8">();</span><span style="color:#6A737D">//保持MQTT连接</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">loop</span><span style="color:#E1E4E8">();</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">int</span><span style="color:#FFAB70"> time</span><span style="color:#E1E4E8">) {</span></span>
-<span class="line"><span style="color:#B392F0">  digitalWrite</span><span style="color:#E1E4E8">(LED, HIGH);</span><span style="color:#6A737D">//点亮LED</span></span>
-<span class="line"><span style="color:#B392F0">  delay</span><span style="color:#E1E4E8">(time);</span><span style="color:#6A737D">//延时time</span></span>
-<span class="line"><span style="color:#B392F0">  digitalWrite</span><span style="color:#E1E4E8">(LED, LOW);</span><span style="color:#6A737D">//熄灭LED</span></span>
-<span class="line"><span style="color:#B392F0">  delay</span><span style="color:#E1E4E8">(time);</span><span style="color:#6A737D">//延时time</span></span>
-<span class="line"><span style="color:#E1E4E8">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> WiFi_Connect</span><span style="color:#E1E4E8">()</span></span>
+<span class="line"></span></code></pre>
+<p>检测连接状态，断线自动重连。</p>
+<h3 id="8-wifi-连接函数">8. WiFi 连接函数</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> WiFi_Connect</span><span style="color:#E1E4E8">()</span></span>
 <span class="line"><span style="color:#E1E4E8">{</span></span>
-<span class="line"><span style="color:#E1E4E8">  WiFi.</span><span style="color:#B392F0">begin</span><span style="color:#E1E4E8">(ssid, password);</span><span style="color:#6A737D">//连接WiFi</span></span>
-<span class="line"><span style="color:#F97583">  while</span><span style="color:#E1E4E8"> (WiFi.</span><span style="color:#B392F0">status</span><span style="color:#E1E4E8">() </span><span style="color:#F97583">!=</span><span style="color:#E1E4E8"> WL_CONNECTED) {</span><span style="color:#6A737D">//等待WiFi连接,WiFI.status()返回当前WiFi连接状态,WL_CONNECTED为连接成功状态</span></span>
-<span class="line"><span style="color:#B392F0">    LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">//LED闪烁,循环等待</span></span>
+<span class="line"><span style="color:#E1E4E8">  WiFi.</span><span style="color:#B392F0">begin</span><span style="color:#E1E4E8">(ssid, password);</span></span>
+<span class="line"><span style="color:#F97583">  while</span><span style="color:#E1E4E8"> (WiFi.</span><span style="color:#B392F0">status</span><span style="color:#E1E4E8">() </span><span style="color:#F97583">!=</span><span style="color:#E1E4E8"> WL_CONNECTED) {</span></span>
+<span class="line"><span style="color:#B392F0">    LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">Connecting to WiFi..."</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">  }</span></span>
-<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Connected to the WiFi network"</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">//WiFi连接成功</span></span>
-<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(WiFi.</span><span style="color:#B392F0">localIP</span><span style="color:#E1E4E8">());</span><span style="color:#6A737D">//输出设备IP地址</span></span>
-<span class="line"><span style="color:#B392F0">  digitalWrite</span><span style="color:#E1E4E8">(LED, HIGH);</span><span style="color:#6A737D">//点亮LED,表示WiFi连接成功</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Connected to the WiFi network"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(WiFi.</span><span style="color:#B392F0">localIP</span><span style="color:#E1E4E8">());</span></span>
+<span class="line"><span style="color:#B392F0">  digitalWrite</span><span style="color:#E1E4E8">(LED, HIGH);</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Connect</span><span style="color:#E1E4E8">()</span></span>
+<span class="line"></span></code></pre>
+<h3 id="9-onenet-连接函数">9. OneNET 连接函数</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Connect</span><span style="color:#E1E4E8">()</span></span>
 <span class="line"><span style="color:#E1E4E8">{</span></span>
-<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">setServer</span><span style="color:#E1E4E8">(mqtt_server, mqtt_port);</span><span style="color:#6A737D">//设置MQTT服务器地址和端口</span></span>
-<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">connect</span><span style="color:#E1E4E8">(device_id, product_id, token);</span><span style="color:#6A737D">//连接OneNet</span></span>
-<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">())</span><span style="color:#6A737D"> //如果连接成功</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">setServer</span><span style="color:#E1E4E8">(mqtt_server, mqtt_port);</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">connect</span><span style="color:#E1E4E8">(device_id, product_id, token);</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">()) </span></span>
 <span class="line"><span style="color:#E1E4E8">  {</span></span>
 <span class="line"><span style="color:#B392F0">    LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Connected to OneNet!"</span><span style="color:#E1E4E8">);</span></span>
@@ -124,25 +122,175 @@
 <span class="line"><span style="color:#E1E4E8">  {</span></span>
 <span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Failed to connect to OneNet!"</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">  }</span></span>
-<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">subscribe</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_SET);</span><span style="color:#6A737D">//订阅设备属性设置请求, OneNET---->设备</span></span>
-<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">subscribe</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_POST_REPLY);</span><span style="color:#6A737D">//订阅设备属性上报响应,OneNET---->设备</span></span>
-<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">setCallback</span><span style="color:#E1E4E8">(callback);</span><span style="color:#6A737D">//设置回调函数</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">subscribe</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_SET);</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">subscribe</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_POST_REPLY);</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">setCallback</span><span style="color:#E1E4E8">(callback);</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span>
-<span class="line"><span style="color:#6A737D">//上报设备属性</span></span>
+<span class="line"></span></code></pre>
+<h3 id="10-属性上报函数">10. 属性上报函数</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Prop_Post</span><span style="color:#E1E4E8">()</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">  humi</span><span style="color:#F97583">+=</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(humi</span><span style="color:#F97583">==</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">) humi</span><span style="color:#F97583">=</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">()) </span></span>
+<span class="line"><span style="color:#E1E4E8">  {</span></span>
+<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> parmas[</span><span style="color:#79B8FF">256</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> jsonBuf[</span><span style="color:#79B8FF">256</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(parmas, </span><span style="color:#9ECBFF">"{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">Temp</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%.1f</span><span style="color:#9ECBFF">},</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">Humi</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%d</span><span style="color:#9ECBFF">},</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">LED</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%s</span><span style="color:#9ECBFF">}}"</span><span style="color:#E1E4E8">, temp, humi, LED_Status </span><span style="color:#F97583">?</span><span style="color:#9ECBFF"> "true"</span><span style="color:#F97583"> :</span><span style="color:#9ECBFF"> "false"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(jsonBuf,ONENET_TOPIC_PROP_FORMAT,postMsgId</span><span style="color:#F97583">++</span><span style="color:#E1E4E8">,parmas);</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">publish</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_POST, jsonBuf))</span></span>
+<span class="line"><span style="color:#E1E4E8">    {</span></span>
+<span class="line"><span style="color:#B392F0">      LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Post property success!"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span></code></pre>
+<h3 id="11-回调函数">11. 回调函数</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> callback</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">char*</span><span style="color:#FFAB70"> topic</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">byte</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> payload</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">unsigned</span><span style="color:#F97583"> int</span><span style="color:#FFAB70"> length</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Message arrived ["</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(topic);</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"] "</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">  for</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">int</span><span style="color:#E1E4E8"> i </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">; i </span><span style="color:#F97583">&#x3C;</span><span style="color:#E1E4E8"> length; i</span><span style="color:#F97583">++</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">((</span><span style="color:#F97583">char</span><span style="color:#E1E4E8">)payload[i]);</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#B392F0">  LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">strcmp</span><span style="color:#E1E4E8">(topic, ONENET_TOPIC_PROP_SET) </span><span style="color:#F97583">==</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">  {</span></span>
+<span class="line"><span style="color:#E1E4E8">    DynamicJsonDocument </span><span style="color:#B392F0">doc</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    DeserializationError error </span><span style="color:#F97583">=</span><span style="color:#B392F0"> deserializeJson</span><span style="color:#E1E4E8">(doc, payload);</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (error) {</span></span>
+<span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">F</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"deserializeJson() failed: "</span><span style="color:#E1E4E8">));</span></span>
+<span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(error.</span><span style="color:#B392F0">c_str</span><span style="color:#E1E4E8">());</span></span>
+<span class="line"><span style="color:#F97583">      return</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">    JsonObject setAlinkMsgObj </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> doc.as</span><span style="color:#F97583">&#x3C;</span><span style="color:#E1E4E8">JsonObject</span><span style="color:#F97583">></span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">    JsonObject params </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> setAlinkMsgObj[</span><span style="color:#9ECBFF">"params"</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(params.</span><span style="color:#B392F0">containsKey</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"LED"</span><span style="color:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#E1E4E8">    {</span></span>
+<span class="line"><span style="color:#E1E4E8">      LED_Status </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> params[</span><span style="color:#9ECBFF">"LED"</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Set LED:"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(LED_Status);</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#6A737D">    // 发送响应</span></span>
+<span class="line"><span style="color:#E1E4E8">    String str </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> setAlinkMsgObj[</span><span style="color:#9ECBFF">"id"</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> SendBuf[</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(SendBuf, </span><span style="color:#9ECBFF">"{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">id</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"%s\"</span><span style="color:#9ECBFF">,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">code</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:200,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">msg</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">success</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">}"</span><span style="color:#E1E4E8">, str.</span><span style="color:#B392F0">c_str</span><span style="color:#E1E4E8">());</span></span>
+<span class="line"><span style="color:#E1E4E8">    client.</span><span style="color:#B392F0">publish</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_SET_REPLY, SendBuf);</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span></code></pre>
+<h2 id="完整代码">完整代码</h2>
+<p>把上面的所有部分组合在一起，就是完整的代码：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="cpp"><code><span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;Arduino.h></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;WiFi.h></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;PubSubClient.h></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;Ticker.h></span></span>
+<span class="line"><span style="color:#F97583">#include</span><span style="color:#9ECBFF"> &#x3C;ArduinoJson.h></span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> LED</span><span style="color:#79B8FF"> 2</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> product_id</span><span style="color:#9ECBFF"> "aGLGgWW0AG"</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> device_id</span><span style="color:#9ECBFF"> "LED"</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> token</span><span style="color:#9ECBFF"> "version=2018-10-31&#x26;res=products</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">aGLGgWW0AG</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">devices</span><span style="color:#79B8FF">%2F</span><span style="color:#9ECBFF">LED&#x26;et=2058447118&#x26;method=md5&#x26;sign=8bE23XXVikhfzz%2BWDupxxg</span><span style="color:#79B8FF">%3D%3D</span><span style="color:#9ECBFF">"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> ssid </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "HONOR"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> password </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "12345678"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> char*</span><span style="color:#E1E4E8"> mqtt_server </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> "mqtts.heclouds.com"</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#F97583"> int</span><span style="color:#E1E4E8"> mqtt_port </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 1883</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_POST</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/post"</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_SET</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/set"</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_POST_REPLY</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/post/reply"</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_SET_REPLY</span><span style="color:#9ECBFF"> "$sys/"</span><span style="color:#E1E4E8"> product_id </span><span style="color:#9ECBFF">"/"</span><span style="color:#E1E4E8"> device_id </span><span style="color:#9ECBFF">"/thing/property/set_reply"</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ONENET_TOPIC_PROP_FORMAT</span><span style="color:#9ECBFF"> "{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">id</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"%u\"</span><span style="color:#9ECBFF">,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">version</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">1.0</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">params</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%s</span><span style="color:#9ECBFF">}"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">int</span><span style="color:#E1E4E8"> postMsgId </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">float</span><span style="color:#E1E4E8"> temp </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 28.0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">int</span><span style="color:#E1E4E8"> humi </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 60</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">bool</span><span style="color:#E1E4E8"> LED_Status </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> false</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">WiFiClient espClient;</span></span>
+<span class="line"><span style="color:#B392F0">PubSubClient</span><span style="color:#B392F0"> client</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">espClient</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">Ticker ticker;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">int</span><span style="color:#FFAB70"> time</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> WiFi_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Prop_Post</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> callback</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">char*</span><span style="color:#FFAB70"> topic</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">byte</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> payload</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">unsigned</span><span style="color:#F97583"> int</span><span style="color:#FFAB70"> length</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> setup</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#B392F0">  pinMode</span><span style="color:#E1E4E8">(LED, OUTPUT);</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">begin</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">9600</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#B392F0">  WiFi_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#B392F0">  OneNet_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  ticker.</span><span style="color:#B392F0">attach</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">10</span><span style="color:#E1E4E8">, OneNet_Prop_Post);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> loop</span><span style="color:#E1E4E8">() {</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(WiFi.</span><span style="color:#B392F0">status</span><span style="color:#E1E4E8">() </span><span style="color:#F97583">!=</span><span style="color:#E1E4E8"> WL_CONNECTED) {</span></span>
+<span class="line"><span style="color:#B392F0">    WiFi_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">!</span><span style="color:#E1E4E8">client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">()) {</span></span>
+<span class="line"><span style="color:#B392F0">    OneNet_Connect</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">loop</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">int</span><span style="color:#FFAB70"> time</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#B392F0">  digitalWrite</span><span style="color:#E1E4E8">(LED, HIGH);</span></span>
+<span class="line"><span style="color:#B392F0">  delay</span><span style="color:#E1E4E8">(time);</span></span>
+<span class="line"><span style="color:#B392F0">  digitalWrite</span><span style="color:#E1E4E8">(LED, LOW);</span></span>
+<span class="line"><span style="color:#B392F0">  delay</span><span style="color:#E1E4E8">(time);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> WiFi_Connect</span><span style="color:#E1E4E8">()</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">  WiFi.</span><span style="color:#B392F0">begin</span><span style="color:#E1E4E8">(ssid, password);</span></span>
+<span class="line"><span style="color:#F97583">  while</span><span style="color:#E1E4E8"> (WiFi.</span><span style="color:#B392F0">status</span><span style="color:#E1E4E8">() </span><span style="color:#F97583">!=</span><span style="color:#E1E4E8"> WL_CONNECTED) {</span></span>
+<span class="line"><span style="color:#B392F0">    LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\n</span><span style="color:#9ECBFF">Connecting to WiFi..."</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Connected to the WiFi network"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(WiFi.</span><span style="color:#B392F0">localIP</span><span style="color:#E1E4E8">());</span></span>
+<span class="line"><span style="color:#B392F0">  digitalWrite</span><span style="color:#E1E4E8">(LED, HIGH);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Connect</span><span style="color:#E1E4E8">()</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">setServer</span><span style="color:#E1E4E8">(mqtt_server, mqtt_port);</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">connect</span><span style="color:#E1E4E8">(device_id, product_id, token);</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">()) </span></span>
+<span class="line"><span style="color:#E1E4E8">  {</span></span>
+<span class="line"><span style="color:#B392F0">    LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Connected to OneNet!"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#F97583">  else</span></span>
+<span class="line"><span style="color:#E1E4E8">  {</span></span>
+<span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Failed to connect to OneNet!"</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">  }</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">subscribe</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_SET);</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">subscribe</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_POST_REPLY);</span></span>
+<span class="line"><span style="color:#E1E4E8">  client.</span><span style="color:#B392F0">setCallback</span><span style="color:#E1E4E8">(callback);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> OneNet_Prop_Post</span><span style="color:#E1E4E8">()</span></span>
 <span class="line"><span style="color:#E1E4E8">{</span></span>
 <span class="line"><span style="color:#E1E4E8">  humi</span><span style="color:#F97583">+=</span><span style="color:#79B8FF">1</span><span style="color:#E1E4E8">;</span></span>
-<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(humi</span><span style="color:#F97583">==</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#E1E4E8">    humi</span><span style="color:#F97583">=</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(humi</span><span style="color:#F97583">==</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">) humi</span><span style="color:#F97583">=</span><span style="color:#79B8FF">0</span><span style="color:#E1E4E8">;</span></span>
 <span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">connected</span><span style="color:#E1E4E8">()) </span></span>
 <span class="line"><span style="color:#E1E4E8">  {</span></span>
-<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> parmas[</span><span style="color:#79B8FF">256</span><span style="color:#E1E4E8">];</span><span style="color:#6A737D">//属性参数</span></span>
-<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> jsonBuf[</span><span style="color:#79B8FF">256</span><span style="color:#E1E4E8">];</span><span style="color:#6A737D">//JSON格式数据,用于上报属性的缓冲区</span></span>
-<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(parmas, </span><span style="color:#9ECBFF">"{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">Temp</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%.1f</span><span style="color:#9ECBFF">},</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">Humi</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%d</span><span style="color:#9ECBFF">},</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">LED</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%s</span><span style="color:#9ECBFF">}}"</span><span style="color:#E1E4E8">, temp, humi, LED_Status </span><span style="color:#F97583">?</span><span style="color:#9ECBFF"> "true"</span><span style="color:#F97583"> :</span><span style="color:#9ECBFF"> "false"</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">//设置属性参数</span></span>
+<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> parmas[</span><span style="color:#79B8FF">256</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> jsonBuf[</span><span style="color:#79B8FF">256</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(parmas, </span><span style="color:#9ECBFF">"{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">Temp</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%.1f</span><span style="color:#9ECBFF">},</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">Humi</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%d</span><span style="color:#9ECBFF">},</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">LED</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">value</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">%s</span><span style="color:#9ECBFF">}}"</span><span style="color:#E1E4E8">, temp, humi, LED_Status </span><span style="color:#F97583">?</span><span style="color:#9ECBFF"> "true"</span><span style="color:#F97583"> :</span><span style="color:#9ECBFF"> "false"</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(parmas);</span></span>
-<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(jsonBuf,ONENET_TOPIC_PROP_FORMAT,postMsgId</span><span style="color:#F97583">++</span><span style="color:#E1E4E8">,parmas);</span><span style="color:#6A737D">//设置JSON格式数据,包括消息ID和属性参数</span></span>
+<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(jsonBuf,ONENET_TOPIC_PROP_FORMAT,postMsgId</span><span style="color:#F97583">++</span><span style="color:#E1E4E8">,parmas);</span></span>
 <span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(jsonBuf);</span></span>
-<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">publish</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_POST, jsonBuf))</span><span style="color:#6A737D">//上报属性</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">publish</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_POST, jsonBuf))</span></span>
 <span class="line"><span style="color:#E1E4E8">    {</span></span>
 <span class="line"><span style="color:#B392F0">      LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Post property success!"</span><span style="color:#E1E4E8">);</span></span>
@@ -153,42 +301,41 @@
 <span class="line"><span style="color:#E1E4E8">    }</span></span>
 <span class="line"><span style="color:#E1E4E8">  }</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span>
-<span class="line"><span style="color:#6A737D">//回调函数，当订阅的主题有消息时，会调用此函数</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> callback</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">char*</span><span style="color:#FFAB70"> topic</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">byte</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> payload</span><span style="color:#E1E4E8">, </span><span style="color:#F97583">unsigned</span><span style="color:#F97583"> int</span><span style="color:#FFAB70"> length</span><span style="color:#E1E4E8">)</span></span>
 <span class="line"><span style="color:#E1E4E8">{</span></span>
 <span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Message arrived ["</span><span style="color:#E1E4E8">);</span></span>
-<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(topic);</span><span style="color:#6A737D">//打印主题</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(topic);</span></span>
 <span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"] "</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#F97583">  for</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">int</span><span style="color:#E1E4E8"> i </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">; i </span><span style="color:#F97583">&#x3C;</span><span style="color:#E1E4E8"> length; i</span><span style="color:#F97583">++</span><span style="color:#E1E4E8">) {</span></span>
-<span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">((</span><span style="color:#F97583">char</span><span style="color:#E1E4E8">)payload[i]);</span><span style="color:#6A737D">//打印消息内容</span></span>
+<span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">((</span><span style="color:#F97583">char</span><span style="color:#E1E4E8">)payload[i]);</span></span>
 <span class="line"><span style="color:#E1E4E8">  }</span></span>
-<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">();</span><span style="color:#6A737D">//换行</span></span>
-<span class="line"><span style="color:#B392F0">  LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">//LED闪烁,表示收到消息</span></span>
+<span class="line"><span style="color:#E1E4E8">  Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#B392F0">  LED_Flash</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">500</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#F97583">  if</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">strcmp</span><span style="color:#E1E4E8">(topic, ONENET_TOPIC_PROP_SET) </span><span style="color:#F97583">==</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">)</span></span>
 <span class="line"><span style="color:#E1E4E8">  {</span></span>
-<span class="line"><span style="color:#E1E4E8">    DynamicJsonDocument </span><span style="color:#B392F0">doc</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">);</span><span style="color:#6A737D">//创建一个JSON文档,用于解析消息内容</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#E1E4E8">    DeserializationError error </span><span style="color:#F97583">=</span><span style="color:#B392F0"> deserializeJson</span><span style="color:#E1E4E8">(doc, payload);</span><span style="color:#6A737D">//解析消息内容,将消息内容存储到doc中,返回解析结果,成功返回0,失败返回其他值</span></span>
-<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (error) {</span><span style="color:#6A737D">//解析失败,打印错误信息,返回</span></span>
+<span class="line"><span style="color:#E1E4E8">    DynamicJsonDocument </span><span style="color:#B392F0">doc</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#E1E4E8">    DeserializationError error </span><span style="color:#F97583">=</span><span style="color:#B392F0"> deserializeJson</span><span style="color:#E1E4E8">(doc, payload);</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (error) {</span></span>
 <span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">F</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"deserializeJson() failed: "</span><span style="color:#E1E4E8">));</span></span>
 <span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(error.</span><span style="color:#B392F0">c_str</span><span style="color:#E1E4E8">());</span></span>
 <span class="line"><span style="color:#F97583">      return</span><span style="color:#E1E4E8">;</span></span>
 <span class="line"><span style="color:#E1E4E8">    }</span></span>
-<span class="line"><span style="color:#E1E4E8">    JsonObject setAlinkMsgObj </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> doc.as</span><span style="color:#F97583">&#x3C;</span><span style="color:#E1E4E8">JsonObject</span><span style="color:#F97583">></span><span style="color:#E1E4E8">();</span><span style="color:#6A737D">//获取JSON文档的根对象</span></span>
-<span class="line"><span style="color:#E1E4E8">    JsonObject params </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> setAlinkMsgObj[</span><span style="color:#9ECBFF">"params"</span><span style="color:#E1E4E8">];</span><span style="color:#6A737D">//获取params对象</span></span>
-<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(params.</span><span style="color:#B392F0">containsKey</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"LED"</span><span style="color:#E1E4E8">))</span><span style="color:#6A737D">//判断params对象是否包含LED属性</span></span>
+<span class="line"><span style="color:#E1E4E8">    JsonObject setAlinkMsgObj </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> doc.as</span><span style="color:#F97583">&#x3C;</span><span style="color:#E1E4E8">JsonObject</span><span style="color:#F97583">></span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#E1E4E8">    JsonObject params </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> setAlinkMsgObj[</span><span style="color:#9ECBFF">"params"</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(params.</span><span style="color:#B392F0">containsKey</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"LED"</span><span style="color:#E1E4E8">))</span></span>
 <span class="line"><span style="color:#E1E4E8">    {</span></span>
-<span class="line"><span style="color:#E1E4E8">      LED_Status </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> params[</span><span style="color:#9ECBFF">"LED"</span><span style="color:#E1E4E8">];</span><span style="color:#6A737D">//获取LED属性值</span></span>
+<span class="line"><span style="color:#E1E4E8">      LED_Status </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> params[</span><span style="color:#9ECBFF">"LED"</span><span style="color:#E1E4E8">];</span></span>
 <span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">print</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Set LED:"</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(LED_Status);</span></span>
 <span class="line"><span style="color:#E1E4E8">    }</span></span>
-<span class="line"><span style="color:#B392F0">    serializeJsonPretty</span><span style="color:#E1E4E8">(setAlinkMsgObj, Serial);</span><span style="color:#6A737D">//打印JSON文档</span></span>
-<span class="line"><span style="color:#E1E4E8">    String str </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> setAlinkMsgObj[</span><span style="color:#9ECBFF">"id"</span><span style="color:#E1E4E8">];</span><span style="color:#6A737D">//获取消息ID</span></span>
-<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> SendBuf[</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">];</span><span style="color:#6A737D">//发送缓冲区</span></span>
-<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(SendBuf, </span><span style="color:#9ECBFF">"{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">id</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"%s\"</span><span style="color:#9ECBFF">,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">code</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:200,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">msg</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">success</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">}"</span><span style="color:#E1E4E8">, str.</span><span style="color:#B392F0">c_str</span><span style="color:#E1E4E8">());</span><span style="color:#6A737D">//设置响应消息</span></span>
+<span class="line"><span style="color:#B392F0">    serializeJsonPretty</span><span style="color:#E1E4E8">(setAlinkMsgObj, Serial);</span></span>
+<span class="line"><span style="color:#E1E4E8">    String str </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> setAlinkMsgObj[</span><span style="color:#9ECBFF">"id"</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#F97583">    char</span><span style="color:#E1E4E8"> SendBuf[</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#B392F0">    sprintf</span><span style="color:#E1E4E8">(SendBuf, </span><span style="color:#9ECBFF">"{</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">id</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"%s\"</span><span style="color:#9ECBFF">,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">code</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:200,</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">msg</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">success</span><span style="color:#79B8FF">\"</span><span style="color:#9ECBFF">}"</span><span style="color:#E1E4E8">, str.</span><span style="color:#B392F0">c_str</span><span style="color:#E1E4E8">());</span></span>
 <span class="line"><span style="color:#E1E4E8">    Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(SendBuf);</span></span>
 <span class="line"><span style="color:#B392F0">    delay</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">100</span><span style="color:#E1E4E8">);</span></span>
-<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">publish</span><span style="color:#E1E4E8">(ONENET_TOPIC_SET_REPLY, SendBuf))</span><span style="color:#6A737D">//发送响���消��,不知道为什么，这里发送成功的，但是OneNET平台上没有收到</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8">(client.</span><span style="color:#B392F0">publish</span><span style="color:#E1E4E8">(ONENET_TOPIC_PROP_SET_REPLY, SendBuf))</span></span>
 <span class="line"><span style="color:#E1E4E8">    {</span></span>
 <span class="line"><span style="color:#E1E4E8">      Serial.</span><span style="color:#B392F0">println</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">"Send set reply success!"</span><span style="color:#E1E4E8">);</span></span>
 <span class="line"><span style="color:#E1E4E8">    }</span></span>
@@ -199,33 +346,6 @@
 <span class="line"><span style="color:#E1E4E8">  }</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span>
 <span class="line"></span></code></pre>
-<h2 id="代码功能说明">代码功能说明</h2>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table><thead><tr><th>函数</th><th>功能</th></tr></thead><tbody><tr><td><code>WiFi_Connect()</code></td><td>连接WiFi网络</td></tr><tr><td><code>OneNet_Connect()</code></td><td>连接OneNET MQTT服务器</td></tr><tr><td><code>OneNet_Prop_Post()</code></td><td>定时上报设备属性（温湿度、LED状态）</td></tr><tr><td><code>callback()</code></td><td>接收并处理OneNET下发的指令</td></tr></tbody></table>
 <h2 id="使用说明">使用说明</h2>
 <ol>
 <li><strong>修改配置</strong>：把代码中的 <code>product_id</code>、<code>device_id</code>、<code>token</code>、<code>ssid</code>、<code>password</code> 改成你自己的</li>
