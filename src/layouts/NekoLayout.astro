@@ -232,11 +232,9 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
 
     // 音乐开关
     var musicToggle = document.getElementById('musicToggle');
-    var bgmFrame = document.getElementById('bgmFrame');
 
     // 读取状态
-    var isAutoPlay = localStorage.getItem('bgmAutoPlay') === 'true';
-    var isPlaying = isAutoPlay;
+    var isPlaying = localStorage.getItem('bgmAutoPlay') === 'true';
 
     // 更新按钮状态
     function updateMusicBtn() {
@@ -254,11 +252,10 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
     musicToggle.addEventListener('click', function() {
       isPlaying = !isPlaying;
       localStorage.setItem('bgmAutoPlay', isPlaying.toString());
-
-      // 通知player iframe切换状态
-      bgmFrame.contentWindow.postMessage(isPlaying ? 'play' : 'pause', '*');
-
       updateMusicBtn();
+
+      // 刷新页面以触发player状态变化
+      window.location.reload();
     });
 
     // 监听来自player的消息
