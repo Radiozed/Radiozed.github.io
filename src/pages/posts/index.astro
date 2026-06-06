@@ -1,0 +1,127 @@
+---
+import { getCollection } from 'astro:content';
+import NekoLayout from '../../layouts/NekoLayout.astro';
+
+const posts = await getCollection('posts');
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<NekoLayout title="文章列表 - Radiozed">
+  <section class="posts-page">
+    <h1 class="page-title">全部文章</h1>
+    <p class="page-subtitle">记录一些有趣的想法和创作过程~</p>
+
+    <div class="posts-list">
+      {sortedPosts.map((post) => (
+        <a href={`/posts/${post.slug}`} class="post-item">
+          <span class="post-date">{post.data.pubDate.toLocaleDateString('zh-CN')}</span>
+          <span class="post-title">{post.data.title}</span>
+          <span class="post-desc">{post.data.description}</span>
+          <div class="post-tags">
+            {post.data.tags?.map((tag) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <a href="/" class="back-link">← 返回首页</a>
+  </section>
+</NekoLayout>
+
+<style>
+  .posts-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 120px 30px 80px;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--text-light), var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .page-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 50px;
+  }
+
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .post-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 25px;
+    background: rgba(30, 27, 46, 0.6);
+    border: 1px solid rgba(255, 105, 180, 0.15);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .post-item:hover {
+    background: rgba(255, 20, 147, 0.15);
+    border-color: rgba(255, 105, 180, 0.3);
+    transform: translateX(5px);
+  }
+
+  .post-date {
+    font-size: 0.8rem;
+    color: var(--secondary);
+    width: 100px;
+    flex-shrink: 0;
+  }
+
+  .post-title {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .post-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    flex: 2;
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .tag {
+    padding: 3px 10px;
+    background: rgba(255, 20, 147, 0.15);
+    border: 1px solid rgba(255, 105, 180, 0.3);
+    border-radius: 12px;
+    font-size: 0.7rem;
+    color: var(--accent);
+  }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 50px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .back-link:hover {
+    color: var(--primary);
+  }
+</style>
