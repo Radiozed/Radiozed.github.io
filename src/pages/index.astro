@@ -4,55 +4,7 @@ import NekoLayout from '../layouts/NekoLayout.astro';
 
 const posts = await getCollection('posts');
 const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
-
-// 按标签分组文章
-const tags = ['STM32', 'MAX31865', 'PT100', 'ESP32', 'OneNET'];
-const postsByTag = {};
-tags.forEach(tag => {
-  postsByTag[tag] = sortedPosts.filter(post =>
-    post.data.tags?.some(t => t.toLowerCase().includes(tag.toLowerCase()))
-  );
-});
-// 添加未分类的文章
-const uncategorized = sortedPosts.filter(post =>
-  !post.data.tags?.some(t => tags.some(tag => t.toLowerCase().includes(tag.toLowerCase())))
-);
-if (uncategorized.length > 0) {
-  postsByTag['其他'] = uncategorized;
-}
 ---
-
-<script is:inline>
-  // 分类切换功能
-  var buttons = document.querySelectorAll('.category-btn');
-  var groups = document.querySelectorAll('.posts-group');
-
-  function switchCategory(btn) {
-    var category = btn.getAttribute('data-posts');
-
-    // 更新按钮状态
-    buttons.forEach(function(b) {
-      b.classList.remove('active');
-    });
-    btn.classList.add('active');
-
-    // 显示对应的文章组
-    groups.forEach(function(group) {
-      if (group.getAttribute('data-posts') === category) {
-        group.classList.add('active');
-      } else {
-        group.classList.remove('active');
-      }
-    });
-  }
-
-  // 绑定点击事件
-  buttons.forEach(function(btn) {
-    btn.onclick = function() {
-      switchCategory(this);
-    };
-  });
-</script>
 
 <NekoLayout title="Radiozed - 喵的小屋">
   <section class="hero">
@@ -69,41 +21,23 @@ if (uncategorized.length > 0) {
   </section>
 
   <section class="posts-section" id="posts">
-    <h2 class="section-title"><span>✦</span> 文章分类</h2>
+    <h2 class="section-title"><span>✦</span> 全部文章</h2>
     <p class="section-subtitle">记录一些有趣的想法和创作过程~</p>
 
-    <!-- 分类导航 -->
-    <div class="category-nav">
-      {Object.keys(postsByTag).map((tag, index) => (
-        <button type="button" class={`category-btn ${index === 0 ? 'active' : ''}`} data-posts={tag}>
-          {tag}
-          <span class="category-count">{postsByTag[tag].length}</span>
-        </button>
-      ))}
-    </div>
-
-    <!-- 分类内容 -->
-    <div class="posts-container">
-      {Object.entries(postsByTag).map(([tag, tagPosts], index) => (
-        <div class={`posts-group ${index === 0 ? 'active' : ''}`} data-posts={tag}>
-          <h3 class="group-title">{tag}</h3>
-          <div class="posts-grid">
-            {tagPosts.map((post) => (
-              <a href={`/posts/${post.slug}`} class="post-card fade-in">
-                <div class="post-date">{post.data.pubDate.toLocaleDateString('zh-CN')}</div>
-                <h3 class="post-title">{post.data.title}</h3>
-                <p class="post-excerpt">{post.data.description}</p>
-                {post.data.tags && (
-                  <div class="post-tags">
-                    {post.data.tags.map((tag) => (
-                      <span class="tag">{tag}</span>
-                    ))}
-                  </div>
-                )}
-              </a>
-            ))}
-          </div>
-        </div>
+    <div class="posts-grid">
+      {sortedPosts.map((post) => (
+        <a href={`/posts/${post.slug}`} class="post-card fade-in">
+          <div class="post-date">{post.data.pubDate.toLocaleDateString('zh-CN')}</div>
+          <h3 class="post-title">{post.data.title}</h3>
+          <p class="post-excerpt">{post.data.description}</p>
+          {post.data.tags && (
+            <div class="post-tags">
+              {post.data.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+          )}
+        </a>
       ))}
     </div>
   </section>
@@ -152,73 +86,7 @@ if (uncategorized.length > 0) {
     position: relative;
   }
 
-  /* 分类导航 */
-  .category-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    margin-bottom: 40px;
-  }
-
-  .category-btn {
-    padding: 8px 20px;
-    background: transparent;
-    border: 1px solid rgba(255, 105, 180, 0.15);
-    border-radius: 20px;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .category-btn:hover {
-    background: rgba(255, 20, 147, 0.15);
-    border-color: rgba(255, 105, 180, 0.3);
-    color: var(--text-light);
-  }
-
-  .category-btn.active {
-    background: rgba(255, 20, 147, 0.25);
-    border-color: var(--primary);
-    color: var(--accent);
-  }
-
-  .category-count {
-    font-size: 0.75rem;
-    opacity: 0.7;
-  }
-
-  .category-btn.active .category-count {
-    opacity: 1;
-  }
-
-  /* 文章组 */
-  .posts-group {
-    display: none;
-  }
-
-  .posts-group.active {
-    display: block;
-    animation: fadeIn 0.4s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .group-title {
-    font-size: 1.5rem;
-    color: var(--primary);
-    margin-bottom: 30px;
-    padding-left: 15px;
-    border-left: 3px solid var(--secondary);
-  }
-
+  
   .posts-section::before {
     content: '';
     position: absolute;
