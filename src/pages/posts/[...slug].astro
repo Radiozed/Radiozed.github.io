@@ -53,22 +53,8 @@ const { Content } = await post.render();
   </div>
 
   <article class="post-page">
-    <div class="post-header">
-      <h1 class="post-title">{post.data.title}</h1>
-      <div class="post-meta">
-        <span class="post-date">📅 {post.data.pubDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-        {post.data.tags && (
-          <div class="post-tags">
-            {post.data.tags.map((tag) => (
-              <span class="tag">{tag}</span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-
-    <!-- 目录导航 -->
-    <nav class="toc-nav">
+    <!-- 左侧目录导航 -->
+    <nav class="toc-sidebar">
       <div class="toc-title">📑 目录</div>
       <div class="toc-links">
         <a href="#准备工作" class="toc-link">准备工作</a>
@@ -79,10 +65,26 @@ const { Content } = await post.render();
       </div>
     </nav>
 
-    <div class="post-content">
-      <Content />
+    <div class="post-main">
+      <div class="post-header">
+        <h1 class="post-title">{post.data.title}</h1>
+        <div class="post-meta">
+          <span class="post-date">📅 {post.data.pubDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          {post.data.tags && (
+            <div class="post-tags">
+              {post.data.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div class="post-content">
+        <Content />
+      </div>
+      <a href="/" class="back-link">← 返回首页</a>
     </div>
-    <a href="/" class="back-link">← 返回首页</a>
   </article>
 </NekoLayout>
 
@@ -126,55 +128,68 @@ const { Content } = await post.render();
 
 <style>
   .post-page {
-    max-width: 800px;
+    display: flex;
+    gap: 40px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 120px 20px 80px;
+  }
+
+  /* 左侧目录 */
+  .toc-sidebar {
+    position: fixed;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20, 15, 35, 0.6);
+    border: 1px solid rgba(255, 105, 180, 0.2);
+    border-radius: 16px;
+    padding: 25px 20px;
+    backdrop-filter: blur(10px);
+    width: 140px;
+  }
+
+  .toc-sidebar .toc-title {
+    font-size: 0.9rem;
+    color: var(--secondary);
+    margin-bottom: 15px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .toc-sidebar .toc-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toc-sidebar .toc-link {
+    padding: 10px 15px;
+    background: rgba(255, 20, 147, 0.15);
+    border: 1px solid rgba(255, 105, 180, 0.3);
+    border-radius: 12px;
+    color: var(--accent);
+    font-size: 0.8rem;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .toc-sidebar .toc-link:hover {
+    background: rgba(255, 20, 147, 0.3);
+    border-color: rgba(255, 105, 180, 0.5);
+    transform: translateX(5px);
+  }
+
+  .post-main {
+    flex: 1;
+    max-width: 800px;
+    margin: 0 auto;
   }
 
   .post-header {
     text-align: center;
     margin-bottom: 30px;
-  }
-
-  /* 目录导航 */
-  .toc-nav {
-    background: rgba(20, 15, 35, 0.6);
-    border: 1px solid rgba(255, 105, 180, 0.2);
-    border-radius: 16px;
-    padding: 20px 25px;
-    margin-bottom: 35px;
-    backdrop-filter: blur(10px);
-  }
-
-  .toc-title {
-    font-size: 1rem;
-    color: var(--secondary);
-    margin-bottom: 15px;
-    font-weight: 600;
-  }
-
-  .toc-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-  }
-
-  .toc-link {
-    padding: 8px 16px;
-    background: rgba(255, 20, 147, 0.15);
-    border: 1px solid rgba(255, 105, 180, 0.3);
-    border-radius: 20px;
-    color: var(--accent);
-    font-size: 0.85rem;
-    text-decoration: none;
-    transition: all 0.3s ease;
-  }
-
-  .toc-link:hover {
-    background: rgba(255, 20, 147, 0.3);
-    border-color: rgba(255, 105, 180, 0.5);
-    transform: translateY(-2px);
   }
 
   .post-title {
@@ -541,6 +556,10 @@ const { Content } = await post.render();
   @media (max-width: 768px) {
     .post-page {
       padding: 100px 15px 60px;
+    }
+
+    .toc-sidebar {
+      display: none;
     }
 
     .post-title {
