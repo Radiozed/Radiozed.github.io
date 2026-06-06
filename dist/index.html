@@ -3,16 +3,18 @@
   var buttons = document.querySelectorAll('.category-btn');
   var groups = document.querySelectorAll('.posts-group');
 
-  function switchCategory(category) {
+  function switchCategory(btn) {
+    var category = btn.getAttribute('data-posts');
+
     // 更新按钮状态
     buttons.forEach(function(b) {
       b.classList.remove('active');
     });
-    document.querySelector('[data-posts="' + category + '"]').classList.add('active');
+    btn.classList.add('active');
 
     // 显示对应的文章组
     groups.forEach(function(group) {
-      if (group.dataset.posts === category) {
+      if (group.getAttribute('data-posts') === category) {
         group.classList.add('active');
       } else {
         group.classList.remove('active');
@@ -23,7 +25,7 @@
   // 绑定点击事件
   buttons.forEach(function(btn) {
     btn.onclick = function() {
-      switchCategory(this.dataset.posts);
+      switchCategory(this);
     };
   });
 </script> <html lang="zh-CN" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Radiozed - 喵的小屋</title><meta name="description" content="Radiozed 的小天地~ 喵~ 🐾"><link rel="icon" type="image/jpeg" href="/nekomusume.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/index.QPj6zeHZ.css">
