@@ -52,7 +52,7 @@ const { Content } = await post.render();
 
 <script>
   // 代码块复制功能 - 适配Shiki生成的代码块
-  document.querySelectorAll('.post-content .astro-code').forEach(pre => {
+  document.querySelectorAll('pre.astro-code').forEach(pre => {
     // 创建包装器
     const wrapper = document.createElement('div');
     wrapper.className = 'code-wrapper';
