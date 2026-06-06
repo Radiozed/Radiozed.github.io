@@ -54,12 +54,17 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
   </main>
 
 <!-- BGM播放器 - 使用iframe保持播放不中断 -->
-  <iframe 
-    id="bgmFrame" 
-    src="/player.html" 
-    style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;" 
+  <iframe
+    id="bgmFrame"
+    src="/player.html"
+    style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;"
     allow="autoplay"
   ></iframe>
+
+  <!-- 音乐开关按钮 -->
+  <button class="music-toggle" id="musicToggle" title="背景音乐">
+    <span class="music-icon">🎵</span>
+  </button>
 
   <!-- 图片查看器 -->
   <div class="lightbox" id="lightbox">
@@ -222,6 +227,48 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
       if (e.target === lightbox) {
         lightbox.classList.remove('active');
         document.body.style.overflow = '';
+      }
+    });
+
+    // 音乐开关
+    var musicToggle = document.getElementById('musicToggle');
+    var bgmFrame = document.getElementById('bgmFrame');
+
+    // 读取状态
+    var isAutoPlay = localStorage.getItem('bgmAutoPlay') === 'true';
+    var isPlaying = isAutoPlay;
+
+    // 更新按钮状态
+    function updateMusicBtn() {
+      if (!isPlaying) {
+        musicToggle.classList.add('off');
+        musicToggle.querySelector('.music-icon').textContent = '🔇';
+      } else {
+        musicToggle.classList.remove('off');
+        musicToggle.querySelector('.music-icon').textContent = '🎵';
+      }
+    }
+
+    updateMusicBtn();
+
+    musicToggle.addEventListener('click', function() {
+      isPlaying = !isPlaying;
+      localStorage.setItem('bgmAutoPlay', isPlaying.toString());
+
+      // 通知player iframe切换状态
+      bgmFrame.contentWindow.postMessage(isPlaying ? 'play' : 'pause', '*');
+
+      updateMusicBtn();
+    });
+
+    // 监听来自player的消息
+    window.addEventListener('message', function(e) {
+      if (e.data === 'playing') {
+        isPlaying = true;
+        updateMusicBtn();
+      } else if (e.data === 'paused') {
+        isPlaying = false;
+        updateMusicBtn();
       }
     });
   </script>
@@ -805,6 +852,37 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
     .lightbox-close:hover {
       background: var(--primary);
       transform: rotate(90deg);
+    }
+
+    /* 音乐开关按钮 */
+    .music-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(20, 15, 35, 0.9);
+      border: 1px solid rgba(255, 105, 180, 0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: all 0.3s ease;
+    }
+
+    .music-toggle:hover {
+      background: rgba(255, 20, 147, 0.3);
+      transform: scale(1.1);
+    }
+
+    .music-icon {
+      font-size: 1.3rem;
+    }
+
+    .music-toggle.off .music-icon {
+      opacity: 0.4;
     }
 
     /* 响应式 */

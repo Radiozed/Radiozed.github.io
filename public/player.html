@@ -360,11 +360,13 @@
       audio.play().then(() => {
         isPlaying = true;
         updateUI(true);
+        notifyParent('playing');
       }).catch(() => {
         const tryPlay = () => {
           audio.play().then(() => {
             isPlaying = true;
             updateUI(true);
+            notifyParent('playing');
           });
           document.removeEventListener('click', tryPlay);
         };
@@ -377,10 +379,17 @@
       audio.pause();
       isPlaying = false;
       updateUI(false);
+      notifyParent('paused');
     }
 
-    // 立即自动播放
-    play();
+    // 检查是否自动播放（默认关闭）
+    const autoPlay = localStorage.getItem('bgmAutoPlay');
+    if (autoPlay === 'true') {
+      play();
+    } else if (autoPlay === null) {
+      // 首次访问，默认不自动播放
+      localStorage.setItem('bgmAutoPlay', 'false');
+    }
 
     // 切换按钮
     toggle.addEventListener('click', (e) => {
@@ -421,6 +430,20 @@
     playlist.addEventListener('click', (e) => {
       e.stopPropagation();
     });
+
+    // 监听来自父窗口的消息
+    window.addEventListener('message', (e) => {
+      if (e.data === 'play') {
+        play();
+      } else if (e.data === 'pause') {
+        pause();
+      }
+    });
+
+    // 通知父窗口播放状态
+    function notifyParent(status) {
+      window.parent.postMessage(status, '*');
+    }
   </script>
 </body>
 </html>
