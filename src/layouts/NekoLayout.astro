@@ -62,7 +62,7 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
   ></iframe>
 
   <!-- 音乐开关按钮 -->
-  <button class="music-toggle" id="musicToggle" title="背景音乐">
+  <button type="button" class="music-toggle" id="musicToggle" title="背景音乐" onclick="toggleMusic()">
     <span class="music-icon">🎵</span>
   </button>
 
@@ -232,11 +232,8 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
 
     // 音乐开关
     var musicToggle = document.getElementById('musicToggle');
-
-    // 读取状态
     var isPlaying = localStorage.getItem('bgmAutoPlay') === 'true';
 
-    // 更新按钮状态
     function updateMusicBtn() {
       if (!isPlaying) {
         musicToggle.classList.add('off');
@@ -249,14 +246,12 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
 
     updateMusicBtn();
 
-    musicToggle.addEventListener('click', function() {
+    window.toggleMusic = function() {
       isPlaying = !isPlaying;
       localStorage.setItem('bgmAutoPlay', isPlaying.toString());
       updateMusicBtn();
-
-      // 刷新页面以触发player状态变化
       window.location.reload();
-    });
+    };
 
     // 监听来自player的消息
     window.addEventListener('message', function(e) {
