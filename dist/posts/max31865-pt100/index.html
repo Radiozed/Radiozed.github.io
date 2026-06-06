@@ -47,19 +47,66 @@
 <table><thead><tr><th>MAX31865</th><th>STM32F103 (PA引脚)</th></tr></thead><tbody><tr><td>SDO</td><td>PA0</td></tr><tr><td>CS</td><td>PA1</td></tr><tr><td>SCLK</td><td>PA2</td></tr><tr><td>SDI</td><td>PA3</td></tr><tr><td>DRDY</td><td>PA15</td></tr></tbody></table>
 <h2 id="工作原理-代码详解">工作原理 {#代码详解}</h2>
 <h3 id="max31865-简介">MAX31865 简介</h3>
-<p>MAX31865 是专门用于 PT100/PT1000 铂电阻温度传感器的数字转换芯片，主要特点：</p>
+<p>MAX31865 是 Maxim 公司生产的专用 PT100/PT1000 铂电阻温度传感器数字转换芯片，内部集成了ADC和校正电路，直接输出数字信号。</p>
+<p><strong>主要特性：</strong></p>
 <ul>
-<li>内置 ADC 转换</li>
-<li>支持 2/3/4 线制</li>
-<li>故障检测</li>
-<li>SPI 接口</li>
+<li><strong>内置24位ADC</strong> - 高精度模数转换，无需外部ADC芯片</li>
+<li><strong>支持2/3/4线制</strong> - 可根据需求选择不同的接线方式</li>
+<li><strong>故障检测</strong> - 内置RTD开路和短路检测功能</li>
+<li><strong>SPI接口</strong> - 兼容标准SPI通信协议</li>
+<li><strong>自动转换</strong> - 可配置为连续自动温度转换模式</li>
 </ul>
-<h3 id="温度计算">温度计算</h3>
-<p>使用 Callendar-Van Dusen 公式计算温度：</p>
+<p><strong>寄存器说明：</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>寄存器地址</th><th>名称</th><th>说明</th></tr></thead><tbody><tr><td>0x00</td><td>CONFIG</td><td>配置寄存器，设置转换模式、滤波等</td></tr><tr><td>0x01</td><td>RTD MSB</td><td>RTD电阻值高8位</td></tr><tr><td>0x02</td><td>RTD LSB</td><td>RTD电阻值低8位</td></tr><tr><td>0x07</td><td>FAULT</td><td>故障状态寄存器</td></tr></tbody></table>
+<p><strong>CONFIG寄存器位定义：</strong></p>
 <ul>
-<li><strong>正温区</strong>：使用简化公式</li>
-<li><strong>负温区</strong>：使用 IEC751 多项式拟合</li>
+<li><strong>BIT 7 (VBIAS)</strong> - 激励电流开关，1开启</li>
+<li><strong>BIT 6 (AUTO)</strong> - 自动转换模式，1开启</li>
+<li><strong>BIT 5 (3WIRE)</strong> - 3线制模式，1开启</li>
+<li><strong>BIT 0 (FILTER)</strong> - 50Hz滤波，1开启（国内电网50Hz设为1）</li>
 </ul>
+<h3 id="温度计算原理">温度计算原理</h3>
+<p>PT100的阻值随温度变化并非线性，使用 <strong>Callendar-Van Dusen</strong> 公式计算：</p>
+<p><strong>正温区 (≥0°C)：</strong>
+$$R_t = R_0(1 + aT + bT^2)$$</p>
+<p>其中 a = 3.9083×10⁻³，b = -5.775×10⁻⁷</p>
+<p><strong>负温区 (&#x3C;0°C)：</strong>
+需要使用 IEC751 多项式拟合：
+$$T = -242.02 + 2.2228R_t - 0.0025859R_t² + 0.000004826R_t³$$</p>
+<p><strong>RTD电阻计算：</strong>
+从MAX31865读取的ADC值需要转换为实际电阻：
+$$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
+<p>其中 $R_{REF}$ 是参考电阻，PT100模块常用400Ω。</p>
 <h2 id="标准库代码-完整代码">标准库代码 {#完整代码}</h2>
 <h3 id="max31865h">max31865.h</h3>
 <pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#ifndef __MAX31865_H</span></span>
@@ -445,13 +492,11 @@
 <span class="line"><span></span></span></code></pre>
 <h2 id="使用说明-使用说明">使用说明 {#使用说明}</h2>
 <ol>
-<li><strong>硬件连接</strong>：按表格接线，注意��线��需要短接</li>
+<li><strong>硬件连接</strong>：按表格接线，注意3线制需要短接</li>
 <li><strong>参考电阻</strong>：PT100 常用 400Ω，代码中已配置</li>
 <li><strong>滤波选择</strong>：50Hz 滤波适合国内电网</li>
 <li><strong>故障检测</strong>：内置开路/短路检测</li>
-</ol>
-<hr>
-<p><em>有问题欢迎留言讨论喵！🐾</em></p> </div> <a href="/" class="back-link" data-astro-cid-egg7nqdx>← 返回首页</a> </div> </article>  </main> <!-- BGM播放器 - 使用iframe保持播放不中断 --> <iframe id="bgmFrame" src="/player.html" style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;; --primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;" allow="autoplay"></iframe> <!-- 图片查看器 --> <div class="lightbox" id="lightbox" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <button class="lightbox-close" id="lightboxClose" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✕</button> <img class="lightbox-img" id="lightboxImg" src="" alt="" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> </div> <!-- 页脚 --> <footer class="footer" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="footer-decoration" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="deco-star" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> </div> <p class="footer-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Made with ♥ by <span class="highlight" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Lidure</span></p> <p class="footer-sub" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">~ 喵~ 🐾</p> </footer>   </body> </html> <script>
+</ol> </div> <a href="/" class="back-link" data-astro-cid-egg7nqdx>← 返回首页</a> </div> </article>  </main> <!-- BGM播放器 - 使用iframe保持播放不中断 --> <iframe id="bgmFrame" src="/player.html" style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;; --primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;" allow="autoplay"></iframe> <!-- 图片查看器 --> <div class="lightbox" id="lightbox" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <button class="lightbox-close" id="lightboxClose" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✕</button> <img class="lightbox-img" id="lightboxImg" src="" alt="" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> </div> <!-- 页脚 --> <footer class="footer" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="footer-decoration" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="deco-star" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> </div> <p class="footer-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Made with ♥ by <span class="highlight" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Lidure</span></p> <p class="footer-sub" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">~ 喵~ 🐾</p> </footer>   </body> </html> <script>
   // 平滑滚动到锚点
   document.querySelectorAll('.toc-link').forEach(function(link) {
     link.addEventListener('click', function(e) {
