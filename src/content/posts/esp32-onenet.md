@@ -9,7 +9,9 @@ tags: ["ESP32", "物联网", "OneNET", "MQTT"]
 
 今天来教大家如何使用 ESP32 连接 OneNET 物联网平台，通过 MQTT 协议上报温湿度数据~
 
-## 准备工作
+## 准备工作 {#准备工作}
+
+### 1. 硬件准备
 
 ### 1. 硬件准备
 - ESP32 开发板
@@ -27,7 +29,7 @@ tags: ["ESP32", "物联网", "OneNET", "MQTT"]
 2. 创建产品，选择 MQTT 协议
 3. 添加设备，记录 product_id、device_id 和 token
 
-## 代码详解
+## 代码详解 {#代码详解}
 
 ### 1. 头文件和宏定义
 
@@ -218,7 +220,7 @@ void callback(char* topic, byte* payload, unsigned int length)
 }
 ```
 
-## 完整代码
+## 完整代码 {#完整代码}
 
 把上面的所有部分组合在一起，就是完整的代码：
 
@@ -387,14 +389,14 @@ void callback(char* topic, byte* payload, unsigned int length)
 }
 ```
 
-## 使用说明
+## 使用说明 {#使用说明}
 
 1. **修改配置**：把代码中的 `product_id`、`device_id`、`token`、`ssid`、`password` 改成你自己的
 2. **上传代码**：用Arduino IDE把代码上传到ESP32
 3. **查看结果**：打开串口监视器，波特率设为9600，可以看到连接日志
 4. **OneNET平台**：在平台上可以看到上报的温湿度数据
 
-## 注意事项
+## 注意事项 {#注意事项}
 
 - 记得修改token时要按照OneNET的规则生成签名
 - WiFi信息要改成你自己的

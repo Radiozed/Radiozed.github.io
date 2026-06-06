@@ -66,6 +66,19 @@ const { Content } = await post.render();
         )}
       </div>
     </div>
+
+    <!-- 目录导航 -->
+    <nav class="toc-nav">
+      <div class="toc-title">📑 目录</div>
+      <div class="toc-links">
+        <a href="#准备工作" class="toc-link">准备工作</a>
+        <a href="#代码详解" class="toc-link">代码详解</a>
+        <a href="#完整代码" class="toc-link">完整代码</a>
+        <a href="#使用说明" class="toc-link">使用说明</a>
+        <a href="#注意事项" class="toc-link">注意事项</a>
+      </div>
+    </nav>
+
     <div class="post-content">
       <Content />
     </div>
@@ -120,7 +133,48 @@ const { Content } = await post.render();
 
   .post-header {
     text-align: center;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
+  }
+
+  /* 目录导航 */
+  .toc-nav {
+    background: rgba(20, 15, 35, 0.6);
+    border: 1px solid rgba(255, 105, 180, 0.2);
+    border-radius: 16px;
+    padding: 20px 25px;
+    margin-bottom: 35px;
+    backdrop-filter: blur(10px);
+  }
+
+  .toc-title {
+    font-size: 1rem;
+    color: var(--secondary);
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+
+  .toc-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .toc-link {
+    padding: 8px 16px;
+    background: rgba(255, 20, 147, 0.15);
+    border: 1px solid rgba(255, 105, 180, 0.3);
+    border-radius: 20px;
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .toc-link:hover {
+    background: rgba(255, 20, 147, 0.3);
+    border-color: rgba(255, 105, 180, 0.5);
+    transform: translateY(-2px);
   }
 
   .post-title {
