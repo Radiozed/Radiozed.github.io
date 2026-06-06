@@ -57,11 +57,10 @@ const { Content } = await post.render();
     <nav class="toc-sidebar">
       <div class="toc-title">📑 目录</div>
       <div class="toc-links">
-        <a href="#准备工作" class="toc-link">准备工作</a>
-        <a href="#代码详解" class="toc-link">代码详解</a>
-        <a href="#完整代码" class="toc-link">完整代码</a>
-        <a href="#使用说明" class="toc-link">使用说明</a>
-        <a href="#注意事项" class="toc-link">注意事项</a>
+        <a href="#硬件准备-准备工作" class="toc-link">准备工作</a>
+        <a href="#工作原理-代码详解" class="toc-link">代码详解</a>
+        <a href="#标准库代码-完整代码" class="toc-link">完整代码</a>
+        <a href="#使用说明-使用说明" class="toc-link">使用说明</a>
       </div>
     </nav>
 
@@ -95,8 +94,15 @@ const { Content } = await post.render();
       e.preventDefault();
       var targetId = this.getAttribute('href').substring(1);
       var target = document.getElementById(targetId);
+      // 尝试查找包含该ID的元素
+      if (!target) {
+        var allElements = document.querySelectorAll('[id*="' + targetId + '"], [id*="' + decodeURIComponent(targetId) + '"]');
+        if (allElements.length > 0) {
+          target = allElements[0];
+        }
+      }
       if (target) {
-        var offset = 100; // 固定导航的高度
+        var offset = 100;
         var top = target.getBoundingClientRect().top + window.pageYOffset - offset;
         window.scrollTo({ top: top, behavior: 'smooth' });
       }
@@ -414,6 +420,14 @@ const { Content } = await post.render();
 
   .post-content :global(a:hover) {
     color: var(--primary);
+  }
+
+  .post-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 20px 0;
+    display: block;
   }
 
   .post-content :global(table) {
