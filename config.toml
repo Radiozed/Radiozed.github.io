@@ -1,8 +1,0 @@
-baseURL = "https://lidure.github.io/Radiozed.github.io"
-languageCode = "zh-cn"
-title = "Radiozed - 喵的小屋"
-
-[params]
-  author = "Lidure"
-  description = "Radiozed 的小天地~ 喵~ 🐾 Made by Lidure"
-  github = "https://github.com/Radiozed"

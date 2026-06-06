@@ -8,7 +8,6 @@ on:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
-    # Grant pages and contents write permission to the job
     permissions:
       contents: write
       pages: write
@@ -16,11 +15,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          hugo-version: '0.128.0'
-          extended: true
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci
 
       - name: Build
-        run: hugo --minify -d docs
+        run: npm run build
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

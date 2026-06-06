@@ -1,0 +1,107 @@
+---
+import NekoLayout from '../layouts/NekoLayout.astro';
+---
+
+<NekoLayout title="Radiozed - 喵的小屋">
+  <section class="hero">
+    <div class="hero-avatar"></div>
+    <h1>Radiozed</h1>
+    <p class="subtitle">喵的小天地~ 记录一些有趣的想法和创作过程</p>
+    <p class="greeting">欢迎来我的小屋 🐾</p>
+    <div class="hero-buttons">
+      <a href="#posts" class="btn btn-primary">开始浏览 ✦</a>
+    </div>
+  </section>
+
+  <section class="posts-section" id="posts">
+    <h2 class="section-title"><span>✦</span> 最近的文章</h2>
+    <p class="section-subtitle">记录一些有趣的想法和创作过程~</p>
+    <div class="posts-grid">
+      <article class="post-card">
+        <div class="post-date">2026/06/06</div>
+        <h3 class="post-title">第一篇博客 - 喵的开始</h3>
+        <p class="post-excerpt">欢迎来到 Radiozed 的小天地~ 这里是第一篇博客文章，以后会记录更多有趣的内容！</p>
+        <div class="post-tags">
+          <span class="tag">随笔</span>
+          <span class="tag">开始</span>
+        </div>
+      </article>
+    </div>
+  </section>
+</NekoLayout>
+
+<style>
+  .posts-section {
+    padding: 80px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .section-title span {
+    color: #FF6B9D;
+  }
+
+  .section-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #B8B8B8;
+    margin-bottom: 50px;
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+  }
+
+  .post-card {
+    background: #16213e;
+    border-radius: 20px;
+    padding: 30px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(155, 89, 182, 0.3);
+  }
+
+  .post-card:hover {
+    transform: translateY(-10px);
+    border-color: #FF6B9D;
+    box-shadow: 0 20px 50px rgba(255, 107, 157, 0.2);
+  }
+
+  .post-date {
+    font-size: 0.9rem;
+    color: #9B59B6;
+    margin-bottom: 12px;
+  }
+
+  .post-title {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    color: #F8F9F9;
+  }
+
+  .post-excerpt {
+    font-size: 0.95rem;
+    color: #B8B8B8;
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .tag {
+    padding: 5px 15px;
+    background: rgba(255, 107, 157, 0.2);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #FFB6C1;
+  }
+</style>
