@@ -62,7 +62,7 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
   ></iframe>
 
   <!-- 音乐开关按钮 -->
-  <button type="button" class="music-toggle" id="musicToggle" title="背景音乐" onclick="toggleMusic()">
+  <button type="button" class="music-toggle" id="musicToggle" title="背景音乐">
     <span class="music-icon">🎵</span>
   </button>
 
@@ -231,27 +231,31 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
     });
 
     // 音乐开关
-    var musicToggle = document.getElementById('musicToggle');
-    var isPlaying = localStorage.getItem('bgmAutoPlay') === 'true';
+    (function() {
+      var musicToggle = document.getElementById('musicToggle');
+      if (!musicToggle) return;
 
-    function updateMusicBtn() {
-      if (!isPlaying) {
-        musicToggle.classList.add('off');
-        musicToggle.querySelector('.music-icon').textContent = '🔇';
-      } else {
-        musicToggle.classList.remove('off');
-        musicToggle.querySelector('.music-icon').textContent = '🎵';
+      var isPlaying = localStorage.getItem('bgmAutoPlay') === 'true';
+
+      function updateMusicBtn() {
+        if (!isPlaying) {
+          musicToggle.classList.add('off');
+          musicToggle.querySelector('.music-icon').textContent = '🔇';
+        } else {
+          musicToggle.classList.remove('off');
+          musicToggle.querySelector('.music-icon').textContent = '🎵';
+        }
       }
-    }
 
-    updateMusicBtn();
-
-    window.toggleMusic = function() {
-      isPlaying = !isPlaying;
-      localStorage.setItem('bgmAutoPlay', isPlaying.toString());
       updateMusicBtn();
-      window.location.reload();
-    };
+
+      musicToggle.onclick = function() {
+        isPlaying = !isPlaying;
+        localStorage.setItem('bgmAutoPlay', isPlaying.toString());
+        updateMusicBtn();
+        window.location.reload();
+      };
+    })();
 
     // 监听来自player的消息
     window.addEventListener('message', function(e) {
