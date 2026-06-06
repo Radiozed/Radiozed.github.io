@@ -4,7 +4,47 @@ import NekoLayout from '../layouts/NekoLayout.astro';
 
 const posts = await getCollection('posts');
 const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// 按标签分组文章
+const tags = ['STM32', 'MAX31865', 'PT100', 'ESP32', 'OneNET'];
+const postsByTag = {};
+tags.forEach(tag => {
+  postsByTag[tag] = sortedPosts.filter(post =>
+    post.data.tags?.some(t => t.toLowerCase().includes(tag.toLowerCase()))
+  );
+});
+// 添加未分类的文章
+const uncategorized = sortedPosts.filter(post =>
+  !post.data.tags?.some(t => tags.some(tag => t.toLowerCase().includes(tag.toLowerCase())))
+);
+if (uncategorized.length > 0) {
+  postsByTag['其他'] = uncategorized;
+}
 ---
+
+<script is:inline>
+  // 分类切换功能
+  document.querySelectorAll('.category-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var category = this.dataset.category;
+
+      // 更新按钮状态
+      document.querySelectorAll('.category-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      this.classList.add('active');
+
+      // 显示对应的文章组
+      document.querySelectorAll('.posts-group').forEach(function(group) {
+        if (group.dataset.posts === category) {
+          group.classList.add('active');
+        } else {
+          group.classList.remove('active');
+        }
+      });
+    });
+  });
+</script>
 
 <NekoLayout title="Radiozed - 喵的小屋">
   <section class="hero">
@@ -21,22 +61,41 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
   </section>
 
   <section class="posts-section" id="posts">
-    <h2 class="section-title"><span>✦</span> 最近的文章</h2>
+    <h2 class="section-title"><span>✦</span> 文章分类</h2>
     <p class="section-subtitle">记录一些有趣的想法和创作过程~</p>
-    <div class="posts-grid">
-      {sortedPosts.map((post) => (
-        <a href={`/posts/${post.slug}`} class="post-card fade-in">
-          <div class="post-date">{post.data.pubDate.toLocaleDateString('zh-CN')}</div>
-          <h3 class="post-title">{post.data.title}</h3>
-          <p class="post-excerpt">{post.data.description}</p>
-          {post.data.tags && (
-            <div class="post-tags">
-              {post.data.tags.map((tag) => (
-                <span class="tag">{tag}</span>
-              ))}
-            </div>
-          )}
-        </a>
+
+    <!-- 分类导航 -->
+    <div class="category-nav">
+      {Object.keys(postsByTag).map((tag, index) => (
+        <button class={`category-btn ${index === 0 ? 'active' : ''}`} data-category={tag}>
+          {tag}
+          <span class="category-count">{postsByTag[tag].length}</span>
+        </button>
+      ))}
+    </div>
+
+    <!-- 分类内容 -->
+    <div class="posts-container">
+      {Object.entries(postsByTag).map(([tag, tagPosts], index) => (
+        <div class={`posts-group ${index === 0 ? 'active' : ''}`} data-posts={tag}>
+          <h3 class="group-title">{tag}</h3>
+          <div class="posts-grid">
+            {tagPosts.map((post) => (
+              <a href={`/posts/${post.slug}`} class="post-card fade-in">
+                <div class="post-date">{post.data.pubDate.toLocaleDateString('zh-CN')}</div>
+                <h3 class="post-title">{post.data.title}</h3>
+                <p class="post-excerpt">{post.data.description}</p>
+                {post.data.tags && (
+                  <div class="post-tags">
+                    {post.data.tags.map((tag) => (
+                      <span class="tag">{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   </section>
@@ -83,6 +142,76 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     max-width: 1200px;
     margin: 0 auto;
     position: relative;
+  }
+
+  /* 分类导航 */
+  .category-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 50px;
+  }
+
+  .category-btn {
+    padding: 12px 28px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 105, 180, 0.2);
+    border-radius: 30px;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .category-btn:hover {
+    background: rgba(255, 20, 147, 0.2);
+    border-color: rgba(255, 105, 180, 0.4);
+    color: var(--text-light);
+  }
+
+  .category-btn.active {
+    background: linear-gradient(135deg, rgba(255, 20, 147, 0.3), rgba(255, 105, 180, 0.3));
+    border-color: var(--primary);
+    color: var(--accent);
+    box-shadow: 0 0 20px rgba(255, 20, 147, 0.3);
+  }
+
+  .category-count {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+  }
+
+  .category-btn.active .category-count {
+    background: rgba(255, 105, 180, 0.4);
+  }
+
+  /* 文章组 */
+  .posts-group {
+    display: none;
+  }
+
+  .posts-group.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .group-title {
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin-bottom: 30px;
+    padding-left: 15px;
+    border-left: 3px solid var(--secondary);
   }
 
   .posts-section::before {
