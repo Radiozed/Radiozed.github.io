@@ -136,6 +136,9 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
       const bgmIcon = document.getElementById('bgmIcon');
       const volumeSlider = document.getElementById('volumeSlider');
       
+      // 如果元素不存在则跳过（音频控制在 iframe 中进行）
+      if (!audio || !bgmToggle) return;
+      
       // 恢复音量设置
       const savedVolume = localStorage.getItem('bgmVolume');
       audio.volume = savedVolume ? parseFloat(savedVolume) : 0.5;
@@ -234,7 +237,7 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
     (function() {
       var musicToggle = document.getElementById('musicToggle');
       var bgmFrame = document.getElementById('bgmFrame');
-      if (!musicToggle) return;
+      if (!musicToggle || !bgmFrame) return;
 
       var isPlaying = localStorage.getItem('bgmAutoPlay') === 'true';
 
@@ -250,19 +253,40 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
 
       updateMusicBtn();
 
-      // 如果设置了自动播放，尝试播放
-      if (isPlaying && bgmFrame) {
-        bgmFrame.contentWindow.postMessage('play', '*');
+      // 发送消息到 iframe
+      function sendPlayerMessage(action) {
+        try {
+          if (bgmFrame && bgmFrame.contentWindow) {
+            bgmFrame.contentWindow.postMessage(action, '*');
+            return true;
+          }
+        } catch (e) {
+          console.log('发送消息失败:', e);
+        }
+        return false;
+      }
+
+      // 尝试发送消息，自动重试直到成功
+      function trySendMessage(action) {
+        if (!sendPlayerMessage(action)) {
+          // 如果立即发送失败，等待 iframe 加载后重试
+          bgmFrame.onload = function() {
+            sendPlayerMessage(action);
+            bgmFrame.onload = null; // 清除回调，只执行一次
+          };
+        }
+      }
+
+      // 初始恢复播放状态
+      if (isPlaying) {
+        trySendMessage('play');
       }
 
       musicToggle.onclick = function() {
         isPlaying = !isPlaying;
         localStorage.setItem('bgmAutoPlay', isPlaying.toString());
         updateMusicBtn();
-        // 通过 postMessage 通知 iframe 播放/暂停，不需要刷新页面
-        if (bgmFrame && bgmFrame.contentWindow) {
-          bgmFrame.contentWindow.postMessage(isPlaying ? 'play' : 'pause', '*');
-        }
+        trySendMessage(isPlaying ? 'play' : 'pause');
       };
     })();
 
