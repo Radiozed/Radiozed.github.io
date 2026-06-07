@@ -357,21 +357,26 @@
     // 播放
     function play() {
       audio.volume = volume.value / 100;
-      audio.play().then(() => {
-        isPlaying = true;
-        updateUI(true);
-        notifyParent('playing');
-      }).catch(() => {
-        const tryPlay = () => {
+      const promise = audio.play();
+      if (promise !== undefined) {
+        promise.then(() => {
+          isPlaying = true;
+          updateUI(true);
+          notifyParent('playing');
+        }).catch((e) => {
+          console.log('播放失败:', e);
+          // 浏览器自动播放策略阻止，尝试加载音频后重试
+          audio.load();
           audio.play().then(() => {
             isPlaying = true;
             updateUI(true);
             notifyParent('playing');
+          }).catch(() => {
+            // 用户必须先交互才能播放
+            console.log('需要用户交互才能播放');
           });
-          document.removeEventListener('click', tryPlay);
-        };
-        document.addEventListener('click', tryPlay, { once: true });
-      });
+        });
+      }
     }
 
     // 暂停
