@@ -35,45 +35,18 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
       <span class="float-item" style="--delay:2.5s">✨</span>
       <span class="float-item" style="--delay:3s">🎀</span>
     </div>
-  </section>
 
-  <section class="calendar-section" id="calendar-section">
-    <h2 class="section-title"><span>📅</span> 今日日程</h2>
-    <p class="subtitle">今天也要元气满满哦！♡</p>
-    
-    <div class="calendar-container">
-      <!-- 顶部时间日期显示 -->
-      <div class="calendar-date-time">
-        <div class="current-time">
-          <span class="time-icon">🕐</span>
-          <span id="current-time">--:--:--</span>
-        </div>
-        <div id="current-date">2024年1月1日 星期一</div>
+    <!-- 时间日期信息 -->
+    <div class="hero-time-info">
+      <div class="time-display">
+        <span class="time-icon">🕐</span>
+        <span id="current-time">--:--:--</span>
       </div>
-      
-      <div class="calendar-header">
-        <button class="calendar-nav" id="prev-month">‹</button>
-        <h3 id="calendar-title">2024年1月</h3>
-        <button class="calendar-nav" id="next-month">›</button>
-      </div>
-      
-      <div class="calendar-weekdays">
-        <span>日</span>
-        <span>一</span>
-        <span>二</span>
-        <span>三</span>
-        <span>四</span>
-        <span>五</span>
-        <span>六</span>
-      </div>
-      
-      <div class="calendar-days" id="calendar-days">
-        <!-- JavaScript 动态生成 -->
-      </div>
+      <div class="date-display" id="current-date">2024年1月1日</div>
     </div>
   </section>
 
-  <section class="posts-section" id="posts" style="display:none;">
+  <section class="posts-section" id="posts">
     <h2 class="section-title"><span>✦</span> 全部文章</h2>
     <p class="section-subtitle">记录一些有趣的想法和创作过程~</p>
 
@@ -95,8 +68,8 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     </div>
   </section>
 
-  <section class="gallery-section" id="gallery" style="display:none;">
-    <h2 class="section-title"><span>✦</span> 艺术作品</h2>
+  <section class="gallery-section" id="gallery">
+    <h2 class="section-title"><span>♡</span> 艺术作品</h2>
     <p class="section-subtitle">一些喜欢的创作作品~</p>
     <div class="gallery-grid">
       <div class="gallery-item fade-in">
@@ -167,54 +140,51 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
   }
 
-  /* 头像区域 */
-  .hero-avatar {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .hero-avatar img {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid transparent;
-    background: linear-gradient(var(--bg-dark), var(--bg-dark)) padding-box,
-                linear-gradient(135deg, var(--primary), var(--secondary), var(--accent)) border-box;
-    box-shadow: 
-      0 0 30px rgba(255, 105, 180, 0.3),
-      0 0 60px rgba(255, 105, 180, 0.2),
-      inset 0 0 30px rgba(255, 255, 255, 0.05);
-    transition: all 0.4s ease;
-  }
-
-  .hero-avatar:hover img {
-    transform: scale(1.05);
-    box-shadow: 
-      0 0 40px rgba(255, 105, 180, 0.5),
-      0 0 80px rgba(255, 105, 180, 0.3),
-      inset 0 0 40px rgba(255, 255, 255, 0.1);
-  }
-
-  .avatar-glow {
+  /* Hero区域时间信息 */
+  .hero-time-info {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 220px;
-    height: 220px;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(255, 105, 180, 0.3) 0%, transparent 60%);
-    animation: glow-pulse 2s ease-in-out infinite;
-    pointer-events: none;
-    border-radius: 50%;
+    top: 80px;
+    right: 30px;
+    text-align: center;
+    padding: 15px 20px;
+    background: rgba(30, 27, 46, 0.8);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 105, 180, 0.2);
+    backdrop-filter: blur(15px);
+    animation: fade-in 0.8s ease-out 0.5s both;
   }
 
-  @keyframes glow-pulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .time-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1.3rem;
+    color: var(--accent);
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .time-icon {
+    font-size: 1.5rem;
+    animation: bounce 1s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  .date-display {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
   }
 
   /* 标题动画 */
@@ -540,201 +510,17 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     transform: translateY(0);
   }
 
-  /* 日历组件 */
-  .calendar-section {
-    padding: 100px 20px;
-    max-width: 600px;
-    margin: 0 auto;
-    position: relative;
-  }
-
-  .calendar-container {
-    background: linear-gradient(145deg, rgba(30, 27, 46, 0.9), rgba(20, 15, 35, 0.95));
-    border-radius: 28px;
-    padding: 25px 35px;
-    border: 1px solid rgba(255, 105, 180, 0.15);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 25px 60px rgba(255, 20, 147, 0.12);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .calendar-date-time {
-    text-align: center;
-    padding-bottom: 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 105, 180, 0.15);
-    position: relative;
-    z-index: 1;
-  }
-
-  .current-time {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-size: 1.4rem;
-    color: var(--accent);
-    font-family: 'Courier New', monospace;
-    letter-spacing: 3px;
-    margin-bottom: 8px;
-  }
-
-  .time-icon {
-    font-size: 1.6rem;
-    animation: bounce 1s ease-in-out infinite;
-  }
-
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
-
-  #current-time {
-    font-weight: 600;
-    text-shadow: 0 0 20px rgba(255, 20, 147, 0.5);
-  }
-
-  #current-date {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-  }
-
-  .calendar-container::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 150%;
-    height: 150%;
-    background: radial-gradient(circle, rgba(255, 105, 180, 0.08) 0%, transparent 60%);
-    animation: rotate-slow 40s linear infinite;
-  }
-
-  @keyframes rotate-slow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .calendar-nav {
-    width: 45px;
-    height: 45px;
-    border: none;
-    background: linear-gradient(135deg, rgba(255, 20, 147, 0.2), rgba(168, 85, 247, 0.2));
-    color: var(--accent);
-    font-size: 1.5rem;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 105, 180, 0.25);
-  }
-
-  .calendar-nav:hover {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    transform: scale(1.1);
-    box-shadow: 0 8px 25px rgba(255, 20, 147, 0.3);
-  }
-
-  #calendar-title {
-    font-size: 1.4rem;
-    color: var(--text-light);
-    font-weight: 600;
-    letter-spacing: 2px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .calendar-weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    margin-bottom: 15px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .calendar-weekdays span {
-    text-align: center;
-    padding: 12px 0;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 10px;
-  }
-
-  .calendar-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .calendar-day {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
-    color: var(--text-light);
-    border: 1px solid transparent;
-  }
-
-  .calendar-day:hover {
-    background: rgba(255, 105, 180, 0.15);
-    border-color: rgba(255, 105, 180, 0.3);
-    transform: scale(1.05);
-  }
-
-  .calendar-day.empty {
-    background: transparent;
-    cursor: default;
-    opacity: 0;
-  }
-
-  .calendar-day.today {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    color: white;
-    box-shadow: 0 8px 25px rgba(255, 20, 147, 0.4);
-    animation: today-pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes today-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
-  }
-
-  .calendar-day.selected {
-    background: rgba(168, 85, 247, 0.4);
-    border-color: var(--secondary);
-  }
-
-  .calendar-day.other-month {
-    color: var(--text-muted);
-    opacity: 0.4;
-  }
-
   /* 响应式 */
   @media (max-width: 768px) {
+    .hero-time-info {
+      position: static;
+      margin: 30px auto;
+      transform: none;
+    }
+
     .posts-section,
     .gallery-section {
-      padding: 80px 20px;
+      padding: 60px 20px;
     }
 
     .section-title {
@@ -771,37 +557,10 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     }
   }
 
-  @media (max-width: 768px) {
-    .info-panel {
-      position: static;
-      margin-bottom: 30px;
-      animation: none;
-      width: fit-content;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .ribbon {
-      display: none;
-    }
-
-    .calendar-section {
-      padding: 60px 20px;
-    }
-
-    .calendar-container {
-      padding: 25px 20px;
-    }
-
-    .calendar-day {
-      font-size: 0.85rem;
-    }
-  }
-
   @media (max-width: 480px) {
     .posts-section,
     .gallery-section {
-      padding: 60px 15px;
+      padding: 40px 15px;
     }
 
     .section-title {
@@ -813,18 +572,16 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
       gap: 12px;
     }
 
-    .calendar-container {
-      padding: 20px 15px;
+    .hero-time-info {
+      padding: 12px 15px;
     }
 
-    .calendar-nav {
-      width: 38px;
-      height: 38px;
-      font-size: 1.3rem;
+    .time-display {
+      font-size: 1.1rem;
     }
 
-    #calendar-title {
-      font-size: 1.2rem;
+    .date-display {
+      font-size: 0.8rem;
     }
   }
 </style>
@@ -843,77 +600,12 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     const day = now.getDate();
     const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
     const weekday = weekdays[now.getDay()];
-    document.getElementById('current-date').textContent = `${year}年${month}月${day}日 ${weekday}`;
-  }
-
-  // 日历功能
-  let currentDate = new Date();
-  let today = new Date();
-
-  function generateCalendar(year, month) {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysContainer = document.getElementById('calendar-days');
-    const titleElement = document.getElementById('calendar-title');
-    
-    titleElement.textContent = `${year}年${month + 1}月`;
-    daysContainer.innerHTML = '';
-
-    const startDay = firstDay.getDay();
-    const totalDays = lastDay.getDate();
-
-    // 填充上月空白
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = startDay - 1; i >= 0; i--) {
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day empty';
-      daysContainer.appendChild(dayElement);
-    }
-
-    // 填充当月日期
-    for (let day = 1; day <= totalDays; day++) {
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day';
-      dayElement.textContent = day;
-      
-      const isToday = today.getFullYear() === year && 
-                      today.getMonth() === month && 
-                      today.getDate() === day;
-      
-      if (isToday) {
-        dayElement.classList.add('today');
-      }
-
-      daysContainer.appendChild(dayElement);
-    }
-
-    // 填充下月空白
-    const remainingCells = 42 - (startDay + totalDays);
-    for (let i = 1; i <= remainingCells; i++) {
-      const dayElement = document.createElement('div');
-      dayElement.className = 'calendar-day empty';
-      daysContainer.appendChild(dayElement);
-    }
-  }
-
-  function prevMonth() {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-  }
-
-  function nextMonth() {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    document.getElementById('current-date').textContent = `${year}年${month}月${day}日`;
   }
 
   // 页面加载时初始化
   document.addEventListener('DOMContentLoaded', function() {
     updateTime();
     setInterval(updateTime, 1000);
-    
-    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-    
-    document.getElementById('prev-month')?.addEventListener('click', prevMonth);
-    document.getElementById('next-month')?.addEventListener('click', nextMonth);
   });
 </script>
