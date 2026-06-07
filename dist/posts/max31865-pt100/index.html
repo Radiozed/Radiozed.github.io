@@ -1,19 +1,19 @@
-<!DOCTYPE html><html lang="zh-CN" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>STM32F103C8T6 + MAX31865 读取PT100温度 - Radiozed</title><meta name="description" content="Radiozed 的小天地~ 喵~ 🐾"><link rel="icon" type="image/jpeg" href="/nekomusume.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/gallery.CpnEDxBn.css">
-<link rel="stylesheet" href="/_astro/_slug_.Cax--Ov1.css"><script type="module">function g(){const e=document.createElement("div");e.className="sakura-container",document.body.appendChild(e),setInterval(()=>{const t=document.createElement("div");t.className="sakura-petal",t.innerHTML=["🌸","💮","✿","❀"][Math.floor(Math.random()*4)],t.style.left=Math.random()*100+"vw",t.style.fontSize=Math.random()*10+10+"px",t.style.animationDuration=Math.random()*5+8+"s",t.style.opacity=Math.random()*.5+.3,e.appendChild(t),setTimeout(()=>t.remove(),13e3)},800)}g();const f={threshold:.1,rootMargin:"0px 0px -50px 0px"},p=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&t.target.classList.add("visible")})},f);document.querySelectorAll(".fade-in").forEach(e=>p.observe(e));document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(t){t.preventDefault();const o=document.querySelector(this.getAttribute("href"));o&&o.scrollIntoView({behavior:"smooth",block:"start"})})});(function(){if(window.bgMusicInitialized)return;window.bgMusicInitialized=!0;const e=document.getElementById("bgmAudio"),t=document.getElementById("bgmToggle"),o=document.getElementById("bgmIcon"),s=document.getElementById("volumeSlider"),c=localStorage.getItem("bgmVolume");e.volume=c?parseFloat(c):.5,s.value=e.volume*100;const r=sessionStorage.getItem("bgmTime"),d=sessionStorage.getItem("bgmPlaying");r&&(e.currentTime=parseFloat(r));let i=!1;function l(n){n?(o.textContent="🎶",t.classList.add("playing")):(o.textContent="🎵",t.classList.remove("playing"))}function m(){const n=e.play();n!==void 0&&n.then(()=>{i=!0,l(!0),sessionStorage.setItem("bgmPlaying","true")}).catch(()=>{i=!1,l(!1)})}function u(){e.pause(),i=!1,l(!1),sessionStorage.setItem("bgmPlaying","false")}e.addEventListener("timeupdate",()=>{sessionStorage.setItem("bgmTime",e.currentTime.toString())}),d==="true"||d===null?m():l(!1),t.addEventListener("click",n=>{n.stopPropagation(),n.preventDefault(),i?u():m()})})();const a=document.getElementById("lightbox"),y=document.getElementById("lightboxImg"),v=document.getElementById("lightboxClose");document.querySelectorAll(".gallery-item img").forEach(e=>{e.addEventListener("click",()=>{y.src=e.src.replace("/thumbs/","/original/").replace("_p0.jpg","_p0.jpg"),a.classList.add("active"),document.body.style.overflow="hidden"})});v.addEventListener("click",()=>{a.classList.remove("active"),document.body.style.overflow=""});a.addEventListener("click",e=>{e.target===a&&(a.classList.remove("active"),document.body.style.overflow="")});(function(){var e=document.getElementById("musicToggle"),t=document.getElementById("bgmFrame");if(!e)return;var o=localStorage.getItem("bgmAutoPlay")==="true";function s(){o?(e.classList.remove("off"),e.querySelector(".music-icon").textContent="🎵"):(e.classList.add("off"),e.querySelector(".music-icon").textContent="🔇")}s(),o&&t&&t.contentWindow.postMessage("play","*"),e.onclick=function(){o=!o,localStorage.setItem("bgmAutoPlay",o.toString()),s(),t&&t.contentWindow&&t.contentWindow.postMessage(o?"play":"pause","*")}})();window.addEventListener("message",function(e){e.data==="playing"?(isPlaying=!0,updateMusicBtn()):e.data==="paused"&&(isPlaying=!1,updateMusicBtn())});
-</script></head> <body style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <!-- 猫娘大背景 --> <div class="neko-bg" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <img src="/bg-hero.jpg" alt="" class="bg-image" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="bg-overlay" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> </div> <!-- 装饰光效 --> <div class="glow-effects" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="glow glow-1" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> <div class="glow glow-2" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> <div class="glow glow-3" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> </div> <!-- 导航栏 --> <nav class="glass-nav" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <a href="/" class="nav-logo" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="logo-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="logo-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Radiozed</span> </a> <ul class="nav-links" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <li style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"><a href="#posts" class="nav-link" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="link-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> 全部文章
+<!DOCTYPE html><html lang="zh-CN" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>STM32F103C8T6 + MAX31865 读取PT100温度 - Radiozed</title><meta name="description" content="Radiozed 的小天地~ 喵~ 🐾"><link rel="icon" type="image/jpeg" href="/nekomusume.jpg"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/_astro/gallery.DJu1pMH2.css">
+<link rel="stylesheet" href="/_astro/_slug_.BdVS5fYg.css"><script type="module" src="/_astro/hoisted.Ba7sJ_yJ.js"></script></head> <body style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <!-- 猫娘大背景 --> <div class="neko-bg" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <img src="/bg-hero.jpg" alt="" class="bg-image" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="bg-overlay" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> </div> <!-- 装饰光效 --> <div class="glow-effects" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="glow glow-1" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> <div class="glow glow-2" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> <div class="glow glow-3" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"></div> </div> <!-- 导航栏 --> <nav class="glass-nav" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <a href="/" class="nav-logo" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="logo-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="logo-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Radiozed</span> </a> <ul class="nav-links" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <li style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"><a href="#posts" class="nav-link" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="link-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> 全部文章
 </a></li> <li style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"><a href="#gallery" class="nav-link" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="link-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">♡</span> 艺术作品
-</a></li> </ul> </nav> <main style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">   <div class="side-decor left" data-astro-cid-egg7nqdx> <div class="side-date" data-astro-cid-egg7nqdx> <div class="date-year" data-astro-cid-egg7nqdx>2026</div> <div class="date-day" data-astro-cid-egg7nqdx>6</div> <div class="date-month" data-astro-cid-egg7nqdx>6月</div> </div> <div class="side-decoration" data-astro-cid-egg7nqdx> <span class="deco-line" data-astro-cid-egg7nqdx></span> <span class="deco-icon" data-astro-cid-egg7nqdx>✦</span> <span class="deco-line" data-astro-cid-egg7nqdx></span> </div> <div class="side-extra" data-astro-cid-egg7nqdx> <span class="extra-icon" data-astro-cid-egg7nqdx>🌸</span> <span class="extra-icon" data-astro-cid-egg7nqdx>💫</span> <span class="extra-icon" data-astro-cid-egg7nqdx>⭐</span> </div> </div>  <div class="side-decor right" data-astro-cid-egg7nqdx> <div class="side-info" data-astro-cid-egg7nqdx> <div class="info-label" data-astro-cid-egg7nqdx>文章</div> <div class="info-value" data-astro-cid-egg7nqdx>34字</div> </div> <div class="side-decoration" data-astro-cid-egg7nqdx> <span class="deco-line" data-astro-cid-egg7nqdx></span> <span class="deco-icon" data-astro-cid-egg7nqdx>♡</span> <span class="deco-line" data-astro-cid-egg7nqdx></span> </div> <div class="side-extra" data-astro-cid-egg7nqdx> <span class="extra-icon" data-astro-cid-egg7nqdx>🎵</span> <span class="extra-icon" data-astro-cid-egg7nqdx>✨</span> <span class="extra-icon" data-astro-cid-egg7nqdx>🌙</span> </div> </div> <article class="post-page" data-astro-cid-egg7nqdx> <!-- 左侧目录导航 --> <nav class="toc-sidebar" data-astro-cid-egg7nqdx> <div class="toc-title" data-astro-cid-egg7nqdx>📑 目录</div> <div class="toc-links" data-astro-cid-egg7nqdx> <a href="#硬件准备-准备工作" class="toc-link" data-astro-cid-egg7nqdx>准备工作</a> <a href="#工作原理-代码详解" class="toc-link" data-astro-cid-egg7nqdx>代码详解</a> <a href="#标准库代码-完整代码" class="toc-link" data-astro-cid-egg7nqdx>完整代码</a> <a href="#使用说明-使用说明" class="toc-link" data-astro-cid-egg7nqdx>使用说明</a> </div> </nav> <div class="post-main" data-astro-cid-egg7nqdx> <div class="post-header" data-astro-cid-egg7nqdx> <h1 class="post-title" data-astro-cid-egg7nqdx>STM32F103C8T6 + MAX31865 读取PT100温度</h1> <div class="post-meta" data-astro-cid-egg7nqdx> <span class="post-date" data-astro-cid-egg7nqdx>📅 2026年6月6日</span> <div class="post-tags" data-astro-cid-egg7nqdx> <span class="tag" data-astro-cid-egg7nqdx>STM32</span><span class="tag" data-astro-cid-egg7nqdx>MAX31865</span><span class="tag" data-astro-cid-egg7nqdx>PT100</span><span class="tag" data-astro-cid-egg7nqdx>温度传感器</span> </div> </div> </div> <div class="post-content" data-astro-cid-egg7nqdx> <h1 id="stm32f103c8t6--max31865-读取pt100温度">STM32F103C8T6 + MAX31865 读取PT100温度</h1>
-<p>今天来教大家如何使用 STM32F103C8T6 通过 MAX31865 模块读取 PT100 铂电阻温度传感器~</p>
-<h2 id="硬件准备-准备工作">硬件准备 {#准备工作}</h2>
-<h3 id="1-所需硬件-所需硬件">1. 所需硬件 {#所需硬件}</h3>
+</a></li> </ul> </nav> <main style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">  <article class="post-container" data-astro-cid-egg7nqdx> <!-- 侧边栏 --> <aside class="post-sidebar" data-astro-cid-egg7nqdx> <!-- 日历组件 --> <div class="sidebar-calendar" data-astro-cid-egg7nqdx> <div class="calendar-header" data-astro-cid-egg7nqdx> <button class="calendar-nav-btn" id="prev-month-btn" data-astro-cid-egg7nqdx>‹</button> <span class="calendar-title" id="calendar-title" data-astro-cid-egg7nqdx>2024年1月</span> <button class="calendar-nav-btn" id="next-month-btn" data-astro-cid-egg7nqdx>›</button> </div> <div class="calendar-weekdays" data-astro-cid-egg7nqdx> <span data-astro-cid-egg7nqdx>日</span><span data-astro-cid-egg7nqdx>一</span><span data-astro-cid-egg7nqdx>二</span><span data-astro-cid-egg7nqdx>三</span><span data-astro-cid-egg7nqdx>四</span><span data-astro-cid-egg7nqdx>五</span><span data-astro-cid-egg7nqdx>六</span> </div> <div class="calendar-days" id="calendar-days" data-astro-cid-egg7nqdx></div> </div> <!-- 目录导航 --> <nav class="sidebar-toc" data-astro-cid-egg7nqdx> <div class="toc-header" data-astro-cid-egg7nqdx>📑 目录</div> <div class="toc-list" data-astro-cid-egg7nqdx> <a href="#准备工作" class="toc-item" data-astro-cid-egg7nqdx>准备工作</a> <a href="#代码详解" class="toc-item" data-astro-cid-egg7nqdx>代码详解</a> <a href="#完整代码" class="toc-item" data-astro-cid-egg7nqdx>完整代码</a> <a href="#使用说明" class="toc-item" data-astro-cid-egg7nqdx>使用说明</a> </div> </nav> <!-- 文章信息 --> <div class="sidebar-info" data-astro-cid-egg7nqdx> <div class="info-item" data-astro-cid-egg7nqdx> <span class="info-icon" data-astro-cid-egg7nqdx>📝</span> <span class="info-text" data-astro-cid-egg7nqdx>34字</span> </div> <div class="info-item" data-astro-cid-egg7nqdx> <span class="info-icon" data-astro-cid-egg7nqdx>📅</span> <span class="info-text" data-astro-cid-egg7nqdx>2026/6/6</span> </div> </div> </aside> <!-- 主内容区 --> <main class="post-content-area" data-astro-cid-egg7nqdx> <header class="post-header" data-astro-cid-egg7nqdx> <h1 class="post-title" data-astro-cid-egg7nqdx>STM32F103C8T6 + MAX31865 读取PT100温度</h1> <div class="post-meta" data-astro-cid-egg7nqdx> <span class="post-date" data-astro-cid-egg7nqdx>📅 2026年6月6日</span> <div class="post-tags" data-astro-cid-egg7nqdx> <span class="tag" data-astro-cid-egg7nqdx>STM32</span><span class="tag" data-astro-cid-egg7nqdx>MAX31865</span><span class="tag" data-astro-cid-egg7nqdx>PT100</span><span class="tag" data-astro-cid-egg7nqdx>温度传感器</span> </div> </div> </header> <div class="post-body" data-astro-cid-egg7nqdx> <p>今天来教大家如何使用 STM32F103C8T6 通过 MAX31865 模块读取 PT100 铂电阻温度传感器~</p>
+<h2 id="准备工作">准备工作</h2>
+<h3 id="1-所需硬件">1. 所需硬件</h3>
 <ul>
-<li>STM32F103C8T6 开发板</li>
-<li>MAX31865 模块</li>
-<li>PT100 铂电阻传感器</li>
-<li>杜邦线若干</li>
+<li><strong>STM32F103C8T6 开发板</strong> - 核心控制单元，最小系统板即可</li>
+<li><strong>MAX31865 模块</strong> - PT100专用温度转换芯片，推荐带参考电阻的模块</li>
+<li><strong>PT100 铂电阻传感器</strong> - 注意选择合适的封装（如三线制）</li>
+<li><strong>杜邦线若干</strong> - 建议使用优质杜邦线减少干扰</li>
+<li><strong>面包板</strong> - 便于临时接线测试</li>
 </ul>
-<h3 id="2-接线说明">2. 接线说明</h3>
-<p><img src="/imgs/PT100.png" alt="PT100接线图"></p>
+<h3 id="2-硬件连接说明">2. 硬件连接说明</h3>
+<p>MAX31865 支持 2/3/4 线制连接，推荐使用 <strong>3线制</strong> 以消除导线电阻影响。</p>
+<p><strong>接线表：</strong></p>
 
 
 
@@ -43,17 +43,76 @@
 
 
 
-<table><thead><tr><th>MAX31865</th><th>STM32F103 (PA引脚)</th></tr></thead><tbody><tr><td>SDO</td><td>PA0</td></tr><tr><td>CS</td><td>PA1</td></tr><tr><td>SCLK</td><td>PA2</td></tr><tr><td>SDI</td><td>PA3</td></tr><tr><td>DRDY</td><td>PA15</td></tr></tbody></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>MAX31865 引脚</th><th>功能说明</th><th>STM32F103 (PA引脚)</th><th>STM32引脚类型</th></tr></thead><tbody><tr><td>VCC</td><td>电源输入 (3.3V)</td><td>3.3V</td><td>电源</td></tr><tr><td>GND</td><td>地线</td><td>GND</td><td>接地</td></tr><tr><td>SDO (SO)</td><td>SPI数据输出</td><td>PA0</td><td>输入</td></tr><tr><td>CS (SS)</td><td>片选信号</td><td>PA1</td><td>输出</td></tr><tr><td>SCLK (SCK)</td><td>SPI时钟</td><td>PA2</td><td>输出</td></tr><tr><td>SDI (SI)</td><td>SPI数据输入</td><td>PA3</td><td>输出</td></tr><tr><td>DRDY</td><td>数据就绪信号（可选）</td><td>PA15</td><td>输入</td></tr><tr><td>RTD+</td><td>PT100正极</td><td>PT100红/白线</td><td>-</td></tr><tr><td>RTD-</td><td>PT100负极</td><td>PT100黑线</td><td>-</td></tr><tr><td>REF+</td><td>参考电阻端（模块内部已接）</td><td>-</td><td>-</td></tr><tr><td>REF-</td><td>参考电阻端（模块内部已接）</td><td>-</td><td>-</td></tr></tbody></table>
+<p><strong>PT100 三线制接线：</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>PT100传感器        MAX31865模块</span></span>
+<span class="line"><span>   │                  │</span></span>
+<span class="line"><span>   ├─ 红色线 ──────► RTD+</span></span>
+<span class="line"><span>   ├─ 白色线 ──────► RTD-</span></span>
+<span class="line"><span>   └─ 黑色线 ──────► 与RTD+短接（补偿导线电阻）</span></span>
+<span class="line"><span></span></span></code></pre>
+<blockquote>
+<p><strong>注意</strong>：如果使用四线制PT100，需要将两根补偿线分别连接到 REF+ 和 REF-。</p>
+</blockquote>
 <h2 id="工作原理-代码详解">工作原理 {#代码详解}</h2>
 <h3 id="max31865-简介">MAX31865 简介</h3>
-<p>MAX31865 是 Maxim 公司生产的专用 PT100/PT1000 铂电阻温度传感器数字转换芯片，内部集成了ADC和校正电路，直接输出数字信号。</p>
+<p>MAX31865 是 Maxim 公司生产的专用 PT100/PT1000 铂电阻温度传感器数字转换芯片，内部集成了高精度ADC和校正电路，直接输出数字信号。</p>
 <p><strong>主要特性：</strong></p>
 <ul>
-<li><strong>内置24位ADC</strong> - 高精度模数转换，无需外部ADC芯片</li>
-<li><strong>支持2/3/4线制</strong> - 可根据需求选择不同的接线方式</li>
-<li><strong>故障检测</strong> - 内置RTD开路和短路检测功能</li>
-<li><strong>SPI接口</strong> - 兼容标准SPI通信协议</li>
-<li><strong>自动转换</strong> - 可配置为连续自动温度转换模式</li>
+<li><strong>内置24位ADC</strong> - 高精度模数转换，无需外部ADC芯片，分辨率可达0.003°C</li>
+<li><strong>支持2/3/4线制</strong> - 可根据需求选择不同的接线方式，3线制可有效消除导线电阻影响</li>
+<li><strong>故障检测</strong> - 内置RTD开路和短路检测功能，便于诊断传感器故障</li>
+<li><strong>SPI接口</strong> - 兼容标准SPI通信协议，最高支持5MHz时钟</li>
+<li><strong>自动转换</strong> - 可配置为连续自动温度转换模式，无需手动触发</li>
+<li><strong>宽温度范围</strong> - 支持-200°C至+850°C测量范围（取决于传感器）</li>
 </ul>
 <p><strong>寄存器说明：</strong></p>
 
@@ -86,28 +145,110 @@
 
 
 
-<table><thead><tr><th>寄存器地址</th><th>名称</th><th>说明</th></tr></thead><tbody><tr><td>0x00</td><td>CONFIG</td><td>配置寄存器，设置转换模式、滤波等</td></tr><tr><td>0x01</td><td>RTD MSB</td><td>RTD电阻值高8位</td></tr><tr><td>0x02</td><td>RTD LSB</td><td>RTD电阻值低8位</td></tr><tr><td>0x07</td><td>FAULT</td><td>故障状态寄存器</td></tr></tbody></table>
-<p><strong>CONFIG寄存器位定义：</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>寄存器地址</th><th>名称</th><th>说明</th></tr></thead><tbody><tr><td>0x00</td><td>CONFIG</td><td>配置寄存器，设置转换模式、滤波、激励电流等</td></tr><tr><td>0x01</td><td>RTD MSB</td><td>RTD电阻值高8位（15-8位）</td></tr><tr><td>0x02</td><td>RTD LSB</td><td>RTD电阻值低8位（7-0位），最低位为0</td></tr><tr><td>0x03</td><td>HIGH FAULT THRESHOLD MSB</td><td>故障阈值上限高字节</td></tr><tr><td>0x04</td><td>HIGH FAULT THRESHOLD LSB</td><td>故障阈值上限低字节</td></tr><tr><td>0x05</td><td>LOW FAULT THRESHOLD MSB</td><td>故障阈值下限高字节</td></tr><tr><td>0x06</td><td>LOW FAULT THRESHOLD LSB</td><td>故障阈值下限低字节</td></tr><tr><td>0x07</td><td>FAULT STATUS</td><td>故障状态寄存器，指示各类故障</td></tr></tbody></table>
+<p><strong>CONFIG寄存器位定义（地址0x00）：</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>位</th><th>名称</th><th>说明</th></tr></thead><tbody><tr><td>BIT 7 (VBIAS)</td><td>激励电流开关</td><td>1=开启，0=关闭</td></tr><tr><td>BIT 6 (AUTO)</td><td>自动转换模式</td><td>1=连续转换，0=单次转换</td></tr><tr><td>BIT 5 (3WIRE)</td><td>3线制模式</td><td>1=启用，0=2/4线制</td></tr><tr><td>BIT 4-3</td><td>预留</td><td>保留位</td></tr><tr><td>BIT 2 (FAULT)</td><td>故障检测</td><td>1=启用，0=禁用</td></tr><tr><td>BIT 1-0</td><td>FILTER</td><td>滤波选择</td></tr></tbody></table>
+<h3 id="pt100-温度传感器原理">PT100 温度传感器原理</h3>
+<p>PT100 是一种铂电阻温度传感器，其电阻值随温度变化呈近似线性关系。</p>
+<p><strong>基本参数：</strong></p>
 <ul>
-<li><strong>BIT 7 (VBIAS)</strong> - 激励电流开关，1开启</li>
-<li><strong>BIT 6 (AUTO)</strong> - 自动转换模式，1开启</li>
-<li><strong>BIT 5 (3WIRE)</strong> - 3线制模式，1开启</li>
-<li><strong>BIT 0 (FILTER)</strong> - 50Hz滤波，1开启（国内电网50Hz设为1）</li>
+<li><strong>R0</strong>：0°C时的电阻值 = 100Ω</li>
+<li><strong>温度系数</strong>：α = 0.00385 Ω/Ω/°C</li>
+<li><strong>测量范围</strong>：-200°C ~ +850°C</li>
+</ul>
+<p><strong>电阻-温度关系：</strong></p>
+<p>PT100的阻值随温度变化遵循 <strong>Callendar-Van Dusen</strong> 公式：</p>
+<p><strong>正温区 (0°C ≤ T ≤ 850°C)：</strong>
+$$R_t = R_0(1 + aT + bT^2)$$</p>
+<p>其中：</p>
+<ul>
+<li>a = 3.9083 × 10⁻³ °C⁻¹</li>
+<li>b = -5.775 × 10⁻⁷ °C⁻²</li>
+</ul>
+<p><strong>负温区 (-200°C ≤ T &#x3C; 0°C)：</strong>
+$$R_t = R_0(1 + aT + bT^2 + c(T-100)T^3)$$</p>
+<p>其中：</p>
+<ul>
+<li>c = -4.183 × 10⁻¹² °C⁻⁴</li>
 </ul>
 <h3 id="温度计算原理">温度计算原理</h3>
-<p>PT100的阻值随温度变化并非线性，使用 <strong>Callendar-Van Dusen</strong> 公式计算：</p>
-<p><strong>正温区 (≥0°C)：</strong>
-$$R_t = R_0(1 + aT + bT^2)$$</p>
-<p>其中 a = 3.9083×10⁻³，b = -5.775×10⁻⁷</p>
-<p><strong>负温区 (&#x3C;0°C)：</strong>
-需要使用 IEC751 多项式拟合：
-$$T = -242.02 + 2.2228R_t - 0.0025859R_t² + 0.000004826R_t³$$</p>
-<p><strong>RTD电阻计算：</strong>
-从MAX31865读取的ADC值需要转换为实际电阻：
-$$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
-<p>其中 $R_{REF}$ 是参考电阻，PT100模块常用400Ω。</p>
+<p>MAX31865内部通过参考电阻将PT100的电阻转换为数字信号：</p>
+<p>$$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
+<p>其中：</p>
+<ul>
+<li><strong>ADC值</strong>：从寄存器读取的15位数据（0-32767）</li>
+<li><strong>R_REF</strong>：参考电阻，常见值为400Ω或430Ω</li>
+</ul>
+<p><strong>温度计算步骤：</strong></p>
+<ol>
+<li>从MAX31865读取RTD数据寄存器（0x01和0x02）</li>
+<li>将16位数据右移1位，得到15位ADC值</li>
+<li>根据参考电阻计算PT100实际电阻值Rt</li>
+<li>使用Callendar-Van Dusen公式计算温度</li>
+<li>对于负温度，使用多项式拟合公式</li>
+</ol>
 <h2 id="标准库代码-完整代码">标准库代码 {#完整代码}</h2>
-<h3 id="max31865h">max31865.h</h3>
+<h3 id="max31865h-头文件">max31865.h 头文件</h3>
 <pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#ifndef __MAX31865_H</span></span>
 <span class="line"><span>#define __MAX31865_H</span></span>
 <span class="line"><span></span></span>
@@ -125,19 +266,19 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span></span></span>
 <span class="line"><span>#define RTD_TYPE_PT100            1</span></span>
 <span class="line"><span>#define RTD_WIRE_3LINE            1</span></span>
-<span class="line"><span>#define RTD_RREF_VALUE            400.0f</span></span>
-<span class="line"><span>#define RTD_R0_VALUE              100.0f</span></span>
-<span class="line"><span>#define RTD_FILTER_50HZ           1</span></span>
+<span class="line"><span>#define RTD_RREF_VALUE            400.0f      // 参考电阻值</span></span>
+<span class="line"><span>#define RTD_R0_VALUE              100.0f      // PT100在0°C时的电阻</span></span>
+<span class="line"><span>#define RTD_FILTER_50HZ           1           // 国内电网50Hz</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>/************************** 驱动状态枚举 **************************/</span></span>
 <span class="line"><span>typedef enum</span></span>
 <span class="line"><span>{</span></span>
-<span class="line"><span>    MAX31865_OK       = 0x00,</span></span>
-<span class="line"><span>    MAX31865_ERROR    = 0x01,</span></span>
-<span class="line"><span>    MAX31865_COMM_ERR = 0x02,</span></span>
-<span class="line"><span>    MAX31865_RTD_OPEN = 0x03,</span></span>
-<span class="line"><span>    MAX31865_RTD_SHORT= 0x04,</span></span>
-<span class="line"><span>    MAX31865_PARAM_ERR= 0x05</span></span>
+<span class="line"><span>    MAX31865_OK       = 0x00,   // 操作成功</span></span>
+<span class="line"><span>    MAX31865_ERROR    = 0x01,   // 通用错误</span></span>
+<span class="line"><span>    MAX31865_COMM_ERR = 0x02,   // 通信错误</span></span>
+<span class="line"><span>    MAX31865_RTD_OPEN = 0x03,   // RTD开路</span></span>
+<span class="line"><span>    MAX31865_RTD_SHORT= 0x04,   // RTD短路</span></span>
+<span class="line"><span>    MAX31865_PARAM_ERR= 0x05    // 参数错误</span></span>
 <span class="line"><span>}MAX31865_StatusTypeDef;</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>/************************** 对外接口函数 **************************/</span></span>
@@ -149,7 +290,7 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span></span></span>
 <span class="line"><span>#endif</span></span>
 <span class="line"><span></span></span></code></pre>
-<h3 id="max31865c">max31865.c</h3>
+<h3 id="max31865c-实现文件">max31865.c 实现文件</h3>
 <pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#include "max31865.h"</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>/************************** 底层引脚操作 **************************/</span></span>
@@ -166,12 +307,13 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>#define MAX31865_REG_RTD_MSB       0x01</span></span>
 <span class="line"><span>#define MAX31865_REG_RTD_LSB       0x02</span></span>
 <span class="line"><span>#define MAX31865_REG_FAULT         0x07</span></span>
-<span class="line"><span>#define MAX31865_WRITE_MASK        0x80</span></span>
+<span class="line"><span>#define MAX31865_WRITE_MASK        0x80    // 写操作位</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>#define CFG_VBIAS_ON               (1&#x3C;&#x3C;7)</span></span>
-<span class="line"><span>#define CFG_AUTO_CONVERT           (1&#x3C;&#x3C;6)</span></span>
-<span class="line"><span>#define CFG_3WIRE_MODE             (1&#x3C;&#x3C;5)</span></span>
-<span class="line"><span>#define CFG_FILTER_50HZ            (1&#x3C;&#x3C;0)</span></span>
+<span class="line"><span>#define CFG_VBIAS_ON               (1&#x3C;&#x3C;7)  // 开启激励电流</span></span>
+<span class="line"><span>#define CFG_AUTO_CONVERT           (1&#x3C;&#x3C;6)  // 自动转换模式</span></span>
+<span class="line"><span>#define CFG_3WIRE_MODE             (1&#x3C;&#x3C;5)  // 三线制模式</span></span>
+<span class="line"><span>#define CFG_FAULT_DETECT           (1&#x3C;&#x3C;2)  // 故障检测使能</span></span>
+<span class="line"><span>#define CFG_FILTER_50HZ            (1&#x3C;&#x3C;0)  // 50Hz滤波</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>/************************** SPI读写函数 **************************/</span></span>
 <span class="line"><span>static void MAX31865_WriteByte(uint8_t data)</span></span>
@@ -219,25 +361,59 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>    return MAX31865_OK;</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>/************************** GPIO初始化 **************************/</span></span>
+<span class="line"><span>static void MAX31865_GPIO_Init(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    GPIO_InitTypeDef GPIO_InitStructure;</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 使能GPIOA时钟</span></span>
+<span class="line"><span>    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // SDO - 输入</span></span>
+<span class="line"><span>    GPIO_InitStructure.GPIO_Pin = MAX31865_PIN_SDO;</span></span>
+<span class="line"><span>    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;</span></span>
+<span class="line"><span>    GPIO_Init(MAX31865_PORT, &#x26;GPIO_InitStructure);</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // CS, SCLK, SDI - 输出</span></span>
+<span class="line"><span>    GPIO_InitStructure.GPIO_Pin = MAX31865_PIN_CS | MAX31865_PIN_SCLK | MAX31865_PIN_SDI;</span></span>
+<span class="line"><span>    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;</span></span>
+<span class="line"><span>    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;</span></span>
+<span class="line"><span>    GPIO_Init(MAX31865_PORT, &#x26;GPIO_InitStructure);</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // DRDY - 输入（可选）</span></span>
+<span class="line"><span>    GPIO_InitStructure.GPIO_Pin = MAX31865_PIN_DRDY;</span></span>
+<span class="line"><span>    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;</span></span>
+<span class="line"><span>    GPIO_Init(MAX31865_PORT, &#x26;GPIO_InitStructure);</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 默认状态</span></span>
+<span class="line"><span>    CS_HIGH();</span></span>
+<span class="line"><span>    SCLK_HIGH();</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
 <span class="line"><span>/************************** 初始化 **************************/</span></span>
 <span class="line"><span>MAX31865_StatusTypeDef MAX31865_Init(void)</span></span>
 <span class="line"><span>{</span></span>
 <span class="line"><span>    MAX31865_StatusTypeDef status;</span></span>
 <span class="line"><span>    uint8_t cfgValue = 0;</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    // GPIO初始化（略）</span></span>
+<span class="line"><span>    // GPIO初始化</span></span>
+<span class="line"><span>    MAX31865_GPIO_Init();</span></span>
+<span class="line"><span>    </span></span>
 <span class="line"><span>    // 软件复位</span></span>
 <span class="line"><span>    status = MAX31865_SoftReset();</span></span>
 <span class="line"><span>    if(status != MAX31865_OK) return status;</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    // 组装配置</span></span>
-<span class="line"><span>    cfgValue |= CFG_VBIAS_ON;</span></span>
-<span class="line"><span>    cfgValue |= CFG_AUTO_CONVERT;</span></span>
+<span class="line"><span>    // 组装配置寄存器值</span></span>
+<span class="line"><span>    cfgValue |= CFG_VBIAS_ON;        // 开启激励电流</span></span>
+<span class="line"><span>    cfgValue |= CFG_AUTO_CONVERT;    // 自动转换模式</span></span>
+<span class="line"><span>    cfgValue |= CFG_FAULT_DETECT;    // 使能故障检测</span></span>
+<span class="line"><span>    </span></span>
 <span class="line"><span>    #if RTD_WIRE_3LINE</span></span>
-<span class="line"><span>    cfgValue |= CFG_3WIRE_MODE;</span></span>
+<span class="line"><span>    cfgValue |= CFG_3WIRE_MODE;      // 三线制模式</span></span>
 <span class="line"><span>    #endif</span></span>
+<span class="line"><span>    </span></span>
 <span class="line"><span>    #if RTD_FILTER_50HZ</span></span>
-<span class="line"><span>    cfgValue |= CFG_FILTER_50HZ;</span></span>
+<span class="line"><span>    cfgValue |= CFG_FILTER_50HZ;     // 50Hz滤波</span></span>
 <span class="line"><span>    #endif</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>    return MAX31865_WriteReg(MAX31865_REG_CONFIG, cfgValue);</span></span>
@@ -252,22 +428,26 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>    uint16_t adcData;</span></span>
 <span class="line"><span>    float Rt, temperature;</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    // 读故障状态</span></span>
+<span class="line"><span>    // 读取故障状态</span></span>
 <span class="line"><span>    fault = MAX31865_ReadFaultStatus();</span></span>
-<span class="line"><span>    if(fault &#x26; 0x04) return MAX31865_RTD_OPEN;</span></span>
-<span class="line"><span>    if(fault &#x26; 0x02) return MAX31865_RTD_SHORT;</span></span>
+<span class="line"><span>    if(fault &#x26; 0x04) return MAX31865_RTD_OPEN;   // RTD开路</span></span>
+<span class="line"><span>    if(fault &#x26; 0x02) return MAX31865_RTD_SHORT;  // RTD短路</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    // 读RTD数据</span></span>
+<span class="line"><span>    // 读取RTD数据寄存器</span></span>
 <span class="line"><span>    MAX31865_ReadReg(MAX31865_REG_RTD_MSB, &#x26;regH);</span></span>
 <span class="line"><span>    MAX31865_ReadReg(MAX31865_REG_RTD_LSB, &#x26;regL);</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    // 计算温度</span></span>
+<span class="line"><span>    // 组合16位数据，右移1位得到15位有效数据</span></span>
 <span class="line"><span>    adcData = ((uint16_t)regH &#x3C;&#x3C; 8 | regL) >> 1;</span></span>
-<span class="line"><span>    if(adcData == 0 || adcData >= 32767) return MAX31865_ERROR;</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 检查数据有效性</span></span>
+<span class="line"><span>    if(adcData == 0 || adcData >= 32767) </span></span>
+<span class="line"><span>        return MAX31865_ERROR;</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 计算PT100电阻值</span></span>
 <span class="line"><span>    Rt = (float)adcData / 32768.0f * RTD_RREF_VALUE;</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    // Callendar-Van Dusen公式</span></span>
+<span class="line"><span>    // 使用Callendar-Van Dusen公式计算温度</span></span>
 <span class="line"><span>    const float a = 3.9083e-3f;</span></span>
 <span class="line"><span>    const float b = -5.775e-7f;</span></span>
 <span class="line"><span></span></span>
@@ -275,16 +455,18 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>    float Z2 = a * a - 4 * b;</span></span>
 <span class="line"><span>    float Z3 = 4 * b / RTD_R0_VALUE;</span></span>
 <span class="line"><span>    float Z4 = 2 * b;</span></span>
+<span class="line"><span>    </span></span>
 <span class="line"><span>    temperature = Z2 + Z3 * Rt;</span></span>
 <span class="line"><span>    temperature = (sqrtf(temperature) + Z1) / Z4;</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 正温度直接返回</span></span>
 <span class="line"><span>    if(temperature >= 0.0f)</span></span>
 <span class="line"><span>    {</span></span>
 <span class="line"><span>        *temp = temperature;</span></span>
 <span class="line"><span>        return MAX31865_OK;</span></span>
 <span class="line"><span>    }</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    // 负温多项式</span></span>
+<span class="line"><span>    // 负温度使用IEC751多项式拟合</span></span>
 <span class="line"><span>    float rpoly = Rt;</span></span>
 <span class="line"><span>    temperature = -242.02f;</span></span>
 <span class="line"><span>    temperature += 2.2228f * rpoly;</span></span>
@@ -297,53 +479,101 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>    return MAX31865_OK;</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>/************************** 软件复位 **************************/</span></span>
 <span class="line"><span>MAX31865_StatusTypeDef MAX31865_SoftReset(void)</span></span>
 <span class="line"><span>{</span></span>
 <span class="line"><span>    return MAX31865_WriteReg(MAX31865_REG_CONFIG, 0x80);</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>/************************** 读取故障状态 **************************/</span></span>
 <span class="line"><span>uint8_t MAX31865_ReadFaultStatus(void)</span></span>
 <span class="line"><span>{</span></span>
 <span class="line"><span>    uint8_t fault = 0;</span></span>
 <span class="line"><span>    MAX31865_ReadReg(MAX31865_REG_FAULT, &#x26;fault);</span></span>
 <span class="line"><span>    return fault;</span></span>
 <span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>/************************** 设置转换模式 **************************/</span></span>
+<span class="line"><span>MAX31865_StatusTypeDef MAX31865_SetConvertMode(uint8_t autoMode)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>    uint8_t cfg;</span></span>
+<span class="line"><span>    MAX31865_ReadReg(MAX31865_REG_CONFIG, &#x26;cfg);</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    if(autoMode)</span></span>
+<span class="line"><span>        cfg |= CFG_AUTO_CONVERT;</span></span>
+<span class="line"><span>    else</span></span>
+<span class="line"><span>        cfg &#x26;= ~CFG_AUTO_CONVERT;</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    return MAX31865_WriteReg(MAX31865_REG_CONFIG, cfg);</span></span>
+<span class="line"><span>}</span></span>
 <span class="line"><span></span></span></code></pre>
-<h3 id="mainc">main.c</h3>
+<h3 id="mainc-主函数示例">main.c 主函数示例</h3>
 <pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#include "max31865.h"</span></span>
+<span class="line"><span>#include "stdio.h"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// 假设已经实现了串口打印函数</span></span>
+<span class="line"><span>extern void USART_SendString(char* str);</span></span>
+<span class="line"><span>extern void USART_SendFloat(float value);</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>int main(void)</span></span>
 <span class="line"><span>{</span></span>
-<span class="line"><span>    float temp;</span></span>
+<span class="line"><span>    float temperature;</span></span>
 <span class="line"><span>    MAX31865_StatusTypeDef status;</span></span>
+<span class="line"><span>    char buffer[50];</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 初始化MAX31865</span></span>
 <span class="line"><span>    status = MAX31865_Init();</span></span>
 <span class="line"><span>    if(status != MAX31865_OK)</span></span>
 <span class="line"><span>    {</span></span>
-<span class="line"><span>        while(1);</span></span>
+<span class="line"><span>        USART_SendString("MAX31865初始化失败！\r\n");</span></span>
+<span class="line"><span>        while(1);  // 初始化失败，死循环</span></span>
 <span class="line"><span>    }</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    USART_SendString("MAX31865初始化成功！\r\n");</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>    while(1)</span></span>
 <span class="line"><span>    {</span></span>
-<span class="line"><span>        status = MAX31865_GetTemperature(&#x26;temp);</span></span>
+<span class="line"><span>        // 获取温度</span></span>
+<span class="line"><span>        status = MAX31865_GetTemperature(&#x26;temperature);</span></span>
+<span class="line"><span>        </span></span>
 <span class="line"><span>        if(status == MAX31865_OK)</span></span>
 <span class="line"><span>        {</span></span>
-<span class="line"><span>            // 温度有效</span></span>
+<span class="line"><span>            // 温度有效，输出结果</span></span>
+<span class="line"><span>            sprintf(buffer, "温度: %.2f°C\r\n", temperature);</span></span>
+<span class="line"><span>            USART_SendString(buffer);</span></span>
+<span class="line"><span>        }</span></span>
+<span class="line"><span>        else</span></span>
+<span class="line"><span>        {</span></span>
+<span class="line"><span>            // 处理故障</span></span>
+<span class="line"><span>            switch(status)</span></span>
+<span class="line"><span>            {</span></span>
+<span class="line"><span>                case MAX31865_RTD_OPEN:</span></span>
+<span class="line"><span>                    USART_SendString("错误: RTD开路！\r\n");</span></span>
+<span class="line"><span>                    break;</span></span>
+<span class="line"><span>                case MAX31865_RTD_SHORT:</span></span>
+<span class="line"><span>                    USART_SendString("错误: RTD短路！\r\n");</span></span>
+<span class="line"><span>                    break;</span></span>
+<span class="line"><span>                default:</span></span>
+<span class="line"><span>                    USART_SendString("错误: 读取失败！\r\n");</span></span>
+<span class="line"><span>                    break;</span></span>
+<span class="line"><span>            }</span></span>
 <span class="line"><span>        }</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>        MAX31865_Delay(0xFFFFF);</span></span>
+<span class="line"><span>        // 延时1秒</span></span>
+<span class="line"><span>        for(uint32_t i = 0; i &#x3C; 7200000; i++);</span></span>
 <span class="line"><span>    }</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span></code></pre>
 <h2 id="hal库代码-hal库">HAL库代码 {#HAL库}</h2>
-<h3 id="max31865h-1">MAX31865.h</h3>
+<p>如果你使用 STM32 HAL 库，可以使用以下代码：</p>
+<h3 id="max31865h">MAX31865.h</h3>
 <pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#ifndef __MAX31865_H</span></span>
 <span class="line"><span>#define __MAX31865_H</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>#include "main.h"</span></span>
 <span class="line"><span>#include "math.h"</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>#define RREF                    430</span></span>
+<span class="line"><span>#define RREF                    430.0f      // 参考电阻值</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>#define MAX31865_CONTROL_PORT     GPIOA</span></span>
 <span class="line"><span>#define MAX31865_SDO              GPIO_PIN_0</span></span>
@@ -352,6 +582,7 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>#define MAX31865_SDI              GPIO_PIN_3</span></span>
 <span class="line"><span>#define MAX31865_DRDY             GPIO_PIN_15</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>// 引脚操作宏</span></span>
 <span class="line"><span>#define MAX31865_CS_SET     HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_CS, GPIO_PIN_SET)</span></span>
 <span class="line"><span>#define MAX31865_CS_CLR    HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_CS, GPIO_PIN_RESET)</span></span>
 <span class="line"><span>#define MAX31865_SCLK_SET HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_SCLK, GPIO_PIN_SET)</span></span>
@@ -360,6 +591,7 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>#define MAX31865_SDI_CLR  HAL_GPIO_WritePin(MAX31865_CONTROL_PORT, MAX31865_SDI, GPIO_PIN_RESET)</span></span>
 <span class="line"><span>#define MAX31865_SDO_READ HAL_GPIO_ReadPin(MAX31865_CONTROL_PORT, MAX31865_SDO)</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>// 函数声明</span></span>
 <span class="line"><span>void MAX31865_Init(void);</span></span>
 <span class="line"><span>void MAX31865_Write(unsigned char addr, unsigned char data);</span></span>
 <span class="line"><span>unsigned char MAX31865_Read(unsigned char addr);</span></span>
@@ -367,34 +599,45 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span></span></span>
 <span class="line"><span>#endif</span></span>
 <span class="line"><span></span></span></code></pre>
-<h3 id="max31865c-1">MAX31865.c</h3>
+<h3 id="max31865c">MAX31865.c</h3>
 <pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#include "MAX31865.h"</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>/************************** 初始化 **************************/</span></span>
 <span class="line"><span>void MAX31865_Init(void)</span></span>
 <span class="line"><span>{</span></span>
 <span class="line"><span>    GPIO_InitTypeDef GPIO_InitStruct = {0};</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 使能GPIOA时钟</span></span>
 <span class="line"><span>    __HAL_RCC_GPIOA_CLK_ENABLE();</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 配置CS, SCLK, SDI为输出</span></span>
 <span class="line"><span>    GPIO_InitStruct.Pin = MAX31865_CS | MAX31865_SCLK | MAX31865_SDI;</span></span>
 <span class="line"><span>    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;</span></span>
 <span class="line"><span>    GPIO_InitStruct.Pull = GPIO_NOPULL;</span></span>
 <span class="line"><span>    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;</span></span>
 <span class="line"><span>    HAL_GPIO_Init(MAX31865_CONTROL_PORT, &#x26;GPIO_InitStruct);</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 配置SDO为输入</span></span>
 <span class="line"><span>    GPIO_InitStruct.Pin = MAX31865_SDO;</span></span>
 <span class="line"><span>    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;</span></span>
 <span class="line"><span>    HAL_GPIO_Init(MAX31865_CONTROL_PORT, &#x26;GPIO_InitStruct);</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 默认状态</span></span>
 <span class="line"><span>    MAX31865_CS_SET;</span></span>
 <span class="line"><span>    MAX31865_SCLK_SET;</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 初始化配置</span></span>
+<span class="line"><span>    MAX31865_Write(0x80, 0xD1);  // 开启自动转换、三线制、50Hz滤波</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>/************************** 写寄存器 **************************/</span></span>
 <span class="line"><span>void MAX31865_Write(unsigned char addr, unsigned char data)</span></span>
 <span class="line"><span>{</span></span>
 <span class="line"><span>    unsigned char i;</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>    MAX31865_CS_CLR;</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 发送地址（写操作）</span></span>
 <span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
 <span class="line"><span>    {</span></span>
 <span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
@@ -403,6 +646,8 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>        MAX31865_SCLK_SET;</span></span>
 <span class="line"><span>        addr &#x3C;&#x3C;= 1;</span></span>
 <span class="line"><span>    }</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 发送数据</span></span>
 <span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
 <span class="line"><span>    {</span></span>
 <span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
@@ -411,15 +656,19 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>        MAX31865_SCLK_SET;</span></span>
 <span class="line"><span>        data &#x3C;&#x3C;= 1;</span></span>
 <span class="line"><span>    }</span></span>
+<span class="line"><span>    </span></span>
 <span class="line"><span>    MAX31865_CS_SET;</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>/************************** 读寄存器 **************************/</span></span>
 <span class="line"><span>unsigned char MAX31865_Read(unsigned char addr)</span></span>
 <span class="line"><span>{</span></span>
 <span class="line"><span>    unsigned char i;</span></span>
 <span class="line"><span>    unsigned char data = 0;</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>    MAX31865_CS_CLR;</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 发送地址（读操作）</span></span>
 <span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
 <span class="line"><span>    {</span></span>
 <span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
@@ -428,6 +677,8 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>        MAX31865_SCLK_SET;</span></span>
 <span class="line"><span>        addr &#x3C;&#x3C;= 1;</span></span>
 <span class="line"><span>    }</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 读取数据</span></span>
 <span class="line"><span>    for(i = 0; i &#x3C; 8; i++)</span></span>
 <span class="line"><span>    {</span></span>
 <span class="line"><span>        MAX31865_SCLK_CLR;</span></span>
@@ -435,26 +686,31 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>        MAX31865_SCLK_SET;</span></span>
 <span class="line"><span>        if(MAX31865_SDO_READ) data |= 0x01;</span></span>
 <span class="line"><span>    }</span></span>
+<span class="line"><span>    </span></span>
 <span class="line"><span>    MAX31865_CS_SET;</span></span>
 <span class="line"><span>    return data;</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>/************************** 获取温度 **************************/</span></span>
 <span class="line"><span>float MAX31865_GetTemp(void)</span></span>
 <span class="line"><span>{</span></span>
 <span class="line"><span>    unsigned int data;</span></span>
 <span class="line"><span>    float Rt;</span></span>
-<span class="line"><span>    float Rt0 = 100;</span></span>
+<span class="line"><span>    float Rt0 = 100.0f;</span></span>
 <span class="line"><span>    float Z1, Z2, Z3, Z4, temp;</span></span>
-<span class="line"><span>    float a = 3.9083e-3;</span></span>
-<span class="line"><span>    float b = -5.775e-7;</span></span>
+<span class="line"><span>    float a = 3.9083e-3f;</span></span>
+<span class="line"><span>    float b = -5.775e-7f;</span></span>
 <span class="line"><span>    float rpoly;</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 读取16位ADC数据</span></span>
 <span class="line"><span>    data = MAX31865_Read(0x01) &#x3C;&#x3C; 8;</span></span>
 <span class="line"><span>    data |= MAX31865_Read(0x02);</span></span>
-<span class="line"><span>    data >>= 1;</span></span>
+<span class="line"><span>    data >>= 1;  // 右移1位，取高15位</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    Rt = (float)data / 32768.0 * RREF;</span></span>
+<span class="line"><span>    // 计算PT100电阻值</span></span>
+<span class="line"><span>    Rt = (float)data / 32768.0f * RREF;</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // Callendar-Van Dusen公式计算正温度</span></span>
 <span class="line"><span>    Z1 = -a;</span></span>
 <span class="line"><span>    Z2 = a * a - 4 * b;</span></span>
 <span class="line"><span>    Z3 = 4 * b / Rt0;</span></span>
@@ -462,47 +718,134 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 <span class="line"><span>    temp = Z2 + Z3 * Rt;</span></span>
 <span class="line"><span>    temp = (sqrt(temp) + Z1) / Z4;</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>    if(temp >= 0)</span></span>
+<span class="line"><span>    // 正温度直接返回</span></span>
+<span class="line"><span>    if(temp >= 0.0f)</span></span>
 <span class="line"><span>    {</span></span>
 <span class="line"><span>        return temp;</span></span>
 <span class="line"><span>    }</span></span>
 <span class="line"><span></span></span>
+<span class="line"><span>    // 负温度使用多项式拟合</span></span>
 <span class="line"><span>    rpoly = Rt;</span></span>
-<span class="line"><span>    temp = -242.02;</span></span>
-<span class="line"><span>    temp += 2.2228 * rpoly;</span></span>
+<span class="line"><span>    temp = -242.02f;</span></span>
+<span class="line"><span>    temp += 2.2228f * rpoly;</span></span>
 <span class="line"><span>    rpoly *= Rt;</span></span>
-<span class="line"><span>    temp += 2.5859e-3 * rpoly;</span></span>
+<span class="line"><span>    temp += 2.5859e-3f * rpoly;</span></span>
 <span class="line"><span>    rpoly *= Rt;</span></span>
-<span class="line"><span>    temp -= 4.8260e-6 * rpoly;</span></span>
+<span class="line"><span>    temp -= 4.8260e-6f * rpoly;</span></span>
 <span class="line"><span>    rpoly *= Rt;</span></span>
-<span class="line"><span>    temp -= 2.8183e-8 * rpoly;</span></span>
+<span class="line"><span>    temp -= 2.8183e-8f * rpoly;</span></span>
 <span class="line"><span>    rpoly *= Rt;</span></span>
-<span class="line"><span>    temp += 1.5243e-10 * rpoly;</span></span>
+<span class="line"><span>    temp += 1.5243e-10f * rpoly;</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span>    return temp;</span></span>
 <span class="line"><span>}</span></span>
 <span class="line"><span></span></span></code></pre>
-<h3 id="mainc-使用">main.c 使用</h3>
-<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>// 配置</span></span>
-<span class="line"><span>MAX31865_Write(0x80, 0xD1);</span></span>
+<h3 id="mainc-使用示例">main.c 使用示例</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>#include "MAX31865.h"</span></span>
+<span class="line"><span>#include "stdio.h"</span></span>
 <span class="line"><span></span></span>
-<span class="line"><span>// 获取温度</span></span>
-<span class="line"><span>Temp1 = MAX31865_GetTemp() * 10;</span></span>
+<span class="line"><span>extern UART_HandleTypeDef huart1;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>int main(void)</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>  HAL_Init();</span></span>
+<span class="line"><span>  SystemClock_Config();</span></span>
+<span class="line"><span>  </span></span>
+<span class="line"><span>  // 初始化MAX31865</span></span>
+<span class="line"><span>  MAX31865_Init();</span></span>
+<span class="line"><span>  </span></span>
+<span class="line"><span>  // 配置转换模式</span></span>
+<span class="line"><span>  MAX31865_Write(0x80, 0xD1);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  while (1)</span></span>
+<span class="line"><span>  {</span></span>
+<span class="line"><span>    // 获取温度</span></span>
+<span class="line"><span>    float temp = MAX31865_GetTemp();</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // 通过串口输出</span></span>
+<span class="line"><span>    char buffer[30];</span></span>
+<span class="line"><span>    sprintf(buffer, "Temp: %.2fC\r\n", temp);</span></span>
+<span class="line"><span>    HAL_UART_Transmit(&#x26;huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    HAL_Delay(1000);</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>}</span></span>
 <span class="line"><span></span></span></code></pre>
 <h2 id="使用说明-使用说明">使用说明 {#使用说明}</h2>
+<h3 id="1-硬件连接步骤">1. 硬件连接步骤</h3>
 <ol>
-<li><strong>硬件连接</strong>：按表格接线，注意3线制需要短接</li>
-<li><strong>参考电阻</strong>：PT100 常用 400Ω，代码中已配置</li>
-<li><strong>滤波选择</strong>：50Hz 滤波适合国内电网</li>
-<li><strong>故障检测</strong>：内置开路/短路检测</li>
-</ol> </div> <a href="/" class="back-link" data-astro-cid-egg7nqdx>← 返回首页</a> </div> </article>  </main> <!-- BGM播放器 - 使用iframe保持播放不中断 --> <iframe id="bgmFrame" src="/player.html" style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;; --primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;" allow="autoplay"></iframe> <!-- 音乐开关按钮 --> <button type="button" class="music-toggle" id="musicToggle" title="背景音乐" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="music-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🎵</span> </button> <!-- 图片查看器 --> <div class="lightbox" id="lightbox" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <button class="lightbox-close" id="lightboxClose" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✕</button> <img class="lightbox-img" id="lightboxImg" src="" alt="" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> </div> <!-- 页脚 --> <footer class="footer" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="footer-decoration" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="deco-star" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> </div> <p class="footer-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Made with ♥ by <span class="highlight" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Lidure</span></p> <p class="footer-sub" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">~ 喵~ 🐾</p> </footer>   </body> </html> <script>
+<li><strong>连接电源</strong>：将MAX31865模块的VCC连接到3.3V，GND连接到GND</li>
+<li><strong>连接SPI引脚</strong>：按照接线表连接SDO、CS、SCLK、SDI到STM32</li>
+<li><strong>连接PT100</strong>：使用三线制方式连接PT100传感器</li>
+<li><strong>检查接线</strong>：确保所有连接牢固，无虚焊</li>
+</ol>
+<h3 id="2-软件配置">2. 软件配置</h3>
+<ol>
+<li><strong>配置参考电阻</strong>：根据模块实际参考电阻修改 <code>RTD_RREF_VALUE</code></li>
+<li><strong>选择滤波频率</strong>：国内使用50Hz，国外使用60Hz</li>
+<li><strong>选择接线方式</strong>：根据实际接线修改 <code>RTD_WIRE_3LINE</code> 宏</li>
+</ol>
+<h3 id="3-调试技巧">3. 调试技巧</h3>
+<p><strong>常见问题及解决方法：</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>问题现象</th><th>可能原因</th><th>解决方法</th></tr></thead><tbody><tr><td>温度显示固定值</td><td>通信故障</td><td>检查SPI接线、时钟频率</td></tr><tr><td>温度显示异常高/低</td><td>参考电阻配置错误</td><td>确认模块参考电阻值</td></tr><tr><td>显示RTD开路错误</td><td>传感器未连接或断线</td><td>检查PT100接线</td></tr><tr><td>显示RTD短路错误</td><td>传感器短路</td><td>检查PT100是否短路</td></tr><tr><td>温度跳变严重</td><td>电源干扰</td><td>添加电源滤波电容</td></tr></tbody></table>
+<h3 id="4-精度优化建议">4. 精度优化建议</h3>
+<ul>
+<li><strong>使用三线制连接</strong>：消除导线电阻影响</li>
+<li><strong>添加滤波电容</strong>：在VCC和GND之间添加100nF电容</li>
+<li><strong>远离干扰源</strong>：将传感器远离电机、继电器等干扰源</li>
+<li><strong>定期校准</strong>：使用标准温度计进行校准</li>
+</ul>
+<h2 id="注意事项-注意事项">注意事项 {#注意事项}</h2>
+<ol>
+<li><strong>电源要求</strong>：MAX31865需要稳定的3.3V电源，纹波应小于100mV</li>
+<li><strong>参考电阻</strong>：不同模块参考电阻可能不同，常见为400Ω或430Ω</li>
+<li><strong>PT100类型</strong>：确保使用的是PT100（100Ω）而非PT1000（1000Ω）</li>
+<li><strong>测量范围</strong>：标准PT100测量范围为-200°C至+850°C</li>
+<li><strong>故障处理</strong>：检测到故障时应及时处理，避免错误数据</li>
+</ol>
+<hr>
+<p>希望这篇文章对你有帮助！如果有任何问题或建议，欢迎留言讨论~</p> </div> <footer class="post-footer" data-astro-cid-egg7nqdx> <a href="/" class="back-button" data-astro-cid-egg7nqdx>← 返回首页</a> </footer> </main> </article>  </main> <!-- BGM播放器 - 使用iframe保持播放不中断 --> <iframe id="bgmFrame" src="/player.html" style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;; --primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;" allow="autoplay"></iframe> <!-- 音乐开关按钮 --> <button type="button" class="music-toggle" id="musicToggle" title="背景音乐" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="music-icon" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🎵</span> </button> <!-- 图片查看器 --> <div class="lightbox" id="lightbox" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <button class="lightbox-close" id="lightboxClose" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✕</button> <img class="lightbox-img" id="lightboxImg" src="" alt="" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> </div> <!-- 页脚 --> <footer class="footer" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <div class="footer-decoration" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;"> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> <span class="deco-star" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">✦</span> <span class="deco-flower" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">🌸</span> </div> <p class="footer-text" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Made with ♥ by <span class="highlight" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">Lidure</span></p> <p class="footer-sub" style="--primary: #FF69B4;--secondary: #FF1493;--accent: #FFB6C1;--bgDark: #0D0B14;--bgCard: rgba(30, 27, 46, 0.8);--textLight: #FDF2F8;--textMuted: #FFB6C1;">~ 喵~ 🐾</p> </footer>   </body> </html> <script>
   // 平滑滚动到锚点
-  document.querySelectorAll('.toc-link').forEach(function(link) {
+  document.querySelectorAll('.toc-item').forEach(function(link) {
     link.addEventListener('click', function(e) {
       e.preventDefault();
       var targetId = this.getAttribute('href').substring(1);
       var target = document.getElementById(targetId);
-      // 尝试查找包含该ID的元素
       if (!target) {
         var allElements = document.querySelectorAll('[id*="' + targetId + '"], [id*="' + decodeURIComponent(targetId) + '"]');
         if (allElements.length > 0) {
@@ -551,5 +894,57 @@ $$R_t = \frac{ADC值}{32768} \times R_{REF}$$</p>
 
       wrapper.appendChild(copyBtn);
     });
+  })();
+
+  // 侧边栏日历
+  (function() {
+    let currentDate = new Date();
+    const today = new Date();
+
+    function generateCalendar(year, month) {
+      const titleEl = document.getElementById('calendar-title');
+      const daysEl = document.getElementById('calendar-days');
+      
+      if (!titleEl || !daysEl) return;
+      
+      titleEl.textContent = `${year}年${month + 1}月`;
+      daysEl.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDay();
+      const totalDays = lastDay.getDate();
+
+      for (let i = 0; i < startDay; i++) {
+        const empty = document.createElement('span');
+        empty.className = 'cal-empty';
+        daysEl.appendChild(empty);
+      }
+
+      for (let d = 1; d <= totalDays; d++) {
+        const day = document.createElement('span');
+        day.className = 'cal-day';
+        day.textContent = d;
+        if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === d) {
+          day.classList.add('cal-today');
+        }
+        daysEl.appendChild(day);
+      }
+    }
+
+    function prevMonth() {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    }
+
+    function nextMonth() {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    }
+
+    generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+    
+    document.getElementById('prev-month-btn')?.addEventListener('click', prevMonth);
+    document.getElementById('next-month-btn')?.addEventListener('click', nextMonth);
   })();
 </script> 
