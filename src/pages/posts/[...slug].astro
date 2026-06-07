@@ -571,23 +571,51 @@ const { Content } = await post.render();
 
   .post-content :global(table) {
     width: 100%;
-    border-collapse: collapse;
-    margin: 25px 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 30px 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   }
 
   .post-content :global(th), .post-content :global(td) {
-    padding: 12px 15px;
-    border: 1px solid var(--glass-border);
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 105, 180, 0.15);
+    border-right: 1px solid rgba(255, 105, 180, 0.15);
     text-align: left;
+    font-size: 0.95rem;
+  }
+
+  .post-content :global(th):last-child,
+  .post-content :global(td):last-child {
+    border-right: none;
+  }
+
+  .post-content :global(tr):last-child :global(td) {
+    border-bottom: none;
   }
 
   .post-content :global(th) {
-    background: rgba(255, 20, 147, 0.15);
+    background: linear-gradient(135deg, rgba(255, 20, 147, 0.2), rgba(168, 85, 247, 0.2));
     color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
+  }
+
+  .post-content :global(tr) {
+    transition: all 0.3s ease;
   }
 
   .post-content :global(tr:hover) {
-    background: rgba(255, 20, 147, 0.05);
+    background: rgba(255, 105, 180, 0.1);
+    transform: scale(1.01);
+  }
+
+  .post-content :global(tr:nth-child(even)) {
+    background: rgba(255, 105, 180, 0.03);
   }
 
   .back-link {
