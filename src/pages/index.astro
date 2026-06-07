@@ -156,7 +156,8 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
   .info-panel {
     position: absolute;
     top: 80px;
-    right: 30px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -166,18 +167,18 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     border: 1px solid rgba(255, 105, 180, 0.18);
     backdrop-filter: blur(20px);
     z-index: 10;
-    animation: slide-in-right 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+    animation: slide-in-down 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
     box-shadow: 0 8px 32px rgba(255, 20, 147, 0.12);
   }
 
-  @keyframes slide-in-right {
+  @keyframes slide-in-down {
     from {
       opacity: 0;
-      transform: translateX(30px);
+      transform: translateX(-50%) translateY(-20px);
     }
     to {
       opacity: 1;
-      transform: translateX(0);
+      transform: translateX(-50%) translateY(0);
     }
   }
 

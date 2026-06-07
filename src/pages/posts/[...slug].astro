@@ -17,10 +17,14 @@ const { Content } = await post.render();
 <NekoLayout title={`${post.data.title} - Radiozed`}>
   <!-- 左侧装饰 -->
   <div class="side-decor left">
-    <div class="side-date">
-      <div class="date-year">{post.data.pubDate.getFullYear()}</div>
-      <div class="date-day">{post.data.pubDate.getDate()}</div>
-      <div class="date-month">{post.data.pubDate.toLocaleDateString('zh-CN', { month: 'short' })}</div>
+    <div class="side-calendar">
+      <div class="calendar-header">
+        <span class="calendar-year-month" id="calendar-year-month"></span>
+      </div>
+      <div class="calendar-weekdays-row">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div class="calendar-days-grid" id="calendar-days-grid"></div>
     </div>
     <div class="side-decoration">
       <span class="deco-line"></span>
@@ -143,6 +147,43 @@ const { Content } = await post.render();
 
       wrapper.appendChild(copyBtn);
     });
+  })();
+
+  // 侧边栏日历
+  (function() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    
+    const yearMonthEl = document.getElementById('calendar-year-month');
+    const daysGridEl = document.getElementById('calendar-days-grid');
+    
+    if (!yearMonthEl || !daysGridEl) return;
+    
+    yearMonthEl.textContent = `${year}年${month + 1}月`;
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+    
+    // 上月空白
+    for (let i = 0; i < startDay; i++) {
+      const empty = document.createElement('span');
+      empty.className = 'cal-empty';
+      daysGridEl.appendChild(empty);
+    }
+    
+    // 当月日期
+    for (let d = 1; d <= totalDays; d++) {
+      const day = document.createElement('span');
+      day.className = 'cal-day';
+      day.textContent = d;
+      if (d === now.getDate()) {
+        day.classList.add('today');
+      }
+      daysGridEl.appendChild(day);
+    }
   })();
 </script>
 
@@ -485,13 +526,72 @@ const { Content } = await post.render();
     right: 25px;
   }
 
-  .side-date {
-    background: rgba(20, 15, 35, 0.8);
+  /* 侧边栏日历样式 */
+  .side-calendar {
+    background: rgba(20, 15, 35, 0.85);
     backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 105, 180, 0.2);
+    border: 1px solid rgba(255, 105, 180, 0.25);
     border-radius: 16px;
-    padding: 15px 20px;
+    padding: 15px 12px;
     text-align: center;
+    min-width: 120px;
+  }
+
+  .calendar-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 105, 180, 0.15);
+  }
+
+  .calendar-year-month {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .calendar-weekdays-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 8px;
+  }
+
+  .calendar-weekdays-row span {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 3px 0;
+  }
+
+  .calendar-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .cal-empty {
+    display: block;
+    width: 14px;
+    height: 14px;
+  }
+
+  .cal-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    font-size: 0.6rem;
+    color: var(--text-light);
+    border-radius: 4px;
+    margin: 0 auto;
+  }
+
+  .cal-day.today {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(255, 20, 147, 0.5);
   }
 
   .side-info {
@@ -604,6 +704,27 @@ const { Content } = await post.render();
     }
 
     .side-decor {
+      display: none;
+    }
+  }
+
+  /* 移动端显示日历 */
+  @media (max-width: 1100px) {
+    .side-decor.left {
+      position: static;
+      transform: none;
+      flex-direction: row;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 15px;
+    }
+
+    .side-decor.left .side-decoration,
+    .side-decor.left .side-extra {
+      display: none;
+    }
+
+    .side-decor.right {
       display: none;
     }
   }
