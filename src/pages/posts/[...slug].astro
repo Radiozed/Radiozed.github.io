@@ -569,53 +569,53 @@ const { Content } = await post.render();
     display: block;
   }
 
-  .post-content :global(table) {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin: 30px 0;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 30px 0 !important;
+    border: 2px solid rgba(255, 105, 180, 0.3) !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    background: rgba(30, 27, 46, 0.9) !important;
+    display: table !important;
   }
 
-  .post-content :global(th), .post-content :global(td) {
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(255, 105, 180, 0.15);
-    border-right: 1px solid rgba(255, 105, 180, 0.15);
-    text-align: left;
-    font-size: 0.95rem;
+  thead {
+    background: linear-gradient(135deg, rgba(255, 20, 147, 0.3), rgba(168, 85, 247, 0.3)) !important;
   }
 
-  .post-content :global(th):last-child,
-  .post-content :global(td):last-child {
-    border-right: none;
+  th {
+    padding: 16px 20px !important;
+    text-align: center !important;
+    color: #FFB6C1 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    font-size: 0.9rem !important;
+    border-bottom: 2px solid rgba(255, 105, 180, 0.4) !important;
+    white-space: nowrap !important;
+    background: linear-gradient(135deg, rgba(255, 20, 147, 0.3), rgba(168, 85, 247, 0.3)) !important;
   }
 
-  .post-content :global(tr):last-child :global(td) {
-    border-bottom: none;
+  td {
+    padding: 14px 20px !important;
+    text-align: center !important;
+    border-bottom: 1px solid rgba(255, 105, 180, 0.15) !important;
+    font-size: 0.95rem !important;
+    color: #FDF2F8 !important;
+    background: transparent !important;
   }
 
-  .post-content :global(th) {
-    background: linear-gradient(135deg, rgba(255, 20, 147, 0.2), rgba(168, 85, 247, 0.2));
-    color: var(--accent);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 0.85rem;
+  tr:last-child td {
+    border-bottom: none !important;
   }
 
-  .post-content :global(tr) {
-    transition: all 0.3s ease;
+  tbody tr:hover {
+    background: rgba(255, 105, 180, 0.15) !important;
   }
 
-  .post-content :global(tr:hover) {
-    background: rgba(255, 105, 180, 0.1);
-    transform: scale(1.01);
-  }
-
-  .post-content :global(tr:nth-child(even)) {
-    background: rgba(255, 105, 180, 0.03);
+  tbody tr:nth-child(even) {
+    background: rgba(255, 105, 180, 0.05) !important;
   }
 
   .back-link {
