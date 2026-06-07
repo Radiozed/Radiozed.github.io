@@ -233,6 +233,7 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
     // 音乐开关
     (function() {
       var musicToggle = document.getElementById('musicToggle');
+      var bgmFrame = document.getElementById('bgmFrame');
       if (!musicToggle) return;
 
       var isPlaying = localStorage.getItem('bgmAutoPlay') === 'true';
@@ -249,11 +250,19 @@ const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
 
       updateMusicBtn();
 
+      // 如果设置了自动播放，尝试播放
+      if (isPlaying && bgmFrame) {
+        bgmFrame.contentWindow.postMessage('play', '*');
+      }
+
       musicToggle.onclick = function() {
         isPlaying = !isPlaying;
         localStorage.setItem('bgmAutoPlay', isPlaying.toString());
         updateMusicBtn();
-        window.location.reload();
+        // 通过 postMessage 通知 iframe 播放/暂停，不需要刷新页面
+        if (bgmFrame && bgmFrame.contentWindow) {
+          bgmFrame.contentWindow.postMessage(isPlaying ? 'play' : 'pause', '*');
+        }
       };
     })();
 
