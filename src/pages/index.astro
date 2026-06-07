@@ -31,7 +31,6 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     <div class="hero-avatar">
       <img src="/nekomusume.jpg" alt="猫娘头像" />
       <div class="avatar-glow"></div>
-      <div class="avatar-ring"></div>
     </div>
     <h1 class="title-animate">我是 Radiozed~</h1>
     <p class="subtitle">一个热爱技术&amp;二次元的普通大学生</p>
@@ -215,27 +214,6 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     border-top: 1px solid rgba(255, 105, 180, 0.15);
   }
 
-  /* 头像圆环装饰 */
-  .avatar-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 160px;
-    height: 160px;
-    transform: translate(-50%, -50%);
-    border: 2px solid transparent;
-    border-radius: 50%;
-    background: linear-gradient(var(--bg-dark), var(--bg-dark)) padding-box,
-                linear-gradient(135deg, var(--primary), var(--secondary), var(--accent)) border-box;
-    animation: ring-rotate 8s linear infinite;
-    pointer-events: none;
-  }
-
-  @keyframes ring-rotate {
-    from { transform: translate(-50%, -50%) rotate(0deg); }
-    to { transform: translate(-50%, -50%) rotate(360deg); }
-  }
-
   /* 装饰丝带 */
   .ribbon {
     position: absolute;
@@ -316,26 +294,54 @@ const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDa
     100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
   }
 
-  /* 头像光晕 */
+  /* 头像区域 */
   .hero-avatar {
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .hero-avatar img {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid transparent;
+    background: linear-gradient(var(--bg-dark), var(--bg-dark)) padding-box,
+                linear-gradient(135deg, var(--primary), var(--secondary), var(--accent)) border-box;
+    box-shadow: 
+      0 0 30px rgba(255, 105, 180, 0.3),
+      0 0 60px rgba(255, 105, 180, 0.2),
+      inset 0 0 30px rgba(255, 255, 255, 0.05);
+    transition: all 0.4s ease;
+  }
+
+  .hero-avatar:hover img {
+    transform: scale(1.05);
+    box-shadow: 
+      0 0 40px rgba(255, 105, 180, 0.5),
+      0 0 80px rgba(255, 105, 180, 0.3),
+      inset 0 0 40px rgba(255, 255, 255, 0.1);
   }
 
   .avatar-glow {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 150px;
-    height: 150px;
+    width: 220px;
+    height: 220px;
     transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(255, 105, 180, 0.4) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255, 105, 180, 0.3) 0%, transparent 60%);
     animation: glow-pulse 2s ease-in-out infinite;
     pointer-events: none;
+    border-radius: 50%;
   }
 
   @keyframes glow-pulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
   }
 
   /* 标题动画 */
