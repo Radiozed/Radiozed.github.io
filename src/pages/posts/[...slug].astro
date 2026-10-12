@@ -5,17 +5,26 @@ import NekoLayout from '../../layouts/NekoLayout.astro';
 export async function getStaticPaths() {
   const posts = await getCollection('posts');
   const sorted = [...posts].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+  /* 侧栏日历要用：所有文章的日期索引，用来标记哪几天有更新 */
+  const archive = sorted.map((p) => ({
+    slug: p.slug,
+    title: p.data.title,
+    date: p.data.pubDate.toISOString().slice(0, 10),
+  }));
+
   return sorted.map((post, i) => ({
     params: { slug: post.slug },
     props: {
       post,
+      archive,
       prev: sorted[i + 1] ?? null,
       next: sorted[i - 1] ?? null,
     },
   }));
 }
 
-const { post, prev, next } = Astro.props;
+const { post, prev, next, archive } = Astro.props;
 const { Content, headings } = await post.render();
 
 /* 目录：只取二三级标题，避免侧栏过长 */
@@ -60,14 +69,23 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
         </div>
       </div>
 
-      <div class="panel panel-tight sidebar-cal reveal">
-        <div class="cal-header">
-          <button class="cal-nav" id="prev-month-btn" type="button" aria-label="上个月">‹</button>
+      <!-- 更新日历：有文章的日期会标出来，点一下直接跳过去 -->
+      <div
+        class="panel panel-tight sidebar-cal reveal"
+        id="calendarPanel"
+        data-archive={JSON.stringify(archive)}
+      >
+        <div class="cal-head">
           <span class="cal-title" id="calendar-title">—</span>
-          <button class="cal-nav" id="next-month-btn" type="button" aria-label="下个月">›</button>
+          <div class="cal-actions">
+            <button class="cal-nav" id="prev-month-btn" type="button" aria-label="上个月">‹</button>
+            <button class="cal-today" id="cal-today-btn" type="button">今天</button>
+            <button class="cal-nav" id="next-month-btn" type="button" aria-label="下个月">›</button>
+          </div>
         </div>
         <div class="cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
         <div class="cal-days" id="calendar-days"></div>
+        <p class="cal-foot" id="calendar-foot">—</p>
       </div>
     </aside>
 
@@ -161,14 +179,69 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     });
   })();
 
-  /* ── 侧栏日历 ── */
+  /* ── 侧栏更新日历 ── */
   (function calendar() {
+    var panel = document.getElementById('calendarPanel');
     var titleEl = document.getElementById('calendar-title');
     var daysEl = document.getElementById('calendar-days');
-    if (!titleEl || !daysEl) return;
+    var footEl = document.getElementById('calendar-foot');
+    if (!panel || !titleEl || !daysEl) return;
+
+    /* 每篇文章的发布日期，由构建时注入 */
+    var archive = [];
+    try { archive = JSON.parse(panel.dataset.archive || '[]'); } catch (e) { archive = []; }
+
+    var byDate = {};
+    archive.forEach(function (a) {
+      if (!a || !a.date) return;
+      if (!byDate[a.date]) byDate[a.date] = [];
+      byDate[a.date].push(a);
+    });
 
     var today = new Date();
     var cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    function pad2(n) { return ('0' + n).slice(-2); }
+
+    function makeCell(day, y, m) {
+      var key = y + '-' + pad2(m + 1) + '-' + pad2(day);
+      var hits = byDate[key] || [];
+      var isToday =
+        y === today.getFullYear() && m === today.getMonth() && day === today.getDate();
+
+      var cell = document.createElement('span');
+      cell.className = 'cal-day';
+      cell.textContent = String(day);
+
+      if (hits.length) {
+        cell.classList.add('has-post');
+        cell.title = hits.map(function (h) { return h.title; }).join('\n');
+      }
+      if (isToday) cell.classList.add('is-today');
+
+      if (hits.length) {
+        cell.classList.add('is-link');
+        cell.setAttribute('role', 'link');
+        cell.setAttribute('tabindex', '0');
+        cell.setAttribute('aria-label', key + ' 的更新：' + hits[0].title);
+
+        var go = function () { window.location.href = '/posts/' + hits[0].slug + '/'; };
+        cell.addEventListener('click', go);
+        cell.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+        });
+      }
+      return cell;
+    }
+
+    function countInMonth(y, m) {
+      var prefix = y + '-' + pad2(m + 1);
+      var n = 0;
+      Object.keys(byDate).forEach(function (k) {
+        if (k.indexOf(prefix) === 0) n += byDate[k].length;
+      });
+      return n;
+    }
 
     function render() {
       var y = cursor.getFullYear();
@@ -179,32 +252,34 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
       var startDay = new Date(y, m, 1).getDay();
       var total = new Date(y, m + 1, 0).getDate();
       var i;
-      var d;
 
       for (i = 0; i < startDay; i++) {
-        var pad = document.createElement('span');
-        pad.className = 'cal-empty';
-        daysEl.appendChild(pad);
+        var blank = document.createElement('span');
+        blank.className = 'cal-empty';
+        daysEl.appendChild(blank);
       }
-      for (d = 1; d <= total; d++) {
-        var el = document.createElement('span');
-        el.className = 'cal-day';
-        el.textContent = String(d);
-        if (y === today.getFullYear() && m === today.getMonth() && d === today.getDate()) {
-          el.classList.add('is-today');
-        }
-        daysEl.appendChild(el);
+      for (i = 1; i <= total; i++) {
+        daysEl.appendChild(makeCell(i, y, m));
       }
+
+      if (footEl) {
+        var n = countInMonth(y, m);
+        footEl.textContent = n ? '本月 ' + n + ' 篇更新，点日期直接看' : '本月还没有更新';
+      }
+    }
+
+    function shift(delta) {
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + delta, 1);
+      render();
     }
 
     var prevBtn = document.getElementById('prev-month-btn');
     var nextBtn = document.getElementById('next-month-btn');
-    if (prevBtn) prevBtn.addEventListener('click', function () {
-      cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1);
-      render();
-    });
-    if (nextBtn) nextBtn.addEventListener('click', function () {
-      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    var todayBtn = document.getElementById('cal-today-btn');
+    if (prevBtn) prevBtn.addEventListener('click', function () { shift(-1); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { shift(1); });
+    if (todayBtn) todayBtn.addEventListener('click', function () {
+      cursor = new Date(today.getFullYear(), today.getMonth(), 1);
       render();
     });
 
@@ -265,29 +340,61 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
   .info-label { font-size: 12px; color: var(--ink-3); }
   .info-value { font-family: var(--font-latin); font-size: 13px; font-weight: 700; color: var(--ink); }
 
-  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .cal-title { font-family: var(--font-latin); font-size: 13px; font-weight: 700; }
-  .cal-nav {
-    width: 30px; height: 30px; border-radius: 10px;
-    background: var(--pink-soft); color: var(--pink-deep); font-size: 16px; line-height: 1;
-    transition: transform .2s ease, background-color .2s ease;
+  /* ── 侧栏更新日历 ── */
+  .sidebar-cal { display: flex; flex-direction: column; gap: 10px; }
+
+  .cal-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
   }
-  .cal-nav:hover { background: var(--pink); color: #fff; transform: scale(1.08); }
-  .cal-week, .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-  .cal-week span { text-align: center; font-size: 11px; color: var(--ink-3); padding: 4px 0; }
+  .cal-title {
+    font-family: var(--font-latin); font-size: 13px; font-weight: 800;
+    color: var(--ink); letter-spacing: .01em; white-space: nowrap;
+  }
+  .cal-actions { display: flex; align-items: center; gap: 3px; }
+  .cal-nav {
+    width: 24px; height: 24px; border-radius: 8px;
+    display: grid; place-items: center;
+    background: transparent; color: var(--ink-3);
+    font-size: 15px; line-height: 1;
+    transition: background-color .18s ease, color .18s ease;
+  }
+  .cal-nav:hover { background: var(--pink-soft); color: var(--pink-deep); }
+  .cal-today {
+    padding: 4px 9px; border-radius: 8px;
+    background: var(--pink-soft); color: var(--pink-deep);
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+    transition: background-color .18s ease, color .18s ease;
+  }
+  .cal-today:hover { background: var(--pink-deep); color: #fff; }
+
+  .cal-week, .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-week span {
+    text-align: center; font-size: 10px; color: var(--ink-3); padding-bottom: 3px;
+  }
+  .cal-week span:first-child,
+  .cal-week span:last-child { color: var(--pink); }
 
   /* 日期格子由脚本动态创建，拿不到 data-astro-cid，必须用 :global 才吃得到样式 */
   :global(.cal-day) {
-    aspect-ratio: 1;
-    display: grid;
-    place-items: center;
-    font-family: var(--font-latin);
-    font-size: 12px;
+    position: relative;
+    display: grid; place-items: center;
+    height: 30px; border-radius: 9px;
+    font-family: var(--font-latin); font-size: 12px;
     color: var(--ink-2);
-    border-radius: 10px;
-    transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+    transition: background-color .16s ease, color .16s ease;
   }
   :global(.cal-day:hover) { background: var(--pink-soft); color: var(--pink-deep); }
+
+  /* 有更新的日期：粉色加粗 + 下方小圆点，点一下就跳过去 */
+  :global(.cal-day.has-post) { color: var(--pink-deep); font-weight: 700; }
+  :global(.cal-day.has-post::after) {
+    content: '';
+    position: absolute; bottom: 3px; left: 50%;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--pink-deep);
+    transform: translateX(-50%);
+  }
+  :global(.cal-day.is-link) { cursor: pointer; }
 
   /* 今天：跟按钮 / 标签同一套樱粉渐变 */
   :global(.cal-day.is-today) {
@@ -300,7 +407,14 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     background: linear-gradient(135deg, #F79AB8, var(--pink-deep));
     color: #fff;
   }
+  :global(.cal-day.is-today.has-post::after) { background: #fff; }
   :global(.cal-empty) { visibility: hidden; }
+
+  .cal-foot {
+    margin: 0; padding-top: 10px;
+    border-top: 1px solid var(--line);
+    font-size: 11px; color: var(--ink-3); text-align: center;
+  }
 
   /* ── 正文 ── */
   .post-main { min-width: 0; }
