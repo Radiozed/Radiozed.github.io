@@ -45,7 +45,7 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     <aside class="post-sidebar">
       {toc.length > 0 && (
         <nav class="panel panel-tight sidebar-toc" aria-label="文章目录">
-          <div class="toc-header">目录</div>
+          <div class="toc-header">目录 <em>{toc.length}</em></div>
           <div class="toc-list">
             {toc.map((h) => (
               <a class:list={['toc-item', { 'is-sub': h.depth === 3 }]} href={`#${h.slug}`}>{h.text}</a>
@@ -348,8 +348,14 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
   .post-sidebar::-webkit-scrollbar-thumb:hover { background: var(--pink); }
 
   .toc-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
     font-size: 13px; font-weight: 700; color: var(--ink-3);
     letter-spacing: .14em; margin-bottom: 14px;
+  }
+  .toc-header em {
+    font-style: normal; font-family: var(--font-latin); font-size: 11px; font-weight: 800;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--pink-soft); color: var(--pink-deep); letter-spacing: 0;
   }
   .toc-list { display: flex; flex-direction: column; gap: 2px; }
   .toc-item {
@@ -360,6 +366,18 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
   }
   .toc-item:hover { background: var(--pink-soft); color: var(--pink-deep); border-left-color: var(--pink); }
   .toc-item.is-sub { padding-left: 24px; font-size: 12.5px; color: var(--ink-3); }
+
+  /* 长文可能有三四十个标题。目录必须限高 + 独立滚动，
+     否则它会把下面的信息面板和日历整个顶出侧栏可视区 */
+  .sidebar-toc {
+    max-height: min(38vh, 340px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .sidebar-toc::-webkit-scrollbar { width: 6px; }
+  .sidebar-toc::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
+  .sidebar-toc::-webkit-scrollbar-thumb:hover { background: var(--pink); }
 
   .info-row {
     display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
@@ -493,6 +511,7 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
       max-height: none; overflow: visible; padding-right: 0;
     }
     .post-sidebar > * { flex: 1 1 240px; }
+    .sidebar-toc { max-height: none; overflow: visible; }
     .post-body { padding: 28px 24px; }
   }
   @media (max-width: 640px) {
