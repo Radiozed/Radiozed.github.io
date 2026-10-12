@@ -77,7 +77,7 @@
 /* ── 基础重置 ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+html { scroll-behavior: smooth; scroll-padding-top: 104px; }
 
 body {
   margin: 0;
@@ -434,7 +434,9 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
    ═══════════════════════════════════════════════════════════ */
 .prose { font-size: 16px; line-height: 2; color: var(--ink-2); }
 .prose > *:first-child { margin-top: 0; }
-.prose h1, .prose h2, .prose h3, .prose h4 { color: var(--ink); line-height: 1.5; scroll-margin-top: 110px; }
+/* 注意：这里不设 scroll-margin-top —— html 上的 scroll-padding-top 已经避开了吸顶导航，
+   两者叠加会让标题落在两倍偏移的位置，导致目录 scroll spy 的高亮停在上一条。 */
+.prose h1, .prose h2, .prose h3, .prose h4 { color: var(--ink); line-height: 1.5; }
 .prose h1 { font-size: 1.9rem; margin: 0 0 20px; padding-bottom: 12px; border-bottom: 2px solid var(--pink-soft); }
 .prose h2 {
   font-size: 1.45rem; margin: 40px 0 18px; padding-left: 14px;
