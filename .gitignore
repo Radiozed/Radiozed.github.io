@@ -1,0 +1,16 @@
+# 依赖
+node_modules/
+
+# 构建产物（GitHub Actions 会重新生成）
+dist/
+.astro/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# 环境变量
+.env
+.env.production

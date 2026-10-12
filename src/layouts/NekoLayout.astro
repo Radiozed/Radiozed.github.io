@@ -1,1048 +1,416 @@
 ---
+/**
+ * 全站布局 —— 樱花柔光主题
+ * 保留原有能力：BGM 播放器（iframe 不中断）、图片灯箱、樱花飘落、滚动揭示
+ */
+import '../styles/theme.css';
+
 interface Props {
   title: string;
   description?: string;
+  /** 当前页面对应的导航项，用于高亮 */
+  active?: 'home' | 'posts' | 'gallery' | 'library' | 'tutorial' | 'about';
 }
 
-const { title, description = "Radiozed 的小天地~ 喵~ 🐾" } = Astro.props;
+const {
+  title,
+  description = '樱风工房 —— Radiozed 的嵌入式驱动笔记：模块驱动源码、接线图、初始化流程与最小 Demo。',
+  active = '',
+} = Astro.props;
+
+const navItems = [
+  { key: 'home', label: '首页', href: '/' },
+  { key: 'library', label: '驱动库', href: '/#library' },
+  { key: 'tutorial', label: '上手教程', href: '/#tutorial' },
+  { key: 'posts', label: '全部文章', href: '/posts' },
+  { key: 'gallery', label: '画廊', href: '/gallery' },
+  { key: 'about', label: '关于我', href: '/#about' },
+];
 ---
 
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
-  <meta name="description" content={description}>
-  <link rel="icon" type="image/jpeg" href="/nekomusume.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="description" content={description} />
+  <meta name="theme-color" content="#FDF5FA" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='19' fill='%23FDE7F0'/%3E%3Cg fill='%23F389AE'%3E%3Cellipse cx='20' cy='12' rx='4.6' ry='5.8'/%3E%3Cellipse cx='20' cy='12' rx='4.6' ry='5.8' transform='rotate(72 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4.6' ry='5.8' transform='rotate(144 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4.6' ry='5.8' transform='rotate(216 20 20)'/%3E%3Cellipse cx='20' cy='12' rx='4.6' ry='5.8' transform='rotate(288 20 20)'/%3E%3C/g%3E%3Ccircle cx='20' cy='20' r='3.2' fill='%23E4668F'/%3E%3C/svg%3E"
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/500.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/700.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5/800.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/400.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/700.css" />
 </head>
 <body>
-  <!-- 猫娘大背景 -->
-  <div class="neko-bg">
-    <img src="/bg-hero.jpg" alt="" class="bg-image" />
-    <div class="bg-overlay"></div>
-  </div>
-  
-  <!-- 装饰光效 -->
-  <div class="glow-effects">
-    <div class="glow glow-1"></div>
-    <div class="glow glow-2"></div>
-    <div class="glow glow-3"></div>
-  </div>
+  <a class="skip-link" href="#main">跳到主要内容</a>
 
-  <!-- 导航栏 -->
-  <nav class="glass-nav">
-    <a href="/" class="nav-logo">
-      <span class="logo-icon">🌸</span>
-      <span class="logo-text">Radiozed</span>
-    </a>
-    <ul class="nav-links">
-      <li><a href="#posts" class="nav-link">
-        <span class="link-icon">✦</span> 全部文章
-      </a></li>
-      <li><a href="#gallery" class="nav-link">
-        <span class="link-icon">♡</span> 艺术作品
-      </a></li>
-    </ul>
-  </nav>
+  <!-- ── 顶部导航 ── -->
+  <header class="site-header" id="siteHeader">
+    <div class="nav-inner">
+      <a class="brand" href="/" aria-label="樱风工房 首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="40" height="40">
+            <circle cx="20" cy="20" r="19" fill="var(--pink-soft)"></circle>
+            <g fill="var(--pink)">
+              <ellipse cx="20" cy="12" rx="4.6" ry="5.8"></ellipse>
+              <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(72 20 20)"></ellipse>
+              <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(144 20 20)"></ellipse>
+              <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(216 20 20)"></ellipse>
+              <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(288 20 20)"></ellipse>
+            </g>
+            <circle cx="20" cy="20" r="3.2" fill="var(--pink-deep)"></circle>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">樱风工房</span>
+          <span class="brand-sub">SAKUKAZE LAB</span>
+        </span>
+      </a>
 
-  <main>
+      <nav class="nav-links" id="navLinks" aria-label="主导航">
+        {navItems.map((item) => (
+          <a href={item.href} class:list={['nav-link', { 'is-active': active === item.key }]}>
+            {item.label}
+          </a>
+        ))}
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn btn-primary btn-sm" href="/posts">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
+            <path
+              d="M12 3l2.6 5.7 6.2.7-4.6 4.2 1.3 6.1L12 16.8 6.5 19.7l1.3-6.1L3.2 9.4l6.2-.7L12 3Z"
+              stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+          </svg>
+          开始阅读
+        </a>
+        <button
+          class="icon-btn menu-btn"
+          id="menuBtn"
+          type="button"
+          aria-label="打开菜单"
+          aria-expanded="false"
+          aria-controls="navLinks"
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
     <slot />
   </main>
 
-<!-- BGM播放器 - 使用iframe保持播放不中断 -->
+  <!-- ── 页脚 ── -->
+  <footer class="site-footer">
+    <div class="footer-sky" aria-hidden="true">
+      <svg viewBox="0 0 1440 420" preserveAspectRatio="xMidYMid slice">
+        <circle cx="1236" cy="88" r="46" fill="#FFF3F8" opacity=".9"></circle>
+        <circle cx="1219" cy="77" r="42" fill="var(--night-from)"></circle>
+        <g fill="#fff">
+          <circle cx="120" cy="60" r="2" opacity=".55"></circle><circle cx="268" cy="122" r="1.4" opacity=".4"></circle>
+          <circle cx="402" cy="48" r="2.2" opacity=".6"></circle><circle cx="548" cy="140" r="1.5" opacity=".35"></circle>
+          <circle cx="690" cy="72" r="1.8" opacity=".5"></circle><circle cx="836" cy="130" r="1.3" opacity=".35"></circle>
+          <circle cx="968" cy="56" r="2" opacity=".55"></circle><circle cx="1094" cy="160" r="1.6" opacity=".4"></circle>
+          <circle cx="1332" cy="230" r="1.7" opacity=".45"></circle><circle cx="176" cy="248" r="1.4" opacity=".3"></circle>
+          <circle cx="628" cy="226" r="1.9" opacity=".4"></circle><circle cx="1046" cy="300" r="1.5" opacity=".3"></circle>
+        </g>
+        <g fill="#F7A8C6">
+          <path d="M300 196c3.4 2.9 5.1 5.9 5.1 8.9a5.1 5.1 0 0 1-10.2 0c0-3 1.7-6 5.1-8.9Z" opacity=".75"></path>
+          <path d="M892 178c2.9 2.5 4.3 5 4.3 7.6a4.3 4.3 0 0 1-8.6 0c0-2.6 1.4-5.1 4.3-7.6Z" opacity=".6"></path>
+          <path d="M512 96c2.6 2.2 3.9 4.5 3.9 6.8a3.9 3.9 0 0 1-7.8 0c0-2.3 1.3-4.6 3.9-6.8Z" opacity=".5"></path>
+        </g>
+      </svg>
+    </div>
+    <span class="footer-glow" aria-hidden="true"></span>
+
+    <div class="wrap footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <span class="footer-logo">
+            <svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true">
+              <circle cx="20" cy="20" r="19" fill="var(--pink)"></circle>
+              <g fill="#fff">
+                <ellipse cx="20" cy="12" rx="4.6" ry="5.8"></ellipse>
+                <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(72 20 20)"></ellipse>
+                <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(144 20 20)"></ellipse>
+                <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(216 20 20)"></ellipse>
+                <ellipse cx="20" cy="12" rx="4.6" ry="5.8" transform="rotate(288 20 20)"></ellipse>
+              </g>
+              <circle cx="20" cy="20" r="3.2" fill="var(--pink-deep)"></circle>
+            </svg>
+            <span>樱风工房</span>
+          </span>
+          <p class="footer-tag">
+            记录每一颗芯片的脾气与解法。源码、接线图、踩坑记录，长期更新。
+          </p>
+          <div class="socials">
+            <a class="social" href="https://github.com/Radiozed" target="_blank" rel="noopener" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true">
+                <path
+                  d="M9.5 21v-3.2c-3 .6-3.7-1.4-3.7-1.4-.5-1.2-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.2-5.1-5.5 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-2.9 0 0 .9-.3 3.1 1.1a10.6 10.6 0 0 1 5.6 0c2.2-1.4 3.1-1.1 3.1-1.1.6 1.5.2 2.6.1 2.9.7.8 1.1 1.8 1.1 3 0 4.3-2.6 5.2-5.1 5.5.4.4.8 1.1.8 2.2V21"
+                  stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </a>
+            <a class="social" href="/posts" aria-label="全部文章">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true">
+                <rect x="4" y="3" width="16" height="18" rx="3" stroke="currentColor" stroke-width="1.7"></rect>
+                <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+              </svg>
+            </a>
+            <a class="social" href="/gallery" aria-label="画廊">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"></rect>
+                <circle cx="9" cy="10" r="2" fill="currentColor"></circle>
+                <path d="M5 18l5-4.5 3.5 3L17 13l2 2.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <nav class="footer-col" aria-label="驱动笔记">
+          <h3>驱动笔记</h3>
+          <a href="/posts">全部文章</a>
+          <a href="/#library">驱动库</a>
+          <a href="/#tutorial">接线与踩坑</a>
+        </nav>
+        <nav class="footer-col" aria-label="内容">
+          <h3>内容</h3>
+          <a href="/gallery">画作画廊</a>
+          <a href="/posts/hello-world">第一篇博客</a>
+          <a href="/posts/max31865-pt100">MAX31865 + PT100</a>
+        </nav>
+        <nav class="footer-col" aria-label="关于">
+          <h3>关于</h3>
+          <a href="/#about">关于我</a>
+          <a href="https://github.com/Radiozed" target="_blank" rel="noopener">GitHub</a>
+          <a href="/posts">联系我</a>
+        </nav>
+      </div>
+
+      <hr class="footer-rule" />
+
+      <div class="footer-bottom">
+        <p>Copyright {new Date().getFullYear()} 樱风工房 SAKUKAZE LAB · Radiozed</p>
+        <p class="footer-sign">Built on a messy desk, powered by J-Link</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── BGM：iframe 保持跨页播放不中断 ── -->
   <iframe
     id="bgmFrame"
     src="/player.html"
+    title="背景音乐播放器"
     style="position:fixed;bottom:0;left:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;"
-    allow="autoplay"
-  ></iframe>
+    allow="autoplay"></iframe>
 
-  <!-- 音乐开关按钮 -->
-  <button type="button" class="music-toggle" id="musicToggle" title="背景音乐">
-    <span class="music-icon">🎵</span>
+  <button type="button" class="music-toggle" id="musicToggle" title="背景音乐" aria-label="背景音乐开关">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+      <path d="M9 18V6l10-2v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+      <circle cx="6.5" cy="18" r="2.5" stroke="currentColor" stroke-width="1.8"></circle>
+      <circle cx="16.5" cy="16" r="2.5" stroke="currentColor" stroke-width="1.8"></circle>
+    </svg>
   </button>
 
-  <!-- 图片查看器 -->
-  <div class="lightbox" id="lightbox">
-    <button class="lightbox-close" id="lightboxClose">✕</button>
-    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+  <!-- ── 图片灯箱 ── -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片查看">
+    <button class="lightbox-close" id="lightboxClose" aria-label="关闭">✕</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="" />
   </div>
 
-  <!-- 页脚 -->
-  <footer class="footer">
-    <div class="footer-decoration">
-      <span class="deco-flower">🌸</span>
-      <span class="deco-star">✦</span>
-      <span class="deco-flower">🌸</span>
-    </div>
-    <p class="footer-text">Made with ♥ by <span class="highlight">Lidure</span></p>
-    <p class="footer-sub">~ 喵~ 🐾</p>
-  </footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // 樱花飘落效果
-    function createSakura() {
-      const container = document.createElement('div');
-      container.className = 'sakura-container';
-      document.body.appendChild(container);
-      
-      setInterval(() => {
-        const petal = document.createElement('div');
-        petal.className = 'sakura-petal';
-        petal.innerHTML = ['🌸', '💮', '✿', '❀'][Math.floor(Math.random() * 4)];
-        petal.style.left = Math.random() * 100 + 'vw';
-        petal.style.fontSize = (Math.random() * 10 + 10) + 'px';
-        petal.style.animationDuration = (Math.random() * 5 + 8) + 's';
-        petal.style.opacity = Math.random() * 0.5 + 0.3;
-        container.appendChild(petal);
-        setTimeout(() => petal.remove(), 13000);
-      }, 800);
+    var $ = function (sel) { return document.querySelector(sel); };
+    var $$ = function (sel) { return document.querySelectorAll(sel); };
+
+    /* ── 导航：滚动阴影 ── */
+    var header = $('#siteHeader');
+    function onScroll() {
+      if (header) header.classList.toggle('is-scrolled', window.scrollY > 8);
     }
-    createSakura();
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
 
-    // 滚动动画
-    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
+    /* ── 移动端抽屉 ── */
+    var menuBtn = $('#menuBtn');
+    var navLinks = $('#navLinks');
+    if (menuBtn && navLinks) {
+      menuBtn.addEventListener('click', function () {
+        var open = navLinks.classList.toggle('is-open');
+        menuBtn.setAttribute('aria-expanded', String(open));
+      });
+      navLinks.addEventListener('click', function (e) {
+        if (e.target.closest('a')) {
+          navLinks.classList.remove('is-open');
+          menuBtn.setAttribute('aria-expanded', 'false');
         }
       });
-    }, observerOptions);
-    
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    }
 
-    // 平滑滚动
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
-
-    // BGM播放器 - 使用单例模式，页面切换不中断
-    (function() {
-      // 检查是否已有播放器实例
-      if (window.bgMusicInitialized) return;
-      window.bgMusicInitialized = true;
-      
-      const audio = document.getElementById('bgmAudio');
-      const bgmToggle = document.getElementById('bgmToggle');
-      const bgmIcon = document.getElementById('bgmIcon');
-      const volumeSlider = document.getElementById('volumeSlider');
-      
-      // 如果元素不存在则跳过（音频控制在 iframe 中进行）
-      if (!audio || !bgmToggle) return;
-      
-      // 恢复音量设置
-      const savedVolume = localStorage.getItem('bgmVolume');
-      audio.volume = savedVolume ? parseFloat(savedVolume) : 0.5;
-      volumeSlider.value = audio.volume * 100;
-
-      // 恢复之前的播放时间和状态
-      const savedTime = sessionStorage.getItem('bgmTime');
-      const savedPlaying = sessionStorage.getItem('bgmPlaying');
-      
-      if (savedTime) {
-        audio.currentTime = parseFloat(savedTime);
-      }
-
-      let isPlaying = false;
-
-      function updateUI(playing) {
-        if (playing) {
-          bgmIcon.textContent = '🎶';
-          bgmToggle.classList.add('playing');
-        } else {
-          bgmIcon.textContent = '🎵';
-          bgmToggle.classList.remove('playing');
-        }
-      }
-
-      function playAudio() {
-        const promise = audio.play();
-        if (promise !== undefined) {
-          promise.then(() => {
-            isPlaying = true;
-            updateUI(true);
-            sessionStorage.setItem('bgmPlaying', 'true');
-          }).catch(() => {
-            isPlaying = false;
-            updateUI(false);
+    /* ── 滚动揭示 ── */
+    var revealTargets = $$('.reveal, .fade-in');
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add(
+              entry.target.classList.contains('fade-in') ? 'visible' : 'is-in'
+            );
+            io.unobserve(entry.target);
           });
-        }
+        },
+        { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+      );
+      revealTargets.forEach(function (el) { io.observe(el); });
+    } else {
+      revealTargets.forEach(function (el) { el.classList.add('is-in', 'visible'); });
+    }
+
+    /* ── 樱花飘落 ── */
+    (function sakura() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var container = document.createElement('div');
+      container.className = 'sakura-container';
+      container.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(container);
+
+      function spawn() {
+        var petal = document.createElement('span');
+        petal.className = 'sakura-petal';
+        var size = Math.random() * 8 + 9;
+        petal.style.left = Math.random() * 100 + 'vw';
+        petal.style.width = size + 'px';
+        petal.style.height = size + 'px';
+        petal.style.animationDuration = Math.random() * 6 + 9 + 's';
+        petal.style.opacity = String(Math.random() * 0.35 + 0.3);
+        petal.style.background = Math.random() > 0.5 ? 'var(--pink)' : 'var(--lavender)';
+        container.appendChild(petal);
+        setTimeout(function () { petal.remove(); }, 15000);
       }
-
-      function pauseAudio() {
-        audio.pause();
-        isPlaying = false;
-        updateUI(false);
-        sessionStorage.setItem('bgmPlaying', 'false');
-      }
-
-      // 定期保存播放时间
-      audio.addEventListener('timeupdate', () => {
-        sessionStorage.setItem('bgmTime', audio.currentTime.toString());
-      });
-
-      // 页面加载完成后恢复播放状态
-      if (savedPlaying === 'true' || savedPlaying === null) {
-        playAudio();
-      } else {
-        updateUI(false);
-      }
-
-      bgmToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        if (isPlaying) {
-          pauseAudio();
-        } else {
-          playAudio();
-        }
-      });
+      for (var i = 0; i < 5; i++) setTimeout(spawn, i * 900);
+      setInterval(spawn, 1600);
     })();
 
-    // 图片查看器
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
-    const lightboxClose = document.getElementById('lightboxClose');
+    /* ── 提示条 ── */
+    var toastTimer;
+    function toast(msg) {
+      var el = $('#toast');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add('is-on');
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(function () { el.classList.remove('is-on'); }, 2200);
+    }
+    window.__toast = toast;
 
-    document.querySelectorAll('.gallery-item img').forEach(img => {
-      img.addEventListener('click', () => {
-        lightboxImg.src = img.src.replace('/thumbs/', '/original/').replace('_p0.jpg', '_p0.jpg');
-        lightbox.classList.add('active');
-        document.body.style.overflow = 'hidden';
+    /* ── 代码块复制 ── */
+    $$('[data-copy]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var scope = btn.closest('.code-window') || btn.closest('.code-wrapper');
+        var code = scope && scope.querySelector('code');
+        if (!code) return;
+        navigator.clipboard.writeText(code.textContent || '').then(function () {
+          var original = btn.textContent;
+          btn.textContent = '已复制';
+          btn.classList.add('is-done');
+          setTimeout(function () {
+            btn.textContent = original;
+            btn.classList.remove('is-done');
+          }, 1800);
+        }).catch(function () { toast('复制失败，手动选一下吧'); });
       });
     });
 
-    lightboxClose.addEventListener('click', () => {
-      lightbox.classList.remove('active');
-      document.body.style.overflow = '';
-    });
+    /* ── 图片灯箱 ── */
+    (function lightbox() {
+      var box = $('#lightbox');
+      var img = $('#lightboxImg');
+      var close = $('#lightboxClose');
+      if (!box || !img) return;
 
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) {
-        lightbox.classList.remove('active');
+      function open(src, alt) {
+        img.src = src;
+        img.alt = alt || '';
+        box.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function hide() {
+        box.classList.remove('active');
         document.body.style.overflow = '';
       }
-    });
 
-    // 音乐开关
-    (function() {
-      var musicToggle = document.getElementById('musicToggle');
-      var bgmFrame = document.getElementById('bgmFrame');
-      if (!musicToggle || !bgmFrame) return;
-
-      var isPlaying = localStorage.getItem('bgmAutoPlay') === 'true';
-
-      function updateMusicBtn() {
-        if (!isPlaying) {
-          musicToggle.classList.add('off');
-          musicToggle.querySelector('.music-icon').textContent = '🔇';
-        } else {
-          musicToggle.classList.remove('off');
-          musicToggle.querySelector('.music-icon').textContent = '🎵';
-        }
-      }
-
-      updateMusicBtn();
-
-      // 发送消息到 iframe
-      function sendPlayerMessage(action) {
-        try {
-          if (bgmFrame && bgmFrame.contentWindow) {
-            bgmFrame.contentWindow.postMessage(action, '*');
-            return true;
-          }
-        } catch (e) {
-          console.log('发送消息失败:', e);
-        }
-        return false;
-      }
-
-      // 尝试发送消息，自动重试直到成功
-      function trySendMessage(action) {
-        if (!sendPlayerMessage(action)) {
-          // 如果立即发送失败，等待 iframe 加载后重试
-          bgmFrame.onload = function() {
-            sendPlayerMessage(action);
-            bgmFrame.onload = null; // 清除回调，只执行一次
-          };
-        }
-      }
-
-      // 初始恢复播放状态
-      if (isPlaying) {
-        trySendMessage('play');
-      }
-
-      musicToggle.onclick = function() {
-        isPlaying = !isPlaying;
-        localStorage.setItem('bgmAutoPlay', isPlaying.toString());
-        updateMusicBtn();
-        trySendMessage(isPlaying ? 'play' : 'pause');
-      };
+      $$('.gallery-item img, [data-lightbox]').forEach(function (el) {
+        el.style.cursor = 'zoom-in';
+        el.addEventListener('click', function () {
+          open(el.currentSrc || el.src, el.alt);
+        });
+      });
+      if (close) close.addEventListener('click', hide);
+      box.addEventListener('click', function (e) { if (e.target === box) hide(); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && box.classList.contains('active')) hide();
+      });
     })();
 
-    // 监听来自player的消息
-    window.addEventListener('message', function(e) {
-      if (e.data === 'playing') {
-        isPlaying = true;
-        updateMusicBtn();
-      } else if (e.data === 'paused') {
-        isPlaying = false;
-        updateMusicBtn();
+    /* ── BGM：通过 postMessage 控制 iframe 里的播放器，跨页不中断 ── */
+    (function bgm() {
+      var toggle = $('#musicToggle');
+      var frame = $('#bgmFrame');
+      if (!toggle || !frame) return;
+
+      var playing = localStorage.getItem('bgmAutoPlay') === 'true';
+
+      function paint() { toggle.classList.toggle('off', !playing); }
+      function post(action) {
+        try {
+          if (frame.contentWindow) frame.contentWindow.postMessage(action, '*');
+        } catch (err) { /* 未就绪，忽略 */ }
       }
-    });
+      function send(action) {
+        post(action);
+        frame.addEventListener('load', function () { post(action); }, { once: true });
+      }
+
+      paint();
+      if (playing) send('play');
+
+      toggle.addEventListener('click', function () {
+        playing = !playing;
+        localStorage.setItem('bgmAutoPlay', String(playing));
+        paint();
+        send(playing ? 'play' : 'pause');
+      });
+
+      window.addEventListener('message', function (e) {
+        if (e.data === 'playing' || e.data === 'paused') {
+          playing = e.data === 'playing';
+          localStorage.setItem('bgmAutoPlay', String(playing));
+          paint();
+        }
+      });
+    })();
   </script>
-
-  <style is:global define:vars={{ 
-    primary: '#FF69B4', 
-    secondary: '#FF1493', 
-    accent: '#FFB6C1',
-    bgDark: '#0D0B14',
-    bgCard: 'rgba(30, 27, 46, 0.8)',
-    textLight: '#FDF2F8',
-    textMuted: '#FFB6C1'
-  }}>
-    :root {
-      --primary: #FF1493;
-      --primary-dark: #C71585;
-      --secondary: #FF69B4;
-      --accent: #FFB6C1;
-      --accent-light: #FFF0F5;
-      --bg-dark: #0D0B14;
-      --bg-card: rgba(30, 27, 46, 0.8);
-      --glass: rgba(255, 20, 147, 0.08);
-      --glass-border: rgba(255, 105, 180, 0.2);
-      --text-light: #FFF0F5;
-      --text-muted: #FFB6C1;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: 'Zen Maru Gothic', 'Noto Sans SC', -apple-system, sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-light);
-      min-height: 100vh;
-      overflow-x: hidden;
-      line-height: 1.8;
-    }
-
-    /* 猫娘大背景 */
-    .neko-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -3;
-      overflow: hidden;
-    }
-
-    .bg-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
-      opacity: 0.4;
-      filter: blur(2px) brightness(0.6) saturate(1.2);
-      transform: scale(1.1);
-    }
-
-    .bg-overlay {
-      position: absolute;
-      inset: 0;
-      background: 
-        linear-gradient(180deg, rgba(13, 11, 20, 0.7) 0%, rgba(13, 11, 20, 0.3) 30%, rgba(13, 11, 20, 0.5) 70%, rgba(13, 11, 20, 0.95) 100%),
-        radial-gradient(ellipse at center, transparent 0%, rgba(13, 11, 20, 0.8) 100%);
-    }
-
-    /* 装饰光效 */
-    .glow-effects {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -2;
-    }
-
-    .glow {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(100px);
-      animation: pulse 8s ease-in-out infinite;
-    }
-
-    .glow-1 {
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(255, 105, 180, 0.3) 0%, transparent 70%);
-      top: 10%;
-      left: -10%;
-      animation-delay: 0s;
-    }
-
-    .glow-2 {
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(232, 121, 249, 0.25) 0%, transparent 70%);
-      bottom: 10%;
-      right: -5%;
-      animation-delay: -3s;
-    }
-
-    .glow-3 {
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, transparent 70%);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation-delay: -6s;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.1); }
-    }
-
-    /* 毛玻璃导航 */
-    .glass-nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      padding: 18px 40px;
-      background: rgba(13, 11, 20, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--glass-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text-light);
-    }
-
-    .logo-icon {
-      font-size: 1.5rem;
-    }
-
-    .logo-text {
-      font-size: 1.4rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 40px;
-      list-style: none;
-    }
-
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 1rem;
-      padding: 10px 18px;
-      border-radius: 25px;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-
-    .nav-link::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      opacity: 0;
-      border-radius: 25px;
-      transition: opacity 0.3s ease;
-    }
-
-    .nav-link:hover::before {
-      opacity: 0.2;
-    }
-
-    .nav-link:hover {
-      color: var(--text-light);
-      transform: translateY(-2px);
-    }
-
-    .link-icon {
-      font-size: 0.9rem;
-      opacity: 0.7;
-      transition: all 0.3s ease;
-    }
-
-    .nav-link:hover .link-icon {
-      opacity: 1;
-      transform: scale(1.2);
-    }
-
-    /* 主内容 */
-    main {
-      padding-top: 100px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Hero区域 */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 80px 20px;
-      position: relative;
-    }
-
-    /* 头像光晕 */
-    .hero-avatar {
-      width: 420px;
-      max-width: 80vw;
-      margin-bottom: 50px;
-      position: relative;
-      animation: gentleFloat 6s ease-in-out infinite;
-    }
-
-    .hero-avatar img {
-      width: 100%;
-      height: auto;
-      border-radius: 40px;
-      object-fit: cover;
-      box-shadow: 
-        0 30px 100px rgba(236, 72, 153, 0.4),
-        0 15px 60px rgba(168, 85, 247, 0.3),
-        0 0 0 2px rgba(255, 255, 255, 0.1);
-      transition: transform 0.5s ease, box-shadow 0.5s ease;
-    }
-
-    .hero-avatar:hover img {
-      transform: scale(1.03);
-      box-shadow: 
-        0 40px 120px rgba(236, 72, 153, 0.5),
-        0 20px 80px rgba(168, 85, 247, 0.4),
-        0 0 0 2px rgba(255, 255, 255, 0.15);
-    }
-
-    .hero-avatar::before {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent), var(--primary));
-      border-radius: 44px;
-      z-index: -1;
-      opacity: 0.8;
-      animation: borderGlow 4s linear infinite;
-    }
-
-    .hero-avatar::after {
-      content: '';
-      position: absolute;
-      inset: -15px;
-      background: radial-gradient(ellipse at center, rgba(255, 105, 180, 0.15) 0%, transparent 70%);
-      border-radius: 50%;
-      z-index: -2;
-      animation: pulse-glow 3s ease-in-out infinite;
-    }
-
-    @keyframes gentleFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-    }
-
-    @keyframes borderGlow {
-      0%, 100% { filter: hue-rotate(0deg); }
-      50% { filter: hue-rotate(30deg); }
-    }
-
-    @keyframes pulse-glow {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.1); }
-    }
-
-    .hero h1 {
-      font-size: 3.8rem;
-      font-weight: 700;
-      margin-bottom: 20px;
-      background: linear-gradient(135deg, var(--text-light) 0%, var(--primary) 50%, var(--secondary) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 2px;
-    }
-
-    .hero .subtitle {
-      font-size: 1.35rem;
-      color: var(--text-muted);
-      max-width: 550px;
-      line-height: 2;
-      margin-bottom: 15px;
-      font-weight: 400;
-    }
-
-    .hero .greeting {
-      font-size: 1.2rem;
-      color: var(--accent);
-      margin-bottom: 40px;
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .btn {
-      padding: 16px 42px;
-      border-radius: 50px;
-      font-size: 1.05rem;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      border: none;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s ease;
-    }
-
-    .btn:hover::before {
-      left: 100%;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: white;
-      box-shadow: 
-        0 8px 30px rgba(236, 72, 153, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-5px) scale(1.05);
-      box-shadow: 
-        0 20px 60px rgba(236, 72, 153, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
-    }
-
-    .btn-primary:active {
-      transform: translateY(-2px) scale(1.02);
-    }
-
-    .btn-secondary {
-      background: var(--glass);
-      color: var(--text-light);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.12);
-      transform: translateY(-5px) scale(1.05);
-      border-color: var(--secondary);
-      box-shadow: 0 15px 40px rgba(255, 105, 180, 0.25);
-    }
-
-    .btn-secondary:active {
-      transform: translateY(-2px) scale(1.02);
-    }
-
-    /* 页脚 */
-    .footer {
-      padding: 100px 20px 60px;
-      text-align: center;
-      position: relative;
-      margin-top: 80px;
-    }
-
-    .footer::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
-    }
-
-    .footer-decoration {
-      display: flex;
-      justify-content: center;
-      gap: 25px;
-      margin-bottom: 30px;
-      font-size: 1.8rem;
-    }
-
-    .deco-flower {
-      animation: spin 12s linear infinite;
-      display: inline-block;
-      transition: transform 0.3s ease;
-    }
-
-    .deco-flower:hover {
-      transform: scale(1.3) rotate(180deg);
-    }
-
-    .deco-star {
-      animation: pulse 2.5s ease-in-out infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.3); }
-    }
-
-    .footer-text {
-      color: var(--text-muted);
-      font-size: 1.1rem;
-    }
-
-    .footer-text .highlight {
-      color: var(--primary);
-      font-weight: 600;
-    }
-
-    .footer-sub {
-      color: var(--text-muted);
-      opacity: 0.6;
-      font-size: 0.95rem;
-      margin-top: 8px;
-    }
-
-    /* 樱花飘落 */
-    .sakura-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 2;
-      overflow: hidden;
-    }
-
-    .sakura-petal {
-      position: absolute;
-      top: -50px;
-      animation: sakuraFall linear forwards;
-      text-shadow: 0 0 10px rgba(255, 182, 193, 0.5);
-    }
-
-    @keyframes sakuraFall {
-      0% {
-        transform: translateY(0) rotate(0deg) translateX(0);
-        opacity: 0;
-      }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% {
-        transform: translateY(100vh) rotate(720deg) translateX(100px);
-        opacity: 0;
-      }
-    }
-
-    /* 滚动淡入 */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(40px);
-      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .fade-in.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* BGM播放器 */
-    .bgm-player {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 1000;
-    }
-
-    .bgm-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3);
-    }
-
-    .bgm-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 30px rgba(255, 20, 147, 0.5);
-    }
-
-    .bgm-btn.playing {
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3); }
-      50% { box-shadow: 0 4px 30px rgba(255, 20, 147, 0.6); }
-    }
-
-    .bgm-icon {
-      font-size: 1.3rem;
-    }
-
-    .bgm-volume {
-      background: rgba(30, 27, 46, 0.9);
-      border-radius: 25px;
-      padding: 8px 15px;
-      border: 1px solid var(--glass-border);
-      opacity: 0;
-      transform: translateX(-10px);
-      transition: all 0.3s ease;
-    }
-
-    .bgm-player:hover .bgm-volume {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .bgm-volume input[type="range"] {
-      width: 80px;
-      height: 6px;
-      -webkit-appearance: none;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      border-radius: 3px;
-      cursor: pointer;
-    }
-
-    .bgm-volume input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      background: white;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-
-    /* 图片查看器 */
-    .lightbox {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .lightbox.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .lightbox-img {
-      max-width: 90%;
-      max-height: 90%;
-      border-radius: 20px;
-      box-shadow: 0 0 100px rgba(255, 20, 147, 0.3);
-      transform: scale(0.9);
-      transition: transform 0.3s ease;
-    }
-
-    .lightbox.active .lightbox-img {
-      transform: scale(1);
-    }
-
-    .lightbox-close {
-      position: absolute;
-      top: 30px;
-      right: 30px;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .lightbox-close:hover {
-      background: var(--primary);
-      transform: rotate(90deg);
-    }
-
-    /* 音乐开关按钮 */
-    .music-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(20, 15, 35, 0.9);
-      border: 1px solid rgba(255, 105, 180, 0.3);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: all 0.3s ease;
-    }
-
-    .music-toggle:hover {
-      background: rgba(255, 20, 147, 0.3);
-      transform: scale(1.1);
-    }
-
-    .music-icon {
-      font-size: 1.3rem;
-    }
-
-    .music-toggle.off .music-icon {
-      opacity: 0.4;
-    }
-
-    /* 响应式 */
-    @media (max-width: 768px) {
-      .glass-nav {
-        padding: 14px 20px;
-      }
-      
-      .nav-links {
-        gap: 10px;
-      }
-      
-      .nav-link {
-        padding: 8px 12px;
-        font-size: 0.85rem;
-      }
-      
-      .hero {
-        padding: 60px 20px;
-      }
-      
-      .hero h1 {
-        font-size: 2.2rem;
-        letter-spacing: 1px;
-      }
-      
-      .hero .subtitle {
-        font-size: 1rem;
-        padding: 0 10px;
-      }
-      
-      .hero .greeting {
-        font-size: 1rem;
-      }
-      
-      .hero-avatar {
-        width: 260px;
-        margin-bottom: 35px;
-      }
-      
-      .hero-buttons {
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-      }
-      
-      .btn {
-        padding: 14px 35px;
-        font-size: 1rem;
-      }
-      
-      .bgm-volume {
-        display: none;
-      }
-      
-      .footer {
-        padding: 60px 20px 40px;
-      }
-      
-      .footer-decoration {
-        font-size: 1.4rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .hero h1 {
-        font-size: 1.8rem;
-      }
-      
-      .hero-avatar {
-        width: 220px;
-      }
-      
-      .logo-text {
-        font-size: 1.2rem;
-      }
-    }
-  </style>
 </body>
 </html>

@@ -1,206 +1,87 @@
 ---
 import NekoLayout from '../layouts/NekoLayout.astro';
+
+const works = [
+  { src: '/gallery1.jpg', title: 'Nekomimi', caption: '猫耳少女' },
+  { src: '/gallery2.jpg', title: 'Neko', caption: '可爱的猫娘' },
+  { src: '/gallery3.jpg', title: 'Meow', caption: '喵' },
+  { src: '/gallery4.jpg', title: 'Neko', caption: '二次元猫娘' },
+];
 ---
 
-<NekoLayout title="艺术作品 - Radiozed">
-  <section class="gallery-page">
-    <h1 class="page-title">艺术作品</h1>
-    <p class="page-subtitle">一些喜欢的创作作品~</p>
+<NekoLayout title="画廊 · 樱风工房" description="Radiozed 的二次元画作收藏。" active="gallery">
+  <section class="gallery-page wrap">
+    <header class="page-head">
+      <p class="eyebrow">GALLERY · {works.length} 张</p>
+      <h1 class="page-title">画廊</h1>
+      <p class="page-subtitle">一些喜欢的二次元画作，点开可以看大图。</p>
+    </header>
 
     <div class="gallery-grid">
-      <div class="gallery-item fade-in">
-        <img src="/gallery1.jpg" alt="猫娘插画 1" loading="lazy" />
-        <div class="gallery-overlay">
-          <h4>♥ Nekomimi ♡</h4>
-          <p>~ 猫耳少女 ~</p>
-        </div>
-      </div>
-      <div class="gallery-item fade-in">
-        <img src="/gallery2.jpg" alt="猫娘插画 2" loading="lazy" />
-        <div class="gallery-overlay">
-          <h4>♡ Neko ♡</h4>
-          <p>~ 可爱的猫娘 ~</p>
-        </div>
-      </div>
-      <div class="gallery-item fade-in">
-        <img src="/gallery3.jpg" alt="猫娘插画 3" loading="lazy" />
-        <div class="gallery-overlay">
-          <h4>✦ Meow ✦</h4>
-          <p>~ 喵~ 🐾</p>
-        </div>
-      </div>
-      <div class="gallery-item fade-in">
-        <img src="/gallery4.jpg" alt="猫娘插画 4" loading="lazy" />
-        <div class="gallery-overlay">
-          <h4>★ Neko ★</h4>
-          <p>~ 二次元猫娘 ~</p>
-        </div>
-      </div>
+      {works.map((work, i) => (
+        <figure class="gallery-item reveal" style={`--delay:${i * 80}ms`}>
+          <img src={work.src} alt={work.title} loading="lazy" />
+          <figcaption class="gallery-overlay">
+            <h3>{work.title}</h3>
+            <p>~ {work.caption} ~</p>
+          </figcaption>
+        </figure>
+      ))}
     </div>
 
-    <a href="/" class="back-link">← 返回首页</a>
+    <div class="center-row">
+      <a class="back-link" href="/">← 返回首页</a>
+    </div>
   </section>
 </NekoLayout>
 
 <style>
-  .gallery-page {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 120px 40px 80px;
-    position: relative;
-  }
-
-  .page-title {
-    font-size: 2.5rem;
-    text-align: center;
-    margin-bottom: 15px;
-    background: linear-gradient(135deg, var(--text-light), var(--primary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .page-subtitle {
-    text-align: center;
-    font-size: 1.1rem;
-    color: var(--text-muted);
-    margin-bottom: 50px;
-  }
+  .gallery-page { padding-bottom: 96px; }
 
   .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 28px;
+    display: grid; gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   }
 
   .gallery-item {
-    position: relative;
-    border-radius: 24px;
-    overflow: hidden;
-    aspect-ratio: 3/4;
-    cursor: pointer;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(255, 105, 180, 0.12);
+    position: relative; margin: 0; overflow: hidden;
+    border-radius: 26px; aspect-ratio: 3 / 4;
+    background: var(--pink-soft);
+    border: 1px solid var(--line);
+    box-shadow: var(--sh-card);
+    transition: transform .4s cubic-bezier(.2, .8, .3, 1), box-shadow .4s ease;
   }
+  .gallery-item:hover { transform: translateY(-8px); box-shadow: var(--sh-card-hover); }
 
   .gallery-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform .6s cubic-bezier(.2, .8, .3, 1);
   }
-
-  .gallery-item:hover img {
-    transform: scale(1.1);
-  }
+  .gallery-item:hover img { transform: scale(1.07); }
 
   .gallery-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 30px 20px;
-    background: linear-gradient(transparent, rgba(13, 11, 20, 0.95) 50%);
-    transform: translateY(65px);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 30px 22px 22px;
+    background: linear-gradient(transparent, rgba(42, 35, 64, .9) 60%);
+    transform: translateY(60px);
+    transition: transform .45s cubic-bezier(.2, .8, .3, 1);
     text-align: center;
   }
+  .gallery-item:hover .gallery-overlay,
+  .gallery-item:focus-within .gallery-overlay { transform: translateY(0); }
 
-  .gallery-item:hover .gallery-overlay {
-    transform: translateY(0);
+  .gallery-overlay h3 {
+    margin: 0 0 6px; font-size: 18px; font-weight: 700; color: #fff;
+    text-shadow: 0 2px 14px rgba(228, 102, 143, .6);
   }
+  .gallery-overlay p { margin: 0; font-size: 13px; color: rgba(255, 255, 255, .84); }
 
-  .gallery-overlay h4 {
-    color: var(--accent);
-    margin-bottom: 8px;
-    font-size: 1.3rem;
-    font-weight: 600;
-    text-shadow: 0 2px 12px rgba(255, 20, 147, 0.5);
-  }
+  .center-row { display: flex; justify-content: center; margin-top: 56px; }
 
-  .gallery-overlay p {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.95rem;
-  }
-
-  .back-link {
-    display: inline-block;
-    text-align: center;
-    margin-top: 60px;
-    padding: 12px 28px;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    border: 1px solid var(--glass-border);
-    border-radius: 25px;
-    background: var(--glass);
-  }
-
-  .back-link:hover {
-    color: var(--primary);
-    transform: translateY(-3px);
-    border-color: var(--primary);
-    box-shadow: 0 8px 25px rgba(255, 105, 180, 0.2);
-  }
-
-  .fade-in {
-    opacity: 0;
-    transform: translateY(30px);
-    animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
-  .fade-in:nth-child(1) { animation-delay: 0.1s; }
-  .fade-in:nth-child(2) { animation-delay: 0.2s; }
-  .fade-in:nth-child(3) { animation-delay: 0.3s; }
-  .fade-in:nth-child(4) { animation-delay: 0.4s; }
-
-  @keyframes fadeIn {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* 响应式 */
-  @media (max-width: 768px) {
-    .gallery-page {
-      padding: 100px 20px 60px;
-    }
-
-    .page-title {
-      font-size: 2rem;
-    }
-
-    .gallery-grid {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-    }
-
-    .back-link {
-      margin-top: 40px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .gallery-page {
-      padding: 80px 15px 50px;
-    }
-
-    .page-title {
-      font-size: 1.7rem;
-    }
-
-    .gallery-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-    }
-
-    .gallery-overlay {
-      padding: 20px 15px;
-    }
-
-    .gallery-overlay h4 {
-      font-size: 1.1rem;
-    }
-
-    .gallery-overlay p {
-      font-size: 0.85rem;
-    }
+  @media (max-width: 560px) {
+    .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .gallery-overlay { padding: 20px 12px 14px; transform: none; }
+    .gallery-overlay h3 { font-size: 15px; }
+    .gallery-overlay p { font-size: 11px; }
   }
 </style>
