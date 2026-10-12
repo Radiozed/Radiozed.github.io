@@ -1,73 +1,91 @@
 ---
 import { getCollection } from 'astro:content';
 import NekoLayout from '../layouts/NekoLayout.astro';
+import { platformOf, categoryOf, busOf, tintOf, shortDate, uniqBy } from '../lib/classify';
 
 const posts = (await getCollection('posts')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 
-/* ── 从文章的 tags 里推断平台与接口，不写死 ── */
-const PLATFORMS = ['STM32', 'STM32F103C8T6', 'ESP32', 'Linux', '树莓派', 'Arduino', 'GD32'];
-const platformOf = (tags: string[] = []) => tags.find((t) => PLATFORMS.includes(t)) ?? '通用';
+type Post = (typeof posts)[number];
 
-const BUS_RULES: Array<[RegExp, string]> = [
-  [/MAX31865|SPI/i, 'SPI'],
-  [/I2C|OLED|SSD1306/i, 'I2C'],
-  [/MQTT|OneNET/i, 'MQTT'],
-  [/UART|串口/i, 'UART'],
-  [/PT100/i, 'PT100'],
-];
-function busOf(post: (typeof posts)[number]) {
-  const hay = [...(post.data.tags ?? []), post.data.title, post.data.description].join(' ');
-  for (const [re, label] of BUS_RULES) if (re.test(hay)) return label;
-  return 'NOTE';
+/* ── 统一成一种卡片结构，已发布的和整理中的走同一套分类 ── */
+interface Entry {
+  kind: 'post' | 'planned';
+  title: string;
+  desc: string;
+  platform: string;
+  category: string;
+  bus: string;
+  difficulty: string;
+  href?: string;
+  meta: string;
 }
 
-const TINTS = ['tint-pink', 'tint-blue', 'tint-lavender', 'tint-mint', 'tint-amber'];
-const tintAt = (i: number) => TINTS[i % TINTS.length];
-
-const shortDate = (d: Date) => {
-  const diff = Date.now() - d.valueOf();
-  const day = 86400000;
-  if (diff < day * 30) return `更新于 ${Math.max(1, Math.round(diff / day))} 天前`;
-  if (diff < day * 365) return `更新于 ${Math.round(diff / (day * 30))} 个月前`;
-  return `更新于 ${d.toLocaleDateString('zh-CN')}`;
-};
+const postEntries: Entry[] = posts.map((p) => ({
+  kind: 'post',
+  title: p.data.title,
+  desc: p.data.description,
+  platform: platformOf(p.data),
+  category: categoryOf(p.data),
+  bus: busOf(p.data),
+  difficulty: p.data.difficulty ?? '进阶',
+  href: `/posts/${p.slug}`,
+  meta: `${busOf(p.data)} · ${p.data.pubDate.toLocaleDateString('zh-CN')} · 更新于 ${shortDate(p.data.pubDate)}`,
+}));
 
 /* ── 整理中的模块（还没写成文章的） ── */
-const planned = [
+const plannedEntries: Entry[] = [
   {
+    kind: 'planned',
     title: 'SX1278 LoRa 无线模块',
     desc: '433MHz 远距离透传，包含寄存器配置、中断收发与低功耗休眠流程，两块板就能跑通。',
     platform: 'ESP32',
+    category: '通信',
     bus: 'SPI',
-    tags: ['esp32', '通信', 'spi'],
+    difficulty: '硬核',
+    meta: 'SPI · 图文还在整理，先把接线跑通了',
   },
   {
+    kind: 'planned',
     title: 'W25Q64 SPI Flash',
     desc: '8MB 串行 Flash，带扇区擦写、页编程与简易磨损均衡的工程封装。',
     platform: 'STM32',
+    category: '存储',
     bus: 'SPI',
-    tags: ['stm32', '存储', 'spi'],
+    difficulty: '进阶',
+    meta: 'SPI · 图文还在整理，先把接线跑通了',
   },
   {
+    kind: 'planned',
     title: 'AHT20 温湿度传感器',
     desc: '出厂校准的温湿度一体传感器，含 CRC 校验与浮点换算公式推导。',
     platform: '通用',
+    category: '传感器',
     bus: 'I2C',
-    tags: ['传感器', 'i2c'],
+    difficulty: '入门',
+    meta: 'I2C · 图文还在整理，先把接线跑通了',
+  },
+  {
+    kind: 'planned',
+    title: 'SSD1306 OLED 显示屏',
+    desc: '0.96 寸 OLED，两线驱动，内置中英文字库与绘图 API，附取模工具。',
+    platform: 'STM32',
+    category: '显示',
+    bus: 'I2C',
+    difficulty: '入门',
+    meta: 'I2C · 图文还在整理，先把接线跑通了',
   },
 ];
 
-const filters = [
-  { key: 'all', label: '全部', count: posts.length + planned.length },
-  { key: 'live', label: '已发布', count: posts.length },
-  { key: 'planned', label: '整理中', count: planned.length },
-  { key: 'stm32', label: 'STM32' },
-  { key: 'esp32', label: 'ESP32' },
-  { key: 'sensor', label: '传感器' },
-  { key: 'comm', label: '通信' },
-];
+const entries: Entry[] = [...postEntries, ...plannedEntries];
+
+/* ── 按数据算出分组，不写死 ── */
+const platformFacets = uniqBy(entries.map((e) => e.platform), 'platform');
+const categoryFacets = uniqBy(entries.map((e) => e.category), 'category');
+
+const countBy = (key: 'platform' | 'category', value: string) =>
+  entries.filter((e) => e[key] === value).length;
 ---
 
 <NekoLayout title="樱风工房 · 让每一颗芯片都听话" active="home">
@@ -134,6 +152,25 @@ const filters = [
       </div>
 
       <div class="hero-visual reveal">
+        <!-- 当前位置天气：定位走 IP，天气走 Open-Meteo，均为免密钥公开接口 -->
+        <div class="weather-card" id="weatherCard">
+          <span class="weather-icon" id="weatherIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none">
+              <path d="M17.5 18.5h-10a4.2 4.2 0 0 1-.4-8.4A5.8 5.8 0 0 1 18.3 11.6a3.6 3.6 0 0 1-.8 6.9Z"
+                    fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path>
+            </svg>
+          </span>
+          <div class="weather-body">
+            <p class="weather-temp" id="weatherTemp">--</p>
+            <p class="weather-place" id="weatherPlace">定位中…</p>
+          </div>
+          <span class="weather-divider" aria-hidden="true"></span>
+          <div class="weather-side">
+            <p class="weather-time" id="weatherTime">--:--</p>
+            <p class="weather-extra" id="weatherExtra"></p>
+          </div>
+        </div>
+
         <span class="sticker">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="10" fill="var(--mint-deep)"></circle>
@@ -174,34 +211,49 @@ const filters = [
         <p class="section-desc">每个模块都配好了源码、接线图与调用示例。挑一个，直接接进你的工程。</p>
       </header>
 
-      <div class="chips reveal" role="group" aria-label="筛选驱动">
-        {filters.map((f, i) => (
-          <button
-            class:list={['chip', { 'is-active': i === 0 }]}
-            type="button"
-            data-filter={f.key}
-            aria-pressed={i === 0 ? 'true' : 'false'}
-          >
-            {f.label}{f.count !== undefined && <> <em>{f.count}</em></>}
+      <div class="filter-bar reveal">
+        <div class="filter-row" data-group="platform">
+          <span class="filter-label">平台</span>
+          <button class="chip is-active" type="button" data-value="all" aria-pressed="true">
+            全部 <em>{entries.length}</em>
           </button>
-        ))}
+          {platformFacets.map((v) => (
+            <button class="chip" type="button" data-value={v} aria-pressed="false">
+              {v} <em>{countBy('platform', v)}</em>
+            </button>
+          ))}
+        </div>
+
+        <div class="filter-row" data-group="category">
+          <span class="filter-label">类别</span>
+          <button class="chip is-active" type="button" data-value="all" aria-pressed="true">
+            全部 <em>{entries.length}</em>
+          </button>
+          {categoryFacets.map((v) => (
+            <button class="chip" type="button" data-value={v} aria-pressed="false">
+              {v} <em>{countBy('category', v)}</em>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div class="card-grid" id="cardGrid">
-        {posts.map((post, i) => {
-          const platform = platformOf(post.data.tags);
-          const bus = busOf(post);
-          const tagString = ['live', platform.toLowerCase(), ...(post.data.tags ?? []).map((t) => t.toLowerCase())].join(' ');
-          return (
-            <a class="card reveal" href={`/posts/${post.slug}`} data-tags={tagString}>
+        {entries.map((item) =>
+          item.kind === 'post' && item.href ? (
+            <a
+              class="card reveal"
+              href={item.href}
+              data-platform={item.platform}
+              data-category={item.category}
+            >
               <div class="card-top">
-                <span class="tag tag-platform">{platform}</span>
+                <span class="tag tag-platform">{item.platform} · {item.category}</span>
                 <span class="tag tag-live">已发布</span>
               </div>
-              <span class:list={['icon-box', tintAt(i)]}><span>{bus}</span></span>
-              <h3 class="card-title">{post.data.title}</h3>
-              <p class="card-desc">{post.data.description}</p>
-              <p class="card-meta">{bus} · {post.data.pubDate.toLocaleDateString('zh-CN')} · {shortDate(post.data.pubDate)}</p>
+              <span class:list={['icon-box', tintOf(item.category)]}><span>{item.bus}</span></span>
+              <h3 class="card-title">{item.title}</h3>
+              <p class="card-desc">{item.desc}</p>
+              <p class="card-meta">难度 {item.difficulty} · {item.meta}</p>
               <div class="card-foot">
                 <span class="card-link">阅读笔记</span>
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
@@ -209,24 +261,26 @@ const filters = [
                 </svg>
               </div>
             </a>
-          );
-        })}
-
-        {planned.map((item, i) => (
-          <article class="card is-planned reveal" data-tags={['planned', ...item.tags].join(' ')}>
-            <div class="card-top">
-              <span class="tag tag-platform">{item.platform}</span>
-              <span class="tag tag-plan">整理中</span>
-            </div>
-            <span class:list={['icon-box', tintAt(i + posts.length)]}><span>{item.bus}</span></span>
-            <h3 class="card-title">{item.title}</h3>
-            <p class="card-desc">{item.desc}</p>
-            <p class="card-meta">{item.bus} · 图文还在整理，先把接线跑通了</p>
-            <div class="card-foot">
-              <span class="card-link" style="color:var(--ink-3)">即将上线</span>
-            </div>
-          </article>
-        ))}
+          ) : (
+            <article
+              class="card is-planned reveal"
+              data-platform={item.platform}
+              data-category={item.category}
+            >
+              <div class="card-top">
+                <span class="tag tag-platform">{item.platform} · {item.category}</span>
+                <span class="tag tag-plan">整理中</span>
+              </div>
+              <span class:list={['icon-box', tintOf(item.category)]}><span>{item.bus}</span></span>
+              <h3 class="card-title">{item.title}</h3>
+              <p class="card-desc">{item.desc}</p>
+              <p class="card-meta">难度 {item.difficulty} · {item.meta}</p>
+              <div class="card-foot">
+                <span class="card-link" style="color:var(--ink-3)">即将上线</span>
+              </div>
+            </article>
+          )
+        )}
       </div>
 
       <p class="grid-empty" id="gridEmpty" hidden>这个分类下暂时没有内容，再等等我。</p>
@@ -411,32 +465,202 @@ const filters = [
   </section>
 
   <script>
-    /* ── 驱动库筛选 ── */
-    (function filter() {
-      const chips = document.querySelectorAll<HTMLElement>('.chip[data-filter]');
-      const cards = document.querySelectorAll<HTMLElement>('#cardGrid .card');
-      const empty = document.getElementById('gridEmpty');
-      if (!chips.length) return;
+    /* ── 驱动库筛选：平台 × 类别，两个维度叠加生效 ── */
+    (function filters() {
+      var rows = document.querySelectorAll('.filter-row');
+      var cards = document.querySelectorAll('#cardGrid .card');
+      var empty = document.getElementById('gridEmpty');
+      if (!rows.length || !cards.length) return;
 
-      chips.forEach((chip) => {
-        chip.addEventListener('click', () => {
-          const key = chip.dataset.filter ?? 'all';
-          chips.forEach((c) => {
-            const on = c === chip;
+      var state = { platform: 'all', category: 'all' };
+
+      function apply() {
+        var shown = 0;
+        cards.forEach(function (card) {
+          var ok =
+            (state.platform === 'all' || card.dataset.platform === state.platform) &&
+            (state.category === 'all' || card.dataset.category === state.category);
+          card.classList.toggle('is-hidden', !ok);
+          if (ok) shown++;
+        });
+        if (empty) empty.hidden = shown > 0;
+      }
+
+      rows.forEach(function (row) {
+        var group = row.dataset.group;
+        row.addEventListener('click', function (e) {
+          var chip = e.target.closest('.chip');
+          if (!chip) return;
+          state[group] = chip.dataset.value;
+
+          row.querySelectorAll('.chip').forEach(function (c) {
+            var on = c === chip;
             c.classList.toggle('is-active', on);
             c.setAttribute('aria-pressed', String(on));
           });
-
-          let shown = 0;
-          cards.forEach((card) => {
-            const tags = card.dataset.tags ?? '';
-            const match = key === 'all' || tags.split(' ').includes(key);
-            card.classList.toggle('is-hidden', !match);
-            if (match) shown++;
-          });
-          if (empty) empty.hidden = shown > 0;
+          apply();
         });
       });
+    })();
+
+    /* ══════════ 当前位置天气 ══════════
+       定位：ipwho.is → ipinfo.io → ipwhois.app，逐个失败就换下一个
+       天气：Open-Meteo（免密钥公开接口）
+       结果缓存 30 分钟，避免每次进首页都打接口 */
+    (function weather() {
+      var card = document.getElementById('weatherCard');
+      if (!card) return;
+
+      var elIcon = document.getElementById('weatherIcon');
+      var elTemp = document.getElementById('weatherTemp');
+      var elPlace = document.getElementById('weatherPlace');
+      var elExtra = document.getElementById('weatherExtra');
+      var elTime = document.getElementById('weatherTime');
+
+      var CACHE_KEY = 'skz_weather_v1';
+      var CACHE_TTL = 30 * 60 * 1000;
+
+      /* WMO 天气码 → [中文描述, 图标名] */
+      var WMO = {
+        0: ['晴', 'sun'], 1: ['晴间多云', 'cloud-sun'], 2: ['多云', 'cloud-sun'], 3: ['阴', 'cloud'],
+        45: ['有雾', 'fog'], 48: ['雾凇', 'fog'],
+        51: ['毛毛雨', 'drizzle'], 53: ['小雨', 'drizzle'], 55: ['中雨', 'rain'],
+        56: ['冻毛毛雨', 'drizzle'], 57: ['冻雨', 'rain'],
+        61: ['小雨', 'rain'], 63: ['中雨', 'rain'], 65: ['大雨', 'rain'],
+        66: ['冻雨', 'rain'], 67: ['强冻雨', 'rain'],
+        71: ['小雪', 'snow'], 73: ['中雪', 'snow'], 75: ['大雪', 'snow'], 77: ['雪粒', 'snow'],
+        80: ['阵雨', 'rain'], 81: ['强阵雨', 'rain'], 82: ['暴雨', 'rain'],
+        85: ['阵雪', 'snow'], 86: ['强阵雪', 'snow'],
+        95: ['雷阵雨', 'thunder'], 96: ['雷暴伴冰雹', 'thunder'], 99: ['强雷暴冰雹', 'thunder']
+      };
+
+      var ICONS = {
+        sun: '<circle cx="12" cy="12" r="4.4" fill="#F5B942"></circle><g stroke="#F5B942" stroke-width="1.8" stroke-linecap="round"><path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M5.4 5.4l1.7 1.7M16.9 16.9l1.7 1.7M18.6 5.4l-1.7 1.7M7.1 16.9l-1.7 1.7"></path></g>',
+        moon: '<path d="M20 14.2A8.4 8.4 0 1 1 9.8 4a6.8 6.8 0 0 0 10.2 10.2Z" fill="#B5A5F0"></path>',
+        'cloud-sun': '<circle cx="9" cy="8.6" r="3.2" fill="#F5B942"></circle><path d="M17.5 19H8a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 18 12.2a3.4 3.4 0 0 1-.5 6.8Z" fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path>',
+        'cloud-moon': '<path d="M10 8.6A5.2 5.2 0 1 1 6.2 5.2a4.2 4.2 0 0 0 3.8 3.4Z" fill="#B5A5F0"></path><path d="M17.5 19H8a4 4 0 0 1-.4-8A5.5 5.5 0 0 1 18 12.2a3.4 3.4 0 0 1-.5 6.8Z" fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path>',
+        cloud: '<path d="M17.5 18.5h-10a4.2 4.2 0 0 1-.4-8.4A5.8 5.8 0 0 1 18.3 11.6a3.6 3.6 0 0 1-.8 6.9Z" fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path>',
+        fog: '<g stroke="#A9C4D8" stroke-width="1.8" stroke-linecap="round"><path d="M6 9.5h12M4.5 13h15M6 16.5h12"></path></g>',
+        drizzle: '<path d="M17.5 14.5H7.5a3.8 3.8 0 0 1-.3-7.6A5.2 5.2 0 0 1 17.8 8a3.3 3.3 0 0 1-.3 6.5Z" fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path><g stroke="#79BCF0" stroke-width="1.7" stroke-linecap="round"><path d="M9 17v1.8M13 17v1.8M17 17v1.8"></path></g>',
+        rain: '<path d="M17.5 14.2H7.5a3.8 3.8 0 0 1-.3-7.6A5.2 5.2 0 0 1 17.8 7.7a3.3 3.3 0 0 1-.3 6.5Z" fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path><g stroke="#79BCF0" stroke-width="1.9" stroke-linecap="round"><path d="M9 16.6l-1 3M13 16.6l-1 3M17 16.6l-1 3"></path></g>',
+        snow: '<path d="M17.5 13.8H7.5a3.8 3.8 0 0 1-.3-7.6A5.2 5.2 0 0 1 17.8 7.3a3.3 3.3 0 0 1-.3 6.5Z" fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path><g fill="#8FD3F7"><circle cx="9" cy="17.4" r="1.2"></circle><circle cx="13" cy="19.4" r="1.2"></circle><circle cx="17" cy="17.4" r="1.2"></circle></g>',
+        thunder: '<path d="M17.5 13.6H7.5a3.8 3.8 0 0 1-.3-7.6A5.2 5.2 0 0 1 17.8 7.1a3.3 3.3 0 0 1-.3 6.5Z" fill="#FFFFFF" stroke="#C9B8D8" stroke-width="1.2"></path><path d="M13.2 14.6l-3.2 4.2h2.8l-1 3.6 3.8-4.8h-2.8l.4-3Z" fill="#F5B942"></path>'
+      };
+
+      function paintIcon(name) {
+        var path = ICONS[name] || ICONS.cloud;
+        elIcon.innerHTML =
+          '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" aria-hidden="true">' + path + '</svg>';
+      }
+
+      function get(url, ms) {
+        return new Promise(function (resolve, reject) {
+          var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          var timer = setTimeout(function () { if (ctl) ctl.abort(); }, ms || 8000);
+          fetch(url, ctl ? { signal: ctl.signal } : {})
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); })
+            .then(function (d) { clearTimeout(timer); resolve(d); })
+            .catch(function (e) { clearTimeout(timer); reject(e); });
+        });
+      }
+
+      var GEO = [
+        {
+          url: 'https://ipwho.is/',
+          pick: function (d) {
+            if (!d || d.success === false) throw new Error('ipwho.is 未识别');
+            return { name: d.city || d.region, lat: d.latitude, lon: d.longitude };
+          }
+        },
+        {
+          url: 'https://ipinfo.io/json',
+          pick: function (d) {
+            var loc = String(d.loc || '').split(',');
+            if (loc.length !== 2) throw new Error('ipinfo 无坐标');
+            return { name: d.city || d.region, lat: Number(loc[0]), lon: Number(loc[1]) };
+          }
+        },
+        {
+          url: 'https://ipwhois.app/json/',
+          pick: function (d) {
+            return { name: d.city || d.region, lat: Number(d.latitude), lon: Number(d.longitude) };
+          }
+        }
+      ];
+
+      function locate(i) {
+        i = i || 0;
+        if (i >= GEO.length) return Promise.reject(new Error('全部定位源不可用'));
+        var p = GEO[i];
+        return get(p.url, 7000)
+          .then(function (d) { return p.pick(d); })
+          .catch(function () { return locate(i + 1); });
+      }
+
+      function render(d) {
+        var info = WMO[d.code] || ['—', 'cloud'];
+        var iconName = info[1];
+        if (!d.isDay && iconName === 'sun') iconName = 'moon';
+        if (!d.isDay && iconName === 'cloud-sun') iconName = 'cloud-moon';
+
+        paintIcon(iconName);
+        elTemp.textContent = d.temp + '°';
+        elPlace.textContent = d.place || '当前位置';
+        elExtra.textContent = info[0] + ' · 体感 ' + d.feels + '°';
+      }
+
+      function load() {
+        locate()
+          .then(function (loc) {
+            var url =
+              'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat +
+              '&longitude=' + loc.lon +
+              '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,is_day&timezone=auto';
+            return get(url, 9000).then(function (w) {
+              var c = w.current;
+              return {
+                place: loc.name,
+                temp: Math.round(c.temperature_2m),
+                feels: Math.round(c.apparent_temperature),
+                code: c.weather_code,
+                isDay: c.is_day === 1,
+                ts: Date.now()
+              };
+            });
+          })
+          .then(function (out) {
+            try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(out)); } catch (e) { /* 忽略 */ }
+            render(out);
+          })
+          .catch(function () {
+            elTemp.textContent = '--';
+            elPlace.textContent = '天气暂不可用';
+            elExtra.textContent = '';
+            paintIcon('cloud');
+          });
+      }
+
+      /* 时钟 */
+      function tick() {
+        var d = new Date();
+        elTime.textContent =
+          ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+      }
+      tick();
+      setInterval(tick, 15000);
+
+      /* 先看缓存 */
+      var cached = null;
+      try {
+        var raw = sessionStorage.getItem(CACHE_KEY);
+        if (raw) {
+          var o = JSON.parse(raw);
+          if (o && o.ts && Date.now() - o.ts < CACHE_TTL) cached = o;
+        }
+      } catch (e) { /* 忽略 */ }
+
+      if (cached) render(cached);
+      else load();
     })();
   </script>
 
@@ -496,6 +720,49 @@ const filters = [
       animation: floaty 4.5s ease-in-out infinite;
     }
     @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+
+    /* ── 当前位置天气 ── */
+    .weather-card {
+      position: absolute; left: -18px; bottom: -22px; z-index: 4;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; border-radius: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: 0 14px 34px -10px rgba(153, 89, 128, .28);
+      animation: floaty 6s ease-in-out infinite;
+      animation-delay: -2.2s;
+    }
+    .weather-icon { flex: none; display: grid; place-items: center; width: 34px; height: 34px; }
+    .weather-body { display: flex; flex-direction: column; gap: 1px; }
+    .weather-temp {
+      margin: 0; font-family: var(--font-latin); font-size: 22px; font-weight: 800;
+      line-height: 1.15; color: var(--ink);
+    }
+    .weather-place {
+      margin: 0; font-size: 12px; color: var(--ink-2); white-space: nowrap;
+      max-width: 132px; overflow: hidden; text-overflow: ellipsis;
+    }
+    .weather-divider { flex: none; width: 1px; height: 30px; background: var(--line); }
+    .weather-side { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+    .weather-time {
+      margin: 0; font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+      color: var(--ink); letter-spacing: .02em;
+    }
+    .weather-extra { margin: 0; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+
+    /* ── 分类筛选 ── */
+    .filter-bar {
+      display: flex; flex-direction: column; gap: 12px;
+      margin-bottom: 32px;
+    }
+    .filter-row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    }
+    .filter-label {
+      flex: none; min-width: 38px;
+      font-family: var(--font-latin); font-size: 12px; font-weight: 800;
+      letter-spacing: .14em; color: var(--ink-3);
+    }
 
     /* ── 步骤 ── */
     .steps {
@@ -594,6 +861,7 @@ const filters = [
     @media (max-width: 1180px) {
       .hero-row { grid-template-columns: minmax(0, 1fr); gap: 64px; padding: 72px 40px 88px; }
       .hero-visual { max-width: 624px; }
+      .weather-card { left: 0; }
       .tutorial-body { grid-template-columns: minmax(0, 1fr); }
       .about-body { grid-template-columns: minmax(0, 1fr); gap: 40px; }
       .portrait-card { max-width: 480px; }
@@ -603,6 +871,10 @@ const filters = [
       .hero-title { font-size: 34px; }
       .hero-sub { font-size: 15.5px; }
       .sticker { right: 12px; top: -20px; font-size: 11px; }
+      .weather-card {
+        position: static; margin-bottom: 18px; animation: none;
+        justify-content: space-between;
+      }
     }
   </style>
 </NekoLayout>

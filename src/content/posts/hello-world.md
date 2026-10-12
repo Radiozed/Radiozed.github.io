@@ -3,6 +3,9 @@ title: "第一篇博客 - 喵的开始"
 description: "欢迎来到 Radiozed 的小天地~ 这里是第一篇博客文章"
 pubDate: 2026-06-01
 tags: ["随笔", "开始"]
+platform: "通用"
+category: "随笔"
+difficulty: "入门"
 ---
 
 这里是 Radiozed 的小天地，记录一些有趣的想法和创作过程~

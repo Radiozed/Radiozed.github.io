@@ -2,7 +2,10 @@
 title: "ESP32连接OneNET物联网平台"
 description: "使用ESP32连接OneNET物联网平台，MQTT协议上报温湿度数据"
 pubDate: 2026-06-06
-tags: ["ESP32", "物联网", "OneNET", "MQTT"]
+tags: ["ESP32", "物联网", "OneNET", "MQTT", "WiFi"]
+platform: "ESP32"
+category: "通信"
+difficulty: "进阶"
 ---
 
 今天来教大家如何使用 ESP32 连接 OneNET 物联网平台，通过 MQTT 协议上报温湿度数据~

@@ -261,16 +261,32 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
   .cal-nav:hover { background: var(--pink); color: #fff; transform: scale(1.08); }
   .cal-week, .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
   .cal-week span { text-align: center; font-size: 11px; color: var(--ink-3); padding: 4px 0; }
-  .cal-day {
-    aspect-ratio: 1; display: grid; place-items: center;
-    font-size: 12px; color: var(--ink-2); border-radius: 9px;
+
+  /* 日期格子由脚本动态创建，拿不到 data-astro-cid，必须用 :global 才吃得到样式 */
+  :global(.cal-day) {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-latin);
+    font-size: 12px;
+    color: var(--ink-2);
+    border-radius: 10px;
+    transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
   }
-  .cal-day:hover { background: var(--pink-soft); }
-  .cal-day.is-today {
+  :global(.cal-day:hover) { background: var(--pink-soft); color: var(--pink-deep); }
+
+  /* 今天：跟按钮 / 标签同一套樱粉渐变 */
+  :global(.cal-day.is-today) {
     background: linear-gradient(135deg, #F79AB8, var(--pink-deep));
-    color: #fff; font-weight: 700;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 4px 12px -2px rgba(228, 102, 143, .45);
   }
-  .cal-empty { visibility: hidden; }
+  :global(.cal-day.is-today:hover) {
+    background: linear-gradient(135deg, #F79AB8, var(--pink-deep));
+    color: #fff;
+  }
+  :global(.cal-empty) { visibility: hidden; }
 
   /* ── 正文 ── */
   .post-main { min-width: 0; }
