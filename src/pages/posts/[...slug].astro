@@ -136,17 +136,103 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
 </NekoLayout>
 
 <script>
-  /* ── 目录平滑滚动 ── */
-  document.querySelectorAll('.toc-item').forEach(function (link) {
-    link.addEventListener('click', function (e) {
-      var href = link.getAttribute('href') || '';
-      var target = document.getElementById(href.slice(1));
-      if (!target) return;
-      e.preventDefault();
-      var top = target.getBoundingClientRect().top + window.scrollY - 104;
-      window.scrollTo({ top: top, behavior: 'smooth' });
+  /* ── 目录：点击跳转 + 滚动联动（scroll spy） ── */
+  (function toc() {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.toc-item'));
+    if (!links.length) return;
+
+    var tocBox = document.querySelector('.sidebar-toc');
+
+    /* 建立「目录项 ↔ 正文标题」的对应关系 */
+    var targets = links
+      .map(function (link) {
+        var id = (link.getAttribute('href') || '').slice(1);
+        return { link: link, el: id ? document.getElementById(id) : null };
+      })
+      .filter(function (t) { return t.el; });
+
+    if (!targets.length) return;
+
+    /* ── 点击平滑跳转 ── */
+    links.forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        var id = (link.getAttribute('href') || '').slice(1);
+        var el = document.getElementById(id);
+        if (!el) return;
+        e.preventDefault();
+        var top = el.getBoundingClientRect().top + window.scrollY - 104;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+        history.replaceState(null, '', '#' + id);
+      });
     });
-  });
+
+    /* 标题在文档中的绝对位置，滚动时不必反复量取 */
+    var tops = [];
+    function measure() {
+      tops = targets.map(function (t) {
+        return t.el.getBoundingClientRect().top + window.scrollY;
+      });
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
+    /* 网络字体是异步加载的，落地后高度可能微调，补测一次 */
+    window.setTimeout(measure, 900);
+
+    var current = -1;
+
+    /* 高亮项若滚出目录可视区，把目录自己也滚一下 */
+    function keepVisible(link) {
+      if (!tocBox) return;
+      var lr = link.getBoundingClientRect();
+      var tr = tocBox.getBoundingClientRect();
+      var pad = 12;
+      var next = null;
+
+      if (lr.top < tr.top + pad) {
+        next = tocBox.scrollTop - (tr.top + pad - lr.top);
+      } else if (lr.bottom > tr.bottom - pad) {
+        next = tocBox.scrollTop + (lr.bottom - (tr.bottom - pad));
+      }
+      if (next !== null) {
+        tocBox.scrollTo({ top: Math.max(0, next), behavior: 'smooth' });
+      }
+    }
+
+    function setActive(i) {
+      if (i === current) return;
+      current = i;
+      targets.forEach(function (t, idx) {
+        t.link.classList.toggle('is-current', idx === i);
+      });
+      if (i >= 0) keepVisible(targets[i].link);
+    }
+
+    /* 判定线取视口上方 130px：标题越过这条线就算「读到这里了」 */
+    function pick() {
+      var line = window.scrollY + 130;
+      var idx = -1;
+      for (var i = 0; i < tops.length; i++) {
+        if (tops[i] <= line) idx = i;
+        else break;
+      }
+      setActive(idx);
+    }
+
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function () {
+        pick();
+        ticking = false;
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    pick();
+  })();
 
   /* ── 给正文代码块加复制按钮 ── */
   (function copyButtons() {
@@ -366,6 +452,16 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
   }
   .toc-item:hover { background: var(--pink-soft); color: var(--pink-deep); border-left-color: var(--pink); }
   .toc-item.is-sub { padding-left: 24px; font-size: 12.5px; color: var(--ink-3); }
+
+  /* 当前正在阅读的章节 —— 跟随页面滚动实时高亮 */
+  .toc-item.is-current,
+  .toc-item.is-sub.is-current {
+    background: var(--pink-soft);
+    color: var(--pink-deep);
+    border-left-color: var(--pink-deep);
+    font-weight: 600;
+  }
+  .toc-item.is-sub.is-current { border-left-color: var(--pink); }
 
   /* 长文可能有三四十个标题。目录必须限高 + 独立滚动，
      否则它会把下面的信息面板和日历整个顶出侧栏可视区 */
