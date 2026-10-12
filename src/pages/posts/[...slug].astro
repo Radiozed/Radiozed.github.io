@@ -224,10 +224,24 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
 
   /* ── 侧栏 ── */
   .post-sidebar {
-    position: sticky; top: 104px;
-    display: flex; flex-direction: column; gap: 16px;
+    position: sticky;
+    top: 104px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* 目录长了也不会把日历顶出屏幕：整个侧栏自己滚 */
+    max-height: calc(100vh - 128px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding-right: 4px;
   }
-  .sidebar-toc { max-height: calc(100vh - 220px); overflow-y: auto; }
+  .post-sidebar::-webkit-scrollbar { width: 6px; }
+  .post-sidebar::-webkit-scrollbar-thumb {
+    background: var(--line-2);
+    border-radius: 999px;
+  }
+  .post-sidebar::-webkit-scrollbar-thumb:hover { background: var(--pink); }
 
   .toc-header {
     font-size: 13px; font-weight: 700; color: var(--ink-3);
@@ -330,9 +344,9 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     .post-sidebar {
       position: static;
       flex-direction: row; flex-wrap: wrap;
+      max-height: none; overflow: visible; padding-right: 0;
     }
     .post-sidebar > * { flex: 1 1 240px; }
-    .sidebar-toc { max-height: none; }
     .post-body { padding: 28px 24px; }
   }
   @media (max-width: 640px) {
