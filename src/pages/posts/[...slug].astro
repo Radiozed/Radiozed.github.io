@@ -44,7 +44,7 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     <!-- ── 侧栏 ── -->
     <aside class="post-sidebar">
       {toc.length > 0 && (
-        <nav class="panel panel-tight sidebar-toc reveal" aria-label="文章目录">
+        <nav class="panel panel-tight sidebar-toc" aria-label="文章目录">
           <div class="toc-header">目录</div>
           <div class="toc-list">
             {toc.map((h) => (
@@ -54,7 +54,7 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
         </nav>
       )}
 
-      <div class="panel panel-tight sidebar-info reveal">
+      <div class="panel panel-tight sidebar-info">
         <div class="info-row">
           <span class="info-label">约</span>
           <span class="info-value">{wordCount} 字</span>
@@ -70,8 +70,9 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
       </div>
 
       <!-- 更新日历：有文章的日期会标出来，点一下直接跳过去 -->
+      <!-- 注意：侧栏是滚动容器，这里不能用 .reveal，否则 IntersectionObserver 被 overflow 裁剪，面板会一直 opacity:0 -->
       <div
-        class="panel panel-tight sidebar-cal reveal"
+        class="panel panel-tight sidebar-cal"
         id="calendarPanel"
         data-archive={JSON.stringify(archive)}
       >
@@ -243,6 +244,14 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
       return n;
     }
 
+    /* 最近有更新的那个月，用于「本月空着」时的跳转提示 */
+    function latestMonth() {
+      var keys = Object.keys(byDate).sort();
+      if (!keys.length) return null;
+      var p = keys[keys.length - 1].split('-');
+      return { y: Number(p[0]), m: Number(p[1]) - 1, label: Number(p[1]) + ' 月' };
+    }
+
     function render() {
       var y = cursor.getFullYear();
       var m = cursor.getMonth();
@@ -264,7 +273,27 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
 
       if (footEl) {
         var n = countInMonth(y, m);
-        footEl.textContent = n ? '本月 ' + n + ' 篇更新，点日期直接看' : '本月还没有更新';
+        if (n) {
+          footEl.textContent = '本月 ' + n + ' 篇更新，点日期直接看';
+          footEl.classList.remove('is-link');
+          footEl.onclick = null;
+          footEl.removeAttribute('title');
+        } else {
+          var latest = latestMonth();
+          if (latest) {
+            footEl.textContent = '本月还没更新 · 最近是 ' + latest.label;
+            footEl.classList.add('is-link');
+            footEl.title = '跳到 ' + latest.label;
+            footEl.onclick = function () {
+              cursor = new Date(latest.y, latest.m, 1);
+              render();
+            };
+          } else {
+            footEl.textContent = '还没有文章';
+            footEl.classList.remove('is-link');
+            footEl.onclick = null;
+          }
+        }
       }
     }
 
@@ -414,7 +443,10 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     margin: 0; padding-top: 10px;
     border-top: 1px solid var(--line);
     font-size: 11px; color: var(--ink-3); text-align: center;
+    transition: color .18s ease;
   }
+  .cal-foot.is-link { cursor: pointer; color: var(--pink-deep); font-weight: 600; }
+  .cal-foot.is-link:hover { color: var(--pink-dark); text-decoration: underline; text-underline-offset: 3px; }
 
   /* ── 正文 ── */
   .post-main { min-width: 0; }
