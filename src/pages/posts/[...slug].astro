@@ -234,15 +234,29 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     pick();
   })();
 
-  /* ── 给正文代码块加复制按钮 ── */
-  (function copyButtons() {
+  /* ── 把正文代码块包装成编辑器窗口：窗口点 + 语言 + 复制 ── */
+  (function codeBlocks() {
     document.querySelectorAll('.prose pre').forEach(function (pre) {
       if (pre.parentElement && pre.parentElement.classList.contains('code-wrapper')) return;
 
       var wrapper = document.createElement('div');
       wrapper.className = 'code-wrapper';
       pre.parentNode.insertBefore(wrapper, pre);
-      wrapper.appendChild(pre);
+
+      var bar = document.createElement('div');
+      bar.className = 'code-bar';
+
+      var dots = document.createElement('span');
+      dots.className = 'code-dots';
+      dots.setAttribute('aria-hidden', 'true');
+      for (var i = 0; i < 3; i++) dots.appendChild(document.createElement('i'));
+      bar.appendChild(dots);
+
+      var raw = (pre.getAttribute('data-language') || '').trim();
+      var label = document.createElement('span');
+      label.className = 'code-lang';
+      label.textContent = !raw || /^(plaintext|text|txt)$/i.test(raw) ? 'text' : raw;
+      bar.appendChild(label);
 
       var btn = document.createElement('button');
       btn.type = 'button';
@@ -262,7 +276,10 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
           if (window.__toast) window.__toast('复制失败，手动选一下吧');
         });
       });
-      wrapper.appendChild(btn);
+      bar.appendChild(btn);
+
+      wrapper.appendChild(bar);
+      wrapper.appendChild(pre);
     });
   })();
 

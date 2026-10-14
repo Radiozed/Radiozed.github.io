@@ -282,7 +282,10 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
 .code-window {
   position: relative; border-radius: var(--radius); overflow: hidden;
   background: var(--code-bg); border: 1px solid rgba(120, 100, 160, .32);
-  box-shadow: 0 30px 60px -12px rgba(46, 31, 71, .34), 0 14px 40px -14px rgba(228, 102, 143, .18);
+  box-shadow:
+    0 30px 60px -12px rgba(46, 31, 71, .34),
+    0 14px 40px -14px rgba(228, 102, 143, .18),
+    inset 0 1px 0 rgba(255, 255, 255, .06);
 }
 .code-titlebar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -470,9 +473,9 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
   font-family: var(--font-mono); font-size: .88em;
 }
 
-/* 代码块 */
+/* 代码块 —— 没有经过 .code-wrapper 包裹时的兜底样式 */
 .prose pre {
-  margin: 22px 0; padding: 44px 20px 20px;
+  margin: 22px 0; padding: 20px 22px;
   border-radius: 16px; overflow-x: auto;
   background: var(--code-bg); border: 1px solid rgba(120, 100, 160, .3);
 }
@@ -480,8 +483,68 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
   font-family: var(--font-mono); font-size: 13.5px; line-height: 1.85;
   color: var(--code-text); background: none; padding: 0;
 }
-.code-wrapper { position: relative; }
-.code-wrapper .copy-btn { position: absolute; top: 12px; right: 12px; z-index: 10; font-size: 12px; padding: 6px 12px; }
+
+/* ── 编辑器窗口式代码块（文章页由脚本包裹生成） ── */
+.code-wrapper {
+  position: relative;
+  margin: 26px 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--code-bg);
+  border: 1px solid rgba(120, 100, 160, .34);
+  box-shadow:
+    0 18px 40px -16px rgba(46, 31, 71, .38),
+    inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+/* 标题栏：三个窗口点 + 语言 + 复制 */
+.code-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--code-bg-alt);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+.code-dots { display: flex; gap: 6px; }
+.code-dots i { width: 10px; height: 10px; border-radius: 50%; }
+.code-dots i:nth-child(1) { background: #FF7B8A; }
+.code-dots i:nth-child(2) { background: #FFD37B; }
+.code-dots i:nth-child(3) { background: #7BE0A8; }
+
+.code-lang {
+  margin-left: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--code-muted);
+}
+
+.code-bar .copy-btn {
+  margin-left: auto;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+/* 盖掉 Shiki 写在 <pre> 上的内联背景与内边距，让窗口外壳接管 */
+.code-wrapper pre,
+.code-wrapper pre.astro-code {
+  margin: 0 !important;
+  padding: 20px 22px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--code-text) !important;
+}
+.code-wrapper pre code {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.85;
+}
 
 /* 表格 */
 .prose table {
