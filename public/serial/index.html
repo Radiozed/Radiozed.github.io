@@ -288,6 +288,42 @@
       默认参数指向公共测试服务器 <code>broker.emqx.io</code>，可直接连。换成你自己的 Broker 时记得改用户名 / 密码。
     </p>
 
+    <div class="row mid" style="gap:10px;margin-bottom:12px">
+      <div>
+        <label class="sm">平台预设</label>
+        <select id="mPreset">
+          <option value="generic" selected>通用 MQTT Broker</option>
+          <option value="onenet">OneNET（中国移动）</option>
+        </select>
+      </div>
+      <span class="tip" id="mPresetTip" style="margin:0 0 8px">公共测试服务器，改自己的 Broker 记得填账号密码</span>
+    </div>
+
+    <!-- OneNET 专用参数 -->
+    <div class="row" id="onenetFields" hidden style="gap:10px;margin-bottom:12px">
+      <div style="flex:1 1 140px">
+        <label class="sm">产品 ID</label>
+        <input type="text" id="mPid" placeholder="如 6a1b2c3d4e" style="width:100%">
+      </div>
+      <div style="flex:1 1 140px">
+        <label class="sm">设备名称</label>
+        <input type="text" id="mDev" value="esp01s_01" style="width:100%">
+      </div>
+      <div style="flex:1 1 240px">
+        <label class="sm">设备密钥 AccessKey（base64）</label>
+        <input type="text" id="mKey" placeholder="OneNET 控制台 → 设备详情里复制" style="width:100%">
+      </div>
+      <div style="flex:0 0 110px">
+        <label class="sm">Token 有效期</label>
+        <select id="mEt" style="width:100%">
+          <option value="1">1 天</option>
+          <option value="7" selected>7 天</option>
+          <option value="30">30 天</option>
+          <option value="365">1 年</option>
+        </select>
+      </div>
+    </div>
+
     <div class="row" style="gap:10px">
       <div style="flex:1 1 170px">
         <label class="sm">WiFi 名称 SSID</label>
@@ -842,8 +878,89 @@
     return steps;
   }
 
-  function mqttRender() {
-    var steps = mqttBuild();
+  /* OneNET token：HMAC-SHA1，用浏览器 Web Crypto 现场算，不用手搓 */
+  async function onenetToken(accessKeyB64, res, et) {
+    var version = '2018-10-31', method = 'sha1';
+    var str = et + '\n' + method + '\n' + res + '\n' + version;
+
+    var raw = atob(String(accessKeyB64).replace(/\s+/g, ''));
+    var kb = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) kb[i] = raw.charCodeAt(i);
+
+    var key = await crypto.subtle.importKey('raw', kb, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+    var sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(str));
+
+    var bytes = new Uint8Array(sig), bin = '';
+    for (var j = 0; j < bytes.length; j++) bin += String.fromCharCode(bytes[j]);
+
+    return 'version=' + version +
+           '&res=' + encodeURIComponent(res) +
+           '&et=' + et +
+           '&method=' + method +
+           '&sign=' + encodeURIComponent(btoa(bin));
+  }
+
+  /* OneNET 物模型指令序列 */
+  async function onenetBuild() {
+    var pid  = $('mPid').value.trim();
+    var dev  = $('mDev').value.trim() || 'esp01s_01';
+    var akey = $('mKey').value.trim();
+    var days = parseInt($('mEt').value, 10) || 7;
+
+    if (!pid || !akey) {
+      appendLine('err', 'OneNET 需要填「产品 ID」和「设备密钥」');
+      return [];
+    }
+
+    var host = 'mqtts.heclouds.com', port = '1883';
+    var et  = Math.floor(Date.now() / 1000) + days * 86400;
+    var res = 'products/' + pid + '/devices/' + dev;
+
+    var token;
+    try {
+      token = await onenetToken(akey, res, et);
+    } catch (e) {
+      appendLine('err', '[Token 生成失败] ' + (e && e.message ? e.message : e) + '，密钥应是 base64 字符串');
+      return [];
+    }
+
+    var topicSet  = '$sys/' + pid + '/' + dev + '/thing/property/set';
+    var topicPost = '$sys/' + pid + '/' + dev + '/thing/property/post';
+    var payload = JSON.stringify({
+      id: String(Date.now()),
+      version: '1.0',
+      params: { temperature: { value: 25.6 } }
+    });
+
+    /* 回填到表单，方便肉眼核对 */
+    $('mHost').value  = host;
+    $('mPort').value  = port;
+    $('mClient').value = dev;
+    $('mUser').value  = pid;
+    $('mUpass').value = token;
+    $('mSub').value   = topicSet;
+    $('mPub').value   = topicPost;
+    $('mPayload').value = payload;
+
+    var ssid = $('mSsid').value.trim(), pass = $('mPass').value;
+
+    var steps = [
+      { cmd: 'AT',          wait: 400 },
+      { cmd: 'ATE0',        wait: 400 },
+      { cmd: 'AT+CWMODE=1', wait: 400 }
+    ];
+    if (ssid) steps.push({ cmd: 'AT+CWJAP=' + mqttQ(ssid) + ',' + mqttQ(pass), wait: 12000 });
+    steps.push({ cmd: 'AT+MQTTUSERCFG=0,1,' + mqttQ(dev) + ',' + mqttQ(pid) + ',' + mqttQ(token) + ',0,0,""', wait: 600 });
+    steps.push({ cmd: 'AT+MQTTCONN=0,' + mqttQ(host) + ',' + port + ',1', wait: 5000 });
+    steps.push({ cmd: 'AT+MQTTSUB=0,' + mqttQ(topicSet) + ',1', wait: 1000 });
+    steps.push({ cmd: 'AT+MQTTPUB=0,' + mqttQ(topicPost) + ',' + mqttQ(payload) + ',1,0', wait: 1200 });
+
+    sys('OneNET Token 已生成（有效期 ' + days + ' 天）');
+    return steps;
+  }
+
+  async function mqttRender() {
+    var steps = ($('mPreset').value === 'onenet') ? await onenetBuild() : mqttBuild();
     MQTT_STEPS = steps;
     var box = $('mqttCmds');
     box.innerHTML = '';
@@ -917,7 +1034,7 @@
 
   async function mqttRunAll() {
     if (!port) { sys('请先连接串口'); return; }
-    if (!MQTT_STEPS.length) mqttRender();
+    if (!MQTT_STEPS.length) await mqttRender();
 
     $('btnMqttRun').disabled = true;
     sys('开始执行 ESP-01S MQTT 指令序列（共 ' + MQTT_STEPS.length + ' 条）…');
@@ -930,6 +1047,40 @@
     sys('序列执行完毕。某步返回 ERROR 时，看日志里 ESP-AT 的原始回显定位。');
     $('btnMqttRun').disabled = !port;
   }
+
+  /* 平台预设切换 */
+  $('mPreset').addEventListener('change', function () {
+    var on = $('mPreset').value === 'onenet';
+    $('onenetFields').hidden = !on;
+    $('mPresetTip').textContent = on
+      ? '填产品 ID、设备名称、设备密钥，Token 由浏览器现场算出'
+      : '公共测试服务器，改自己的 Broker 记得填账号密码';
+
+    /* 切平台后旧指令就失效了，清掉免得误发 */
+    MQTT_STEPS = [];
+    $('mqttCmds').innerHTML = '';
+    $('btnMqttRun').disabled = true;
+    $('btnMqttCopy').disabled = true;
+
+    if (on) {
+      $('mHost').value = 'mqtts.heclouds.com';
+      $('mPort').value = '1883';
+      $('mSub').value = '';
+      $('mPub').value = '';
+      $('mPayload').value = '';
+      $('mUser').value = '';
+      $('mUpass').value = '';
+    } else {
+      $('mHost').value = 'broker.emqx.io';
+      $('mPort').value = '1883';
+      $('mSub').value = 'survivor/test/sub';
+      $('mPub').value = 'survivor/test/pub';
+      $('mPayload').value = 'hello from esp01s';
+      $('mUser').value = '';
+      $('mUpass').value = '';
+    }
+    mqttStateChanged();
+  });
 
   $('btnMqttGen').addEventListener('click', mqttRender);
   $('btnMqttRun').addEventListener('click', mqttRunAll);
