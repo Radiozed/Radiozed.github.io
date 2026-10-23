@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>在线串口工具 · 樱风工房</title>
+<style>
+  :root{
+    --pink:#F389AE; --pink-deep:#E4668F; --pink-soft:#FDE7F0;
+    --ink:#2E2436; --ink-2:#6B6071; --ink-3:#9C93A6;
+    --line:#EFE7F1; --bg:#FBF8FD; --card:#FFFFFF;
+    --ok:#3FB98A; --warn:#E8A33D; --err:#E4586B;
+    --mono:ui-monospace,"JetBrains Mono",Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 system-ui,-apple-system,"Noto Sans SC","Microsoft YaHei",sans-serif;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 64px}
+  header.top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);flex:none}
+  .dot.off{background:var(--ink-3)}
+  .dot.pause{background:var(--warn)}
+  h1{font-size:22px;margin:0;letter-spacing:.01em}
+  .sub{color:var(--ink-2);font-size:13px;margin:2px 0 22px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:18px;margin-bottom:16px;box-shadow:0 10px 26px -18px rgba(90,60,120,.35);
+  }
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+  .row.mid{align-items:center}
+  label.sm{font-size:12px;color:var(--ink-3);display:block;margin-bottom:4px}
+  select,input[type=text],input[type=number]{
+    font:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--line);
+    border-radius:10px;background:#fff;color:var(--ink);outline:none;
+  }
+  input[type=number]{width:92px}
+  select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
+  button{
+    font:inherit;font-size:13px;font-weight:600;padding:9px 16px;border-radius:999px;
+    border:1px solid transparent;background:var(--pink-soft);color:var(--pink-deep);
+    cursor:pointer;transition:.18s;white-space:nowrap;
+  }
+  button:hover:not(:disabled){background:var(--pink);color:#fff}
+  button.primary{background:linear-gradient(135deg,#F79AB8,var(--pink-deep));color:#fff}
+  button.primary:hover:not(:disabled){filter:brightness(1.05)}
+  button.ghost{background:#fff;border-color:var(--line);color:var(--ink-2)}
+  button.ghost:hover:not(:disabled){background:var(--bg);color:var(--ink)}
+  button.sig{font-family:var(--mono);font-size:12px;padding:6px 12px;background:#fff;border-color:var(--line);color:var(--ink-2)}
+  button.sig:hover:not(:disabled){background:var(--pink-soft);color:var(--pink-deep)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.active{background:var(--warn);color:#fff;border-color:var(--warn)}
+  .log{
+    height:360px;overflow-y:auto;background:#2B2439;border-radius:14px;padding:14px;
+    font-family:var(--mono);font-size:12.5px;line-height:1.75;color:#E9E3F4;
+    white-space:pre-wrap;word-break:break-all;
+  }
+  .log .line{display:block}
+  .log .t{color:#8C7FA6}
+  .log .rx{color:#B8E6D0}
+  .log .tx{color:#F7C8A0}
+  .log .sys{color:#9C93A6;font-style:italic}
+  .log .err{color:#FF9AA8}
+  .sendbar{display:flex;gap:8px;margin-top:14px}
+  .sendbar input{flex:1;font-family:var(--mono)}
+  .stats{display:flex;gap:18px;font-size:12px;color:var(--ink-3);margin-top:10px;flex-wrap:wrap}
+  .stats b{color:var(--ink-2);font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chips button{font-size:12px;padding:6px 12px;font-family:var(--mono)}
+  /* 标签切换 */
+  .tabs{display:flex;gap:8px;margin:20px 0 12px;flex-wrap:wrap}
+  .tab{
+    font:inherit;font-size:13.5px;font-weight:600;padding:9px 20px;border-radius:999px;
+    background:#fff;border:1px solid var(--line);color:var(--ink-2);
+    cursor:pointer;transition:.18s;
+  }
+  .tab:hover{background:var(--pink-soft);color:var(--pink-deep);border-color:var(--pink)}
+  .tab.is-active{
+    background:linear-gradient(135deg,#F79AB8,var(--pink-deep));
+    border-color:transparent;color:#fff;
+    box-shadow:0 6px 16px -6px rgba(228,102,143,.55);
+  }
+  .panel{display:block}
+  .panel[hidden]{display:none}
+  .log-slot{margin-top:12px}
+  /* MQTT 指令列表 */
+  .cmds{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+  .cmd{
+    display:flex;align-items:center;gap:10px;background:#FBF8FD;border:1px solid var(--line);
+    border-radius:10px;padding:8px 11px;transition:.18s;
+  }
+  .cmd .idx{font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:none;width:16px}
+  .cmd .text{font-family:var(--mono);font-size:12px;color:var(--ink);flex:1;word-break:break-all;line-height:1.5}
+  .cmd .wait{font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:none}
+  .cmd button{font-size:11px;padding:4px 11px;flex:none}
+  .cmd.done{background:#F0FAF5;border-color:#BEE8D3}
+  .cmd.running{background:#FFF6E6;border-color:#F5DDB4}
+  h2.sec{font-size:16px;margin:0;letter-spacing:.01em}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);cursor:pointer;user-select:none}
+  .toggle input{width:15px;height:15px;accent-color:var(--pink-deep)}
+  .divider{height:1px;background:var(--line);margin:16px 0}
+  .warn{
+    background:#FFF6E6;border:1px solid #F5DDB4;color:#8A6417;
+    padding:12px 16px;border-radius:12px;font-size:13px;margin-bottom:16px;
+  }
+  .warn b{color:#7A5510}
+  .tip{font-size:11.5px;color:var(--ink-3);margin-top:8px;line-height:1.6}
+  a.back{font-size:13px;color:var(--pink-deep);text-decoration:none}
+  a.back:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:.92em;background:#F6F1F8;padding:1px 5px;border-radius:4px}
+  @media(max-width:640px){
+    .log{height:280px}
+    .sendbar{flex-wrap:wrap}
+    .sendbar input{flex:1 1 100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="dot off" id="stateDot"></span>
+    <h1>在线串口工具</h1>
+  </header>
+  <p class="sub">
+    纯浏览器运行 · 数据不上传服务器 · 基于 Web Serial API
+    &nbsp;·&nbsp; <a class="back" href="/">← 返回樱风工房</a>
+  </p>
+
+  <div class="warn" id="unsupported" hidden>
+    <b>当前浏览器不支持 Web Serial API。</b><br>
+    请用桌面版 <b>Chrome</b> 或 <b>Edge</b>（版本 89+），并用 <code>https://</code> 打开本页。
+    Firefox 和 Safari 暂不支持。
+  </div>
+
+  <!-- ═══ 连接参数 ═══ -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <label class="sm">波特率</label>
+        <select id="baud">
+          <option>9600</option>
+          <option>19200</option>
+          <option>38400</option>
+          <option>57600</option>
+          <option selected>115200</option>
+          <option>230400</option>
+          <option>460800</option>
+          <option>921600</option>
+          <option value="custom">自定义…</option>
+        </select>
+      </div>
+      <div id="baudCustomWrap" hidden>
+        <label class="sm">自定义波特率</label>
+        <input type="number" id="baudCustom" placeholder="如 74880" min="50">
+      </div>
+      <div>
+        <label class="sm">数据位 / 停止位 / 校验</label>
+        <select id="frame">
+          <option value="8,1,none" selected>8 / 1 / 无</option>
+          <option value="8,1,even">8 / 1 / 偶</option>
+          <option value="8,1,odd">8 / 1 / 奇</option>
+          <option value="7,1,none">7 / 1 / 无</option>
+          <option value="7,2,none">7 / 2 / 无</option>
+          <option value="8,2,none">8 / 2 / 无</option>
+        </select>
+      </div>
+      <div>
+        <label class="sm">流控</label>
+        <select id="flow">
+          <option value="none" selected>无</option>
+          <option value="hardware">RTS / CTS</option>
+        </select>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="primary" id="btnConnect">连接串口</button>
+        <button class="ghost" id="btnDisconnect" disabled>断开</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 标签切换 ═══ -->
+  <div class="tabs">
+    <button class="tab is-active" data-tab="serial">串口终端</button>
+    <button class="tab" data-tab="mqtt">ESP-01S · MQTT</button>
+  </div>
+
+  <!-- ═══ 面板一：串口终端 ═══ -->
+  <div class="panel" id="panel-serial">
+  <div class="card">
+    <div class="row mid" style="justify-content:space-between;margin-bottom:10px">
+      <div class="row mid" style="gap:14px">
+        <label class="toggle"><input type="checkbox" id="cbTimestamp"> 时间戳</label>
+        <label class="toggle"><input type="checkbox" id="cbAutoScroll" checked> 自动滚动</label>
+        <label class="toggle"><input type="checkbox" id="cbHexView"> HEX 显示</label>
+        <label class="toggle">
+          超时断行
+          <input type="number" id="breakMs" value="0" min="0" step="50" style="width:70px" title="0 = 关闭；单位毫秒">
+          <span style="font-size:11px">ms</span>
+        </label>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="ghost" id="btnPause">暂停</button>
+        <button class="ghost" id="btnClear">清空</button>
+        <button class="ghost" id="btnSave">保存日志</button>
+      </div>
+    </div>
+
+    <div class="log-slot" id="slot-serial">
+      <div class="log-wrap" id="logWrap">
+        <div class="log" id="log"></div>
+        <div class="stats">
+          <span>接收 <b id="rxCount">0</b> 字节</span>
+          <span>发送 <b id="txCount">0</b> 字节</span>
+          <span id="connInfo">未连接</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 信号线：不用手按复位键 -->
+    <div class="row mid" style="margin-top:14px;gap:8px">
+      <span style="font-size:12px;color:var(--ink-3)">信号线</span>
+      <button class="sig" data-sig="dataTerminalReady" data-val="0" disabled>DTR 低</button>
+      <button class="sig" data-sig="dataTerminalReady" data-val="1" disabled>DTR 高</button>
+      <button class="sig" data-sig="requestToSend" data-val="0" disabled>RTS 低</button>
+      <button class="sig" data-sig="requestToSend" data-val="1" disabled>RTS 高</button>
+      <button class="ghost" id="btnReset" disabled>复位脉冲</button>
+    </div>
+    <p class="tip">
+      多数 CH340 / CP2102 板子：<b>RTS 拉低</b> 会把 EN 拉低实现复位；ESP32 进下载模式需 DTR(GPIO0) 与 RTS(EN) 配合。
+      不确定就先用「复位脉冲」试。
+    </p>
+
+    <div class="divider"></div>
+
+    <div class="sendbar">
+      <input type="text" id="txInput" placeholder="输入要发送的内容，回车发送（↑↓ 调历史）" disabled>
+      <button class="primary" id="btnSend" disabled>发送</button>
+    </div>
+
+    <div class="row mid" style="margin-top:10px;gap:16px">
+      <label class="toggle"><input type="checkbox" id="cbHexSend"> HEX 发送</label>
+      <div>
+        <label class="sm" style="margin:0 0 2px">行尾</label>
+        <select id="lineEnding">
+          <option value="" selected>无</option>
+          <option value="\r\n">CRLF (\r\n)</option>
+          <option value="\n">LF (\n)</option>
+          <option value="\r">CR (\r)</option>
+        </select>
+      </div>
+      <label class="toggle"><input type="checkbox" id="cbLoop"> 定时发送</label>
+      <div>
+        <label class="sm" style="margin:0 0 2px">间隔</label>
+        <select id="loopMs">
+          <option value="100">100 ms</option>
+          <option value="200">200 ms</option>
+          <option value="500" selected>500 ms</option>
+          <option value="1000">1 s</option>
+          <option value="2000">2 s</option>
+          <option value="5000">5 s</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="chips">
+      <button data-cmd="AT">AT</button>
+      <button data-cmd="AT+RST">AT+RST</button>
+      <button data-cmd="AT+GMR">AT+GMR</button>
+      <button data-cmd="help">help</button>
+      <button data-cmd="\x03">Ctrl+C</button>
+      <button data-cmd="\r\n">回车换行</button>
+    </div>
+    <p class="tip">
+      快捷指令里 <code>\x03</code>、<code>\r\n</code> 这类转义会解析成真实控制字符再发送；波特率、帧格式、行尾等设置会自动记住。
+    </p>
+  </div>
+  </div><!-- /panel-serial -->
+
+  <!-- ═══ 面板二：ESP-01S MQTT ═══ -->
+  <div class="panel" id="panel-mqtt" hidden>
+  <div class="card">
+    <div class="row mid" style="justify-content:space-between;margin-bottom:4px">
+      <h2 class="sec">ESP-01S · MQTT 指令测试</h2>
+      <span class="tip" style="margin:0">基于 ESP-AT 的 AT+MQTTxxx 指令 · 自动用 CRLF 行尾</span>
+    </div>
+    <p class="tip" style="margin:0 0 14px">
+      默认参数指向公共测试服务器 <code>broker.emqx.io</code>，可直接连。换成你自己的 Broker 时记得改用户名 / 密码。
+    </p>
+
+    <div class="row" style="gap:10px">
+      <div style="flex:1 1 170px">
+        <label class="sm">WiFi 名称 SSID</label>
+        <input type="text" id="mSsid" placeholder="MyWiFi" style="width:100%">
+      </div>
+      <div style="flex:1 1 140px">
+        <label class="sm">WiFi 密码</label>
+        <input type="text" id="mPass" placeholder="留空表示开放网络" style="width:100%">
+      </div>
+      <div style="flex:1 1 170px">
+        <label class="sm">Broker 地址</label>
+        <input type="text" id="mHost" value="broker.emqx.io" style="width:100%">
+      </div>
+      <div style="flex:0 0 88px">
+        <label class="sm">端口</label>
+        <input type="number" id="mPort" value="1883" style="width:100%">
+      </div>
+    </div>
+
+    <div class="row" style="gap:10px;margin-top:10px">
+      <div style="flex:1 1 150px">
+        <label class="sm">客户端 ID</label>
+        <input type="text" id="mClient" value="esp01s_01" style="width:100%">
+      </div>
+      <div style="flex:1 1 130px">
+        <label class="sm">用户名（可空）</label>
+        <input type="text" id="mUser" style="width:100%">
+      </div>
+      <div style="flex:1 1 130px">
+        <label class="sm">密码（可空）</label>
+        <input type="text" id="mUpass" style="width:100%">
+      </div>
+    </div>
+
+    <div class="row" style="gap:10px;margin-top:10px">
+      <div style="flex:1 1 170px">
+        <label class="sm">订阅主题</label>
+        <input type="text" id="mSub" value="survivor/test/sub" style="width:100%">
+      </div>
+      <div style="flex:1 1 170px">
+        <label class="sm">发布主题</label>
+        <input type="text" id="mPub" value="survivor/test/pub" style="width:100%">
+      </div>
+      <div style="flex:1 1 170px">
+        <label class="sm">发布内容</label>
+        <input type="text" id="mPayload" value="hello from esp01s" style="width:100%">
+      </div>
+    </div>
+
+    <div class="row mid" style="margin-top:14px;gap:8px">
+      <button class="primary" id="btnMqttGen">生成指令</button>
+      <button class="ghost" id="btnMqttRun" disabled>按顺序执行</button>
+      <button class="ghost" id="btnMqttCopy" disabled>复制全部</button>
+      <span class="tip" id="mqttHint" style="margin:0 0 0 auto"></span>
+    </div>
+
+    <div class="cmds" id="mqttCmds"></div>
+
+    <div class="log-slot" id="slot-mqtt"></div>
+
+    <p class="tip">
+      指令按 ESP-AT 的顺序发送，每步之间会等待（连 WiFi 12 秒、连 Broker 5 秒）。
+      日志区显示 ESP-01S 的原始回显，看到 <code>OK</code> 就表示这一步成功。
+    </p>
+  </div>
+  </div><!-- /panel-mqtt -->
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var logEl = $('log'), dot = $('stateDot');
+  var btnConnect = $('btnConnect'), btnDisconnect = $('btnDisconnect');
+  var btnSend = $('btnSend'), txInput = $('txInput');
+  var connInfo = $('connInfo'), btnPause = $('btnPause');
+
+  var LS_PREFS = 'skz-serial-prefs-v1';
+  var LS_HIST = 'skz-serial-history-v1';
+
+  if (!('serial' in navigator)) {
+    $('unsupported').hidden = false;
+    btnConnect.disabled = true;
+    return;
+  }
+
+  var port = null, reader = null, writer = null;
+  var keepReading = false;
+  var rxBytes = 0, txBytes = 0;
+  var decoder = new TextDecoder('utf-8');
+  var pending = [];
+  var flushTimer = null;
+  var breakTimer = null;
+  var lastRxEndedWithNL = true;
+  var paused = false, pausedBytes = 0;
+  var loopTimer = null, loopFirst = true;
+  var history = [], histIdx = -1;
+
+  /* ───────── 工具 ───────── */
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function now() {
+    var d = new Date();
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '.' + ('00' + d.getMilliseconds()).slice(-3);
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function scrollIfNeeded() {
+    if ($('cbAutoScroll').checked && !paused) logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  /* 接收数据：行内追加，保持串口「流」语义 —— 设备不换行我们也不换行 */
+  function appendInline(kind, text) {
+    if (paused) { pausedBytes += text.length; return; }
+    var s = document.createElement('span');
+    s.className = kind;
+    s.textContent = text;
+    logEl.appendChild(s);
+    scrollIfNeeded();
+  }
+
+  /* 发送记录 / 系统消息：块级元素，永远独占一行 */
+  function appendLine(kind, text) {
+    if (paused) { pausedBytes += text.length; return; }
+    var line = document.createElement('div');
+    line.className = 'line';
+    if ($('cbTimestamp').checked) {
+      var t = document.createElement('span');
+      t.className = 't';
+      t.textContent = '[' + now() + '] ';
+      line.appendChild(t);
+    }
+    var s = document.createElement('span');
+    s.className = kind;
+    s.textContent = text;
+    line.appendChild(s);
+    logEl.appendChild(line);
+    scrollIfNeeded();
+  }
+
+  function sys(text) { appendLine('sys', text); }
+
+  function hex(bytes) {
+    var out = [];
+    for (var i = 0; i < bytes.length; i++) out.push(('0' + bytes[i].toString(16)).slice(-2).toUpperCase());
+    return out.join(' ');
+  }
+
+  /* 把 \x03 \r\n 这类转义解析成真实字符 */
+  function unescape(s) {
+    return String(s)
+      .replace(/\\x([0-9a-fA-F]{2})/g, function (_, h) { return String.fromCharCode(parseInt(h, 16)); })
+      .replace(/\\r/g, '\r').replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+  }
+
+  /* ───────── 偏好持久化 ───────── */
+  function savePrefs() {
+    var p = {
+      baud: $('baud').value,
+      baudCustom: $('baudCustom').value,
+      frame: $('frame').value,
+      flow: $('flow').value,
+      eol: $('lineEnding').value,
+      hexSend: $('cbHexSend').checked,
+      hexView: $('cbHexView').checked,
+      ts: $('cbTimestamp').checked,
+      auto: $('cbAutoScroll').checked,
+      breakMs: $('breakMs').value
+    };
+    try { localStorage.setItem(LS_PREFS, JSON.stringify(p)); } catch (e) {}
+  }
+
+  function loadPrefs() {
+    var raw = null;
+    try { raw = localStorage.getItem(LS_PREFS); } catch (e) {}
+    if (!raw) return;
+    var p;
+    try { p = JSON.parse(raw); } catch (e) { return; }
+    if (p.baud) $('baud').value = p.baud;
+    if (p.baudCustom) $('baudCustom').value = p.baudCustom;
+    if (p.frame) $('frame').value = p.frame;
+    if (p.flow) $('flow').value = p.flow;
+    if (p.eol !== undefined) $('lineEnding').value = p.eol;
+    $('cbHexSend').checked = !!p.hexSend;
+    $('cbHexView').checked = !!p.hexView;
+    $('cbTimestamp').checked = !!p.ts;
+    $('cbAutoScroll').checked = p.auto !== false;
+    if (p.breakMs) $('breakMs').value = p.breakMs;
+    $('baudCustomWrap').hidden = $('baud').value !== 'custom';
+  }
+
+  function currentBaud() {
+    if ($('baud').value === 'custom') {
+      var v = parseInt($('baudCustom').value, 10);
+      return (v && v > 0) ? v : 115200;
+    }
+    return parseInt($('baud').value, 10);
+  }
+
+  /* ───────── 接收循环 ───────── */
+  async function readLoop() {
+    var buffer = new Uint8Array(0);
+    while (port && port.readable && keepReading) {
+      try {
+        reader = port.readable.getReader();
+      } catch (e) { break; }
+      try {
+        while (true) {
+          var res = await reader.read();
+          if (res.done) break;
+          var chunk = res.value;
+          if (!chunk || !chunk.length) continue;
+
+          rxBytes += chunk.length;
+          $('rxCount').textContent = rxBytes;
+
+          if ($('cbHexView').checked) {
+            appendLine('rx', hex(chunk));
+            lastRxEndedWithNL = true;
+          } else {
+            var merged = new Uint8Array(buffer.length + chunk.length);
+            merged.set(buffer, 0); merged.set(chunk, buffer.length);
+            buffer = merged;
+
+            var text = decoder.decode(buffer, { stream: true });
+            if (text) {
+              pending.push(text);
+              clearTimeout(flushTimer);
+              flushTimer = setTimeout(flushPending, 60);
+              if (/[\r\n]/.test(text)) { clearTimeout(flushTimer); flushPending(); }
+            }
+          }
+        }
+      } catch (e) {
+        if (keepReading) appendLine('err', '[读取中断] ' + e.message);
+      } finally {
+        try { reader.releaseLock(); } catch (e) {}
+        reader = null;
+      }
+    }
+  }
+
+  function flushPending() {
+    if (!pending.length) return;
+    var text = pending.join('');
+    pending = [];
+    appendInline('rx', text);
+    lastRxEndedWithNL = /[\r\n]$/.test(text);
+
+    /* 超时断行：设备 printf 不带 \n 时，停顿后补一个换行，避免日志糊成一行 */
+    clearTimeout(breakTimer);
+    var ms = parseInt($('breakMs').value, 10) || 0;
+    if (ms > 0 && !lastRxEndedWithNL) {
+      breakTimer = setTimeout(function () {
+        if (!lastRxEndedWithNL) { appendInline('rx', '\n'); lastRxEndedWithNL = true; }
+      }, ms);
+    }
+  }
+
+  /* ───────── 连接 / 断开 ───────── */
+  function sigButtons() { return document.querySelectorAll('button.sig'); }
+  function setSigEnabled(on) {
+    var list = sigButtons();
+    for (var i = 0; i < list.length; i++) list[i].disabled = !on;
+    $('btnReset').disabled = !on;
+    if (typeof mqttStateChanged === 'function') mqttStateChanged();
+  }
+
+  async function connect() {
+    try {
+      port = await navigator.serial.requestPort();
+      var frame = $('frame').value.split(',');
+      await port.open({
+        baudRate: currentBaud(),
+        dataBits: parseInt(frame[0], 10),
+        stopBits: parseInt(frame[1], 10),
+        parity: frame[2],
+        flowControl: $('flow').value
+      });
+
+      keepReading = true;
+      readLoop();
+
+      dot.classList.remove('off');
+      btnConnect.disabled = true;
+      btnDisconnect.disabled = false;
+      btnSend.disabled = false;
+      txInput.disabled = false;
+      txInput.focus();
+      setSigEnabled(true);
+      connInfo.textContent = '已连接 · ' + currentBaud() + ' bps';
+
+      var info = port.getInfo && port.getInfo();
+      var desc = currentBaud() + ' ' + frame[0] + 'N' + frame[1];
+      if (info && info.usbVendorId) {
+        desc += ' · VID ' + ('0000' + info.usbVendorId.toString(16)).slice(-4).toUpperCase();
+      }
+      sys('已连接（' + desc + '）');
+    } catch (e) {
+      if (e && e.name === 'NotFoundError') sys('已取消选择串口');
+      else appendLine('err', '[连接失败] ' + (e && e.message ? e.message : e));
+      port = null;
+    }
+  }
+
+  async function disconnect() {
+    stopLoop();
+    keepReading = false;
+    clearTimeout(breakTimer);
+    try { if (reader) await reader.cancel(); } catch (e) {}
+    try { if (writer) writer.releaseLock(); } catch (e) {}
+    writer = null;
+    try { if (port) await port.close(); } catch (e) {}
+    port = null;
+
+    dot.classList.add('off');
+    btnConnect.disabled = false;
+    btnDisconnect.disabled = true;
+    btnSend.disabled = true;
+    txInput.disabled = true;
+    setSigEnabled(false);
+    connInfo.textContent = '未连接';
+    sys('已断开');
+  }
+
+  /* ───────── 发送 ───────── */
+  async function send(text, silent) {
+    if (!port || !port.writable) return false;
+    var eol = $('lineEnding').value || '';
+    var data;
+
+    if ($('cbHexSend').checked) {
+      var cleaned = String(text).replace(/0x/gi, '').replace(/[\s,]/g, '');
+      if (!/^[0-9a-fA-F]*$/.test(cleaned) || cleaned.length % 2 !== 0) {
+        appendLine('err', '[HEX 格式错误] 需要偶数个十六进制字符');
+        return false;
+      }
+      data = new Uint8Array(cleaned.length / 2);
+      for (var i = 0; i < data.length; i++) data[i] = parseInt(cleaned.substr(i * 2, 2), 16);
+    } else {
+      data = new TextEncoder().encode(unescape(String(text)) + unescape(eol));
+    }
+
+    try {
+      writer = port.writable.getWriter();
+      await writer.write(data);
+      writer.releaseLock();
+      writer = null;
+
+      txBytes += data.length;
+      $('txCount').textContent = txBytes;
+
+      if (!silent) {
+        if ($('cbHexView').checked) appendLine('tx', '→ ' + hex(data));
+        else appendLine('tx', '→ ' + String(text) + (eol ? '  ⏎' : ''));
+      }
+      return true;
+    } catch (e) {
+      appendLine('err', '[发送失败] ' + (e && e.message ? e.message : e));
+      try { if (writer) writer.releaseLock(); } catch (x) {}
+      writer = null;
+      return false;
+    }
+  }
+
+  /* ───────── 历史命令 ───────── */
+  function pushHistory(v) {
+    if (!v) return;
+    history = history.filter(function (x) { return x !== v; });
+    history.unshift(v);
+    if (history.length > 50) history.length = 50;
+    histIdx = -1;
+    try { localStorage.setItem(LS_HIST, JSON.stringify(history)); } catch (e) {}
+  }
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(LS_HIST);
+      if (raw) history = JSON.parse(raw) || [];
+    } catch (e) { history = []; }
+  }
+
+  /* ───────── 定时发送 ───────── */
+  function startLoop() {
+    stopLoop();
+    loopFirst = true;
+    var ms = parseInt($('loopMs').value, 10) || 500;
+    var v = txInput.value;
+    if (!v && !$('cbHexSend').checked) { sys('定时发送需要先填内容'); $('cbLoop').checked = false; return; }
+
+    sys('定时发送开始：每 ' + ms + ' ms 一次（首条会显示在日志里）');
+    loopTimer = setInterval(function () {
+      var val = txInput.value;
+      if (!val && !$('cbHexSend').checked) return;
+      send(val, !loopFirst);
+      loopFirst = false;
+    }, ms);
+    $('cbLoop').classList.add('active');
+  }
+  function stopLoop() {
+    if (loopTimer) { clearInterval(loopTimer); loopTimer = null; }
+    if ($('cbLoop').checked) $('cbLoop').checked = false;
+    $('cbLoop').classList.remove('active');
+  }
+
+  /* ───────── 事件绑定 ───────── */
+  btnConnect.addEventListener('click', connect);
+  btnDisconnect.addEventListener('click', disconnect);
+
+  btnSend.addEventListener('click', function () {
+    var v = txInput.value;
+    if (!$('cbHexSend').checked && !v) return;
+    pushHistory(v);
+    send(v);
+    txInput.value = '';
+    txInput.focus();
+  });
+
+  txInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); btnSend.click(); return; }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!history.length) return;
+      histIdx = Math.min(histIdx + 1, history.length - 1);
+      txInput.value = history[histIdx] || '';
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!history.length) return;
+      histIdx = Math.max(histIdx - 1, -1);
+      txInput.value = histIdx >= 0 ? (history[histIdx] || '') : '';
+    }
+  });
+
+  btnPause.addEventListener('click', function () {
+    paused = !paused;
+    btnPause.textContent = paused ? '继续' : '暂停';
+    btnPause.classList.toggle('active', paused);
+    dot.classList.toggle('pause', paused && !!port);
+    if (!paused) {
+      if (pausedBytes > 0) appendLine('sys', '（暂停期间有 ' + pausedBytes + ' 字节未显示）');
+      pausedBytes = 0;
+      if ($('cbAutoScroll').checked) logEl.scrollTop = logEl.scrollHeight;
+    }
+  });
+
+  $('btnClear').addEventListener('click', function () { logEl.textContent = ''; });
+  $('btnSave').addEventListener('click', function () {
+    var blob = new Blob([logEl.innerText], { type: 'text/plain;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'serial-' + Date.now() + '.log';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  });
+
+  $('baud').addEventListener('change', function () {
+    $('baudCustomWrap').hidden = $('baud').value !== 'custom';
+    if (port) sys('注意：修改波特率需重新连接后生效');
+    savePrefs();
+  });
+
+  ['frame', 'flow', 'lineEnding'].forEach(function (id) {
+    $(id).addEventListener('change', savePrefs);
+  });
+  ['cbHexSend', 'cbHexView', 'cbTimestamp', 'cbAutoScroll', 'breakMs', 'baudCustom'].forEach(function (id) {
+    $(id).addEventListener('change', savePrefs);
+    $(id).addEventListener('input', savePrefs);
+  });
+
+  $('cbLoop').addEventListener('change', function () {
+    if ($('cbLoop').checked) startLoop(); else stopLoop();
+  });
+
+  /* 信号线 */
+  sigButtons().forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!port) return;
+      var sig = {};
+      sig[b.getAttribute('data-sig')] = b.getAttribute('data-val') === '1';
+      port.setSignals(sig).then(function () {
+        sys(b.textContent + ' 已设置');
+      }).catch(function (e) {
+        appendLine('err', '[信号线设置失败] ' + (e && e.message ? e.message : e));
+      });
+    });
+  });
+
+  $('btnReset').addEventListener('click', function () {
+    if (!port) return;
+    port.setSignals({ requestToSend: false, dataTerminalReady: false }).then(function () {
+      return sleep(150);
+    }).then(function () {
+      return port.setSignals({ requestToSend: true, dataTerminalReady: true });
+    }).then(function () {
+      sys('已发送复位脉冲（RTS + DTR 拉低 150ms）');
+    }).catch(function (e) {
+      appendLine('err', '[复位失败] ' + (e && e.message ? e.message : e));
+    });
+  });
+
+  document.querySelectorAll('.chips button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!port) { sys('请先连接串口'); return; }
+      send(b.getAttribute('data-cmd'));
+    });
+  });
+
+  /* 拔线自动断开 */
+  if (navigator.serial.addEventListener) {
+    navigator.serial.addEventListener('disconnect', function () {
+      if (port) { sys('设备已拔出'); disconnect(); }
+    });
+  }
+
+  /* ═════════ ESP-01S MQTT 指令测试 ═════════ */
+  var MQTT_STEPS = [];
+
+  /* AT 参数里的双引号需要转义，否则 ESP-AT 解析失败 */
+  function mqttQ(s) {
+    return '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+  }
+
+  function mqttBuild() {
+    var ssid = $('mSsid').value.trim();
+    var pass = $('mPass').value;
+    var host = $('mHost').value.trim() || 'broker.emqx.io';
+    var port = ($('mPort').value || '1883').trim();
+    var cid  = $('mClient').value.trim() || 'esp01s_01';
+    var user = $('mUser').value;
+    var upass = $('mUpass').value;
+    var sub  = $('mSub').value.trim();
+    var pub  = $('mPub').value.trim();
+    var payload = $('mPayload').value;
+
+    var steps = [
+      { cmd: 'AT',          wait: 400, note: '握手' },
+      { cmd: 'ATE0',        wait: 400, note: '关回显' },
+      { cmd: 'AT+CWMODE=1', wait: 400, note: 'STA 模式' }
+    ];
+
+    if (ssid) {
+      steps.push({ cmd: 'AT+CWJAP=' + mqttQ(ssid) + ',' + mqttQ(pass), wait: 12000, note: '连 WiFi' });
+    }
+    steps.push({
+      cmd: 'AT+MQTTUSERCFG=0,1,' + mqttQ(cid) + ',' + mqttQ(user) + ',' + mqttQ(upass) + ',0,0,""',
+      wait: 600, note: 'MQTT 参数'
+    });
+    steps.push({ cmd: 'AT+MQTTCONN=0,' + mqttQ(host) + ',' + port + ',1', wait: 5000, note: '连 Broker' });
+    if (sub) steps.push({ cmd: 'AT+MQTTSUB=0,' + mqttQ(sub) + ',1', wait: 1000, note: '订阅' });
+    if (pub) steps.push({ cmd: 'AT+MQTTPUB=0,' + mqttQ(pub) + ',' + mqttQ(payload) + ',1,0', wait: 1000, note: '发布' });
+
+    return steps;
+  }
+
+  function mqttRender() {
+    var steps = mqttBuild();
+    MQTT_STEPS = steps;
+    var box = $('mqttCmds');
+    box.innerHTML = '';
+
+    steps.forEach(function (s, i) {
+      var row = document.createElement('div');
+      row.className = 'cmd';
+
+      var idx = document.createElement('span');
+      idx.className = 'idx';
+      idx.textContent = String(i + 1);
+
+      var txt = document.createElement('span');
+      txt.className = 'text';
+      txt.textContent = s.cmd;
+
+      var w = document.createElement('span');
+      w.className = 'wait';
+      w.textContent = (s.wait >= 1000 ? (s.wait / 1000) + 's' : s.wait + 'ms');
+
+      var btn = document.createElement('button');
+      btn.className = 'ghost';
+      btn.textContent = '发送';
+      btn.addEventListener('click', function () { mqttSendOne(i, false); });
+
+      row.appendChild(idx);
+      row.appendChild(txt);
+      row.appendChild(w);
+      row.appendChild(btn);
+      box.appendChild(row);
+
+      s.row = row;
+      s.btn = btn;
+    });
+
+    $('btnMqttCopy').disabled = !steps.length;
+    mqttStateChanged();
+  }
+
+  /* 串口连接状态变化时刷新按钮可用性与提示（被 setSigEnabled 调用） */
+  function mqttStateChanged() {
+    var hint = $('mqttHint');
+    if (!hint) return;
+    if (!MQTT_STEPS.length) {
+      hint.textContent = port ? '串口已连接，可以生成指令了' : '先连接串口，再生成指令';
+    } else {
+      hint.textContent = port ? '串口已连接，点「按顺序执行」' : '串口未连接，连接后才能发送';
+    }
+    if ($('btnMqttRun')) $('btnMqttRun').disabled = !port || !MQTT_STEPS.length;
+    MQTT_STEPS.forEach(function (s) { if (s.btn) s.btn.disabled = !port; });
+  }
+
+  function mqttSendOne(i, silent) {
+    return new Promise(function (resolve) {
+      var s = MQTT_STEPS[i];
+      if (!s || !port) { resolve(false); return; }
+
+      /* AT 指令必须以 CRLF 结尾，这里强制切一下行尾设置 */
+      $('lineEnding').value = '\\r\\n';
+
+      if (s.row) { s.row.classList.remove('done'); s.row.classList.add('running'); }
+      send(s.cmd, silent).then(function (ok) {
+        if (s.row) {
+          s.row.classList.remove('running');
+          if (ok) s.row.classList.add('done');
+        }
+        setTimeout(resolve, 80, ok);
+      });
+    });
+  }
+
+  async function mqttRunAll() {
+    if (!port) { sys('请先连接串口'); return; }
+    if (!MQTT_STEPS.length) mqttRender();
+
+    $('btnMqttRun').disabled = true;
+    sys('开始执行 ESP-01S MQTT 指令序列（共 ' + MQTT_STEPS.length + ' 条）…');
+
+    for (var i = 0; i < MQTT_STEPS.length; i++) {
+      await mqttSendOne(i, false);
+      await sleep(MQTT_STEPS[i].wait);
+    }
+
+    sys('序列执行完毕。某步返回 ERROR 时，看日志里 ESP-AT 的原始回显定位。');
+    $('btnMqttRun').disabled = !port;
+  }
+
+  $('btnMqttGen').addEventListener('click', mqttRender);
+  $('btnMqttRun').addEventListener('click', mqttRunAll);
+  $('btnMqttCopy').addEventListener('click', function () {
+    if (!MQTT_STEPS.length) return;
+    var text = MQTT_STEPS.map(function (s) { return s.cmd; }).join('\r\n') + '\r\n';
+    navigator.clipboard.writeText(text).then(function () {
+      sys('已复制 ' + MQTT_STEPS.length + ' 条指令到剪贴板');
+    }).catch(function () {
+      sys('复制失败，请手动选中指令文本');
+    });
+  });
+
+  /* 改了参数就清掉完成标记，避免照着过期结果发 */
+  ['mSsid', 'mPass', 'mHost', 'mPort', 'mClient', 'mUser', 'mUpass', 'mSub', 'mPub', 'mPayload']
+    .forEach(function (id) {
+      $(id).addEventListener('input', function () {
+        MQTT_STEPS.forEach(function (s) { if (s.row) s.row.classList.remove('done', 'running'); });
+      });
+    });
+
+  /* ═════════ 标签切换 ═════════ */
+  var TAB_KEY = 'skz-serial-tab';
+
+  /* 日志区两个面板都要看得见，切标签时把同一个节点搬过去，不复制两份 */
+  function moveLogTo(name) {
+    var wrap = $('logWrap');
+    var slot = name === 'mqtt' ? $('slot-mqtt') : $('slot-serial');
+    if (wrap && slot && wrap.parentElement !== slot) slot.appendChild(wrap);
+  }
+
+  function switchTab(name, persist) {
+    ['serial', 'mqtt'].forEach(function (t) {
+      var p = $('panel-' + t);
+      if (p) p.hidden = (t !== name);
+    });
+
+    var tabs = document.querySelectorAll('.tabs .tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle('is-active', tabs[i].getAttribute('data-tab') === name);
+    }
+
+    moveLogTo(name);
+    if (persist !== false) { try { localStorage.setItem(TAB_KEY, name); } catch (e) {} }
+  }
+
+  document.querySelectorAll('.tabs .tab').forEach(function (b) {
+    b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
+  });
+
+  /* 初始化 */
+  loadPrefs();
+  loadHistory();
+  setSigEnabled(false);
+
+  var savedTab = 'serial';
+  try { savedTab = localStorage.getItem(TAB_KEY) || 'serial'; } catch (e) {}
+  switchTab(savedTab, false);
+
+  sys('准备就绪，点击「连接串口」选择你的设备');
+})();
+</script>
+</body>
+</html>
