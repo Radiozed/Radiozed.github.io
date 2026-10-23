@@ -718,7 +718,7 @@ const countBy = (key: 'platform' | 'category', value: string) =>
          用法：去 https://www.seniverse.com/ 注册 → 控制台 → 产品管理 →
               免费版 → 复制「私钥」，填到下面这行的引号里即可。
          留空则自动退回 ipip.net + Open-Meteo 的免费方案。 */
-      var SENIVERSE_KEY = '';
+      var SENIVERSE_KEY = 'SFyuis947MoKk8ZhS';
 
       function seniverseIcon(code, text) {
         var t = String(text || '');
@@ -736,15 +736,38 @@ const countBy = (key: 'platform' | 'category', value: string) =>
         return 'cloud';
       }
 
+      /* 心知免费版不允许跨域 fetch，只能走 JSONP（需在控制台绑定域名） */
+      function jsonp(url, timeout) {
+        return new Promise(function (resolve, reject) {
+          var name = '__skz_scb_' + Math.floor(Math.random() * 1e9);
+          var script = document.createElement('script');
+          var timer = setTimeout(function () { cleanup(); reject(new Error('JSONP 超时')); }, timeout || 8000);
+
+          function cleanup() {
+            clearTimeout(timer);
+            try { delete window[name]; } catch (e) { window[name] = undefined; }
+            if (script.parentNode) script.parentNode.removeChild(script);
+          }
+
+          window[name] = function (data) { cleanup(); resolve(data); };
+          script.onerror = function () { cleanup(); reject(new Error('JSONP 失败')); };
+          script.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'callback=' + name;
+          document.body.appendChild(script);
+        });
+      }
+
       function seniverse(lat, lon) {
         if (!SENIVERSE_KEY) return Promise.reject(new Error('未配置心知密钥'));
 
+        /* 有坐标用坐标；定位全挂了就让心知按来访 IP 猜 */
+        var place = (lat != null && lon != null) ? (lat + ':' + lon) : 'ip';
+
         var url = 'https://api.seniverse.com/v3/weather/now.json' +
                   '?key=' + encodeURIComponent(SENIVERSE_KEY) +
-                  '&location=' + encodeURIComponent(lat + ':' + lon) +
+                  '&location=' + encodeURIComponent(place) +
                   '&language=zh-Hans&unit=c';
 
-        return get(url, 8000).then(function (d) {
+        return jsonp(url, 8000).then(function (d) {
           var r = d && d.results && d.results[0];
           if (!r || !r.now) throw new Error('心知返回异常');
           var h = new Date().getHours();
@@ -798,9 +821,13 @@ const countBy = (key: 'platform' | 'category', value: string) =>
 
       function load() {
         locate()
+          .catch(function () { return { lat: null, lon: null }; })
           .then(function (loc) {
             /* 配了心知密钥就走心知，失败再退回 Open-Meteo */
-            return seniverse(loc.lat, loc.lon).catch(function () { return openMeteo(loc); });
+            return seniverse(loc.lat, loc.lon).catch(function () {
+              if (loc.lat == null) throw new Error('定位与心知均不可用');
+              return openMeteo(loc);
+            });
           })
           .then(function (out) {
             try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(out)); } catch (e) { /* 忽略 */ }
