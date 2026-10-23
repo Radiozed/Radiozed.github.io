@@ -631,7 +631,56 @@ const countBy = (key: 'platform' | 'category', value: string) =>
         return CITY_CN[k] || REGION_CN[k] || '';
       }
 
+      /* 城市 → 经纬度。ipip.net 只给中文地名不给坐标，靠这张表补上，
+         这样即使境外定位源全被墙，天气也能正常显示。 */
+      var CITY_COORD = {
+        '北京': [39.9042, 116.4074], '上海': [31.2304, 121.4737],
+        '天津': [39.3434, 117.3616], '重庆': [29.5630, 106.5516],
+        '成都': [30.5728, 104.0668], '广州': [23.1291, 113.2644],
+        '深圳': [22.5431, 114.0579], '杭州': [30.2741, 120.1551],
+        '南京': [32.0603, 118.7969], '武汉': [30.5928, 114.3055],
+        '西安': [34.3416, 108.9398], '苏州': [31.2989, 120.5853],
+        '长沙': [28.2282, 112.9388], '郑州': [34.7466, 113.6254],
+        '东莞': [23.0207, 113.7518], '佛山': [23.0219, 113.1214],
+        '青岛': [36.0671, 120.3826], '沈阳': [41.8057, 123.4315],
+        '大连': [38.9140, 121.6147], '厦门': [24.4798, 118.0894],
+        '福州': [26.0745, 119.2965], '济南': [36.6512, 117.1201],
+        '合肥': [31.8206, 117.2272], '昆明': [25.0389, 102.7183],
+        '南宁': [22.8170, 108.3665], '贵阳': [26.6470, 106.6302],
+        '太原': [37.8706, 112.5489], '石家庄': [38.0428, 114.5149],
+        '哈尔滨': [45.8038, 126.5350], '长春': [43.8171, 125.3235],
+        '南昌': [28.6820, 115.8579], '兰州': [36.0611, 103.8343],
+        '乌鲁木齐': [43.8256, 87.6168], '呼和浩特': [40.8426, 111.7492],
+        '银川': [38.4872, 106.2309], '西宁': [36.6171, 101.7782],
+        '海口': [20.0442, 110.1999], '三亚': [18.2528, 109.5119],
+        '拉萨': [29.6520, 91.1721], '宁波': [29.8683, 121.5440],
+        '温州': [27.9938, 120.6994], '无锡': [31.4912, 120.3119],
+        '珠海': [22.2707, 113.5767], '中山': [22.5176, 113.3926],
+        '惠州': [23.1115, 114.4162], '常州': [31.8107, 119.9741],
+        '南通': [31.9802, 120.8943], '徐州': [34.2058, 117.2848],
+        '烟台': [37.4638, 121.4479], '洛阳': [34.6197, 112.4540],
+        '保定': [38.8671, 115.4845], '唐山': [39.6305, 118.1802],
+        '绵阳': [31.4675, 104.6796], '桂林': [25.2736, 110.2900],
+        '柳州': [24.3146, 109.4281], '泉州': [24.8741, 118.6757],
+        '襄阳': [32.0090, 112.1220], '宜昌': [30.6919, 111.2865],
+        '大理': [25.6065, 100.2676], '香港': [22.3193, 114.1694],
+        '澳门': [22.1987, 113.5439], '台北': [25.0330, 121.5654]
+      };
+
       var GEO = [
+        {
+          /* 中文源：直接给汉字城市名，坐标查表；境外源全挂时靠它兜底 */
+          url: 'https://myip.ipip.net/json',
+          pick: function (d) {
+            if (!d || d.ret !== 'ok' || !d.data) throw new Error('ipip 未识别');
+            var l = d.data.location || [];
+            var cn = l[2] || l[1] || '';
+            if (!cn) throw new Error('ipip 无城市');
+            var c = CITY_COORD[cn];
+            if (!c) throw new Error('坐标表无 ' + cn);
+            return { name: cn, cn: cn, lat: c[0], lon: c[1] };
+          }
+        },
         {
           url: 'https://ipwho.is/',
           pick: function (d) {
@@ -664,36 +713,94 @@ const countBy = (key: 'platform' | 'category', value: string) =>
           .catch(function () { return locate(i + 1); });
       }
 
+      /* ══ 心知天气（Seniverse）══════════════════════════════════
+         一次请求同时拿到中文城市名 + 天气，比「定位源 + Open-Meteo」两步更稳。
+         用法：去 https://www.seniverse.com/ 注册 → 控制台 → 产品管理 →
+              免费版 → 复制「私钥」，填到下面这行的引号里即可。
+         留空则自动退回 ipip.net + Open-Meteo 的免费方案。 */
+      var SENIVERSE_KEY = '';
+
+      function seniverseIcon(code, text) {
+        var t = String(text || '');
+        if (/雪/.test(t)) return 'snow';
+        if (/雨/.test(t)) return /毛毛/.test(t) ? 'drizzle' : 'rain';
+        if (/雾|霾|沙|尘/.test(t)) return 'fog';
+        if (/雷/.test(t)) return 'rain';
+        if (/阴/.test(t)) return 'cloud';
+        if (/云/.test(t)) return 'cloud-sun';
+        if (/晴/.test(t)) return 'sun';
+        var c = String(code);
+        if (c === '0') return 'sun';
+        if (c === '1' || c === '2') return 'cloud-sun';
+        if (c === '3') return 'cloud';
+        return 'cloud';
+      }
+
+      function seniverse(lat, lon) {
+        if (!SENIVERSE_KEY) return Promise.reject(new Error('未配置心知密钥'));
+
+        var url = 'https://api.seniverse.com/v3/weather/now.json' +
+                  '?key=' + encodeURIComponent(SENIVERSE_KEY) +
+                  '&location=' + encodeURIComponent(lat + ':' + lon) +
+                  '&language=zh-Hans&unit=c';
+
+        return get(url, 8000).then(function (d) {
+          var r = d && d.results && d.results[0];
+          if (!r || !r.now) throw new Error('心知返回异常');
+          var h = new Date().getHours();
+          return {
+            place: (r.location && r.location.name) || '',
+            text: r.now.text || '',
+            icon: seniverseIcon(r.now.code, r.now.text),
+            temp: Math.round(Number(r.now.temperature)),
+            feels: Math.round(Number(r.now.feels_like || r.now.temperature)),
+            isDay: h >= 6 && h < 18,
+            ts: Date.now()
+          };
+        });
+      }
+
       function render(d) {
-        var info = WMO[d.code] || ['—', 'cloud'];
-        var iconName = info[1];
+        var text = d.text, iconName = d.icon;
+
+        if (!text || !iconName) {
+          var info = WMO[d.code] || ['—', 'cloud'];
+          text = text || info[0];
+          iconName = iconName || info[1];
+        }
+
         if (!d.isDay && iconName === 'sun') iconName = 'moon';
         if (!d.isDay && iconName === 'cloud-sun') iconName = 'cloud-moon';
 
         paintIcon(iconName);
         elTemp.textContent = d.temp + '°';
         elPlace.textContent = d.place || '当前位置';
-        elExtra.textContent = info[0] + ' · 体感 ' + d.feels + '°';
+        elExtra.textContent = text + ' · 体感 ' + d.feels + '°';
+      }
+
+      function openMeteo(loc) {
+        var url =
+          'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat +
+          '&longitude=' + loc.lon +
+          '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,is_day&timezone=auto';
+        return get(url, 9000).then(function (w) {
+          var c = w.current;
+          return {
+            place: loc.cn || toCN(loc.name) || loc.name,
+            temp: Math.round(c.temperature_2m),
+            feels: Math.round(c.apparent_temperature),
+            code: c.weather_code,
+            isDay: c.is_day === 1,
+            ts: Date.now()
+          };
+        });
       }
 
       function load() {
         locate()
           .then(function (loc) {
-            var url =
-              'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat +
-              '&longitude=' + loc.lon +
-              '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,is_day&timezone=auto';
-            return get(url, 9000).then(function (w) {
-              var c = w.current;
-              return {
-                place: toCN(loc.name) || loc.name,
-                temp: Math.round(c.temperature_2m),
-                feels: Math.round(c.apparent_temperature),
-                code: c.weather_code,
-                isDay: c.is_day === 1,
-                ts: Date.now()
-              };
-            });
+            /* 配了心知密钥就走心知，失败再退回 Open-Meteo */
+            return seniverse(loc.lat, loc.lon).catch(function () { return openMeteo(loc); });
           })
           .then(function (out) {
             try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(out)); } catch (e) { /* 忽略 */ }
