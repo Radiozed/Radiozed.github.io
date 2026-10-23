@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>嵌入式工具箱 · 樱风工房</title>
+<style>
+  :root{
+    --pink:#F389AE; --pink-deep:#E4668F; --pink-soft:#FDE7F0;
+    --ink:#2E2436; --ink-2:#6B6071; --ink-3:#9C93A6;
+    --line:#EFE7F1; --bg:#FBF8FD; --card:#FFFFFF;
+    --ok:#3FB98A; --warn:#E8A33D; --err:#E4586B;
+    --mono:ui-monospace,"JetBrains Mono",Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:15px/1.7 system-ui,-apple-system,"Noto Sans SC","Microsoft YaHei",sans-serif;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 64px}
+  header.top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  h1{font-size:22px;margin:0;letter-spacing:.01em}
+  .sub{color:var(--ink-2);font-size:13px;margin:2px 0 20px}
+  a.back{color:var(--pink-deep);text-decoration:none}
+  a.back:hover{text-decoration:underline}
+
+  .tabs{display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap}
+  .tab{
+    font:inherit;font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:999px;
+    background:#fff;border:1px solid var(--line);color:var(--ink-2);
+    cursor:pointer;transition:.18s;
+  }
+  .tab:hover{background:var(--pink-soft);color:var(--pink-deep);border-color:var(--pink)}
+  .tab.is-active{
+    background:linear-gradient(135deg,#F79AB8,var(--pink-deep));
+    border-color:transparent;color:#fff;
+    box-shadow:0 6px 16px -6px rgba(228,102,143,.55);
+  }
+  .panel[hidden]{display:none}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:20px;margin-bottom:16px;box-shadow:0 10px 26px -18px rgba(90,60,120,.35);
+  }
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:4px}
+  label.sm{font-size:12px;color:var(--ink-3)}
+  input,select{
+    font:inherit;font-size:13px;padding:8px 11px;border:1px solid var(--line);
+    border-radius:10px;background:#fff;color:var(--ink);outline:none;min-width:0;
+  }
+  input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
+  input.mono{font-family:var(--mono)}
+  .out{
+    background:#2B2439;border-radius:14px;padding:16px 18px;margin-top:16px;
+    font-family:var(--mono);font-size:13px;line-height:1.9;color:#E9E3F4;
+  }
+  .out .k{color:#9C93A6}
+  .out .v{color:#B8E6D0;font-weight:700}
+  .out .w{color:#F7C8A0}
+  .out .e{color:#FF9AA8}
+  .out .big{font-size:20px;color:#fff;font-weight:700}
+  .out .line{display:block}
+  .hint{font-size:11.5px;color:var(--ink-3);margin-top:10px;line-height:1.6}
+  code{font-family:var(--mono);font-size:.92em;background:#F6F1F8;padding:1px 5px;border-radius:4px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{
+    font:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;
+    border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer;
+  }
+  .seg button.on{background:var(--pink);border-color:var(--pink);color:#fff}
+  .bits{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;margin-top:14px}
+  .bit{
+    font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;
+    padding:6px 0;border-radius:6px;border:1px solid var(--line);background:#fff;
+    color:var(--ink-3);cursor:pointer;user-select:none;transition:.12s;
+  }
+  .bit.on{background:var(--pink);border-color:var(--pink);color:#fff}
+  .bit .idx{display:block;font-size:9px;font-weight:400;opacity:.6}
+  table.std{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
+  table.std th,table.std td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line)}
+  table.std th{color:var(--ink-3);font-weight:600;font-size:11.5px}
+  table.std td.n{font-family:var(--mono)}
+  @media(max-width:640px){
+    .bits{grid-template-columns:repeat(8,1fr)}
+    .wrap{padding:20px 14px 56px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><h1>嵌入式工具箱</h1></header>
+  <p class="sub">
+    纯前端计算，不联网 · 结果实时更新
+    &nbsp;·&nbsp; <a class="back" href="/serial/">串口工具 →</a>
+    &nbsp;·&nbsp; <a class="back" href="/">← 返回樱风工房</a>
+  </p>
+
+  <div class="tabs">
+    <button class="tab is-active" data-tab="crc">CRC 计算</button>
+    <button class="tab" data-tab="bits">进制与位</button>
+    <button class="tab" data-tab="ohm">电阻计算</button>
+    <button class="tab" data-tab="timer">定时器</button>
+    <button class="tab" data-tab="adc">ADC 换算</button>
+  </div>
+
+  <!-- ══════════ CRC ══════════ -->
+  <div class="panel" id="panel-crc">
+    <div class="card">
+      <div class="row">
+        <div class="field" style="flex:1 1 320px">
+          <label class="sm">输入内容</label>
+          <input type="text" id="crcIn" class="mono" value="123456789" placeholder="输入文本，或切换成 HEX 输入">
+        </div>
+        <div class="field">
+          <label class="sm">输入格式</label>
+          <div class="seg" id="crcMode">
+            <button class="on" data-mode="text">文本</button>
+            <button data-mode="hex">HEX</button>
+          </div>
+        </div>
+      </div>
+      <div class="out" id="crcOut"></div>
+      <p class="hint">
+        校验值用 <code>123456789</code> 测出来的标准结果：CRC-8 = <code>F4</code>、
+        CRC-16/MODBUS = <code>4B37</code>、CRC-16/CCITT-FALSE = <code>29B1</code>、CRC-32 = <code>CBF43926</code>。
+        如果对不上，说明参数（多项式/初值/反转）选错了。
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════ 进制与位 ══════════ -->
+  <div class="panel" id="panel-bits" hidden>
+    <div class="card">
+      <div class="row">
+        <div class="field" style="flex:0 0 140px">
+          <label class="sm">宽度</label>
+          <select id="bitWidth">
+            <option value="8">8 位</option>
+            <option value="16">16 位</option>
+            <option value="32" selected>32 位</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1 1 260px">
+          <label class="sm">输入（自动识别 0x / 0b 前缀）</label>
+          <input type="text" id="bitIn" class="mono" value="0x4001080C" placeholder="0x1A2B / 0b1010 / 12345">
+        </div>
+        <div class="field">
+          <div class="seg" id="bitShift">
+            <button data-op="shl">&lt;&lt; 1</button>
+            <button data-op="shr">&gt;&gt; 1</button>
+            <button data-op="not">~ 取反</button>
+            <button data-op="clr">清零</button>
+          </div>
+        </div>
+      </div>
+      <div class="out" id="bitOut"></div>
+      <div class="bits" id="bitGrid"></div>
+      <p class="hint">点击任意一位即可翻转。左边是高位，标号按位权（bit0 在最后）。</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 电阻 ══════════ -->
+  <div class="panel" id="panel-ohm" hidden>
+    <div class="card">
+      <div class="row" style="margin-bottom:6px"><strong style="font-size:14px">分压器</strong></div>
+      <div class="row">
+        <div class="field"><label class="sm">Vin (V)</label><input type="number" id="dvVin" value="5" step="0.1" style="width:110px"></div>
+        <div class="field"><label class="sm">R1 (Ω) 上臂</label><input type="number" id="dvR1" value="10000" step="100" style="width:130px"></div>
+        <div class="field"><label class="sm">R2 (Ω) 下臂</label><input type="number" id="dvR2" value="10000" step="100" style="width:130px"></div>
+      </div>
+      <div class="out" id="dvOut"></div>
+      <p class="hint">Vout = Vin × R2 / (R1 + R2)。接 ADC 时注意：源阻抗太高会影响采样，一般建议分压后总阻值低于 10 kΩ。</p>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:6px"><strong style="font-size:14px">LED 限流电阻</strong></div>
+      <div class="row">
+        <div class="field"><label class="sm">电源 (V)</label><input type="number" id="ledVin" value="3.3" step="0.1" style="width:110px"></div>
+        <div class="field"><label class="sm">正向压降 Vf (V)</label><input type="number" id="ledVf" value="2.0" step="0.1" style="width:120px"></div>
+        <div class="field"><label class="sm">目标电流 (mA)</label><input type="number" id="ledI" value="10" step="1" style="width:120px"></div>
+      </div>
+      <div class="out" id="ledOut"></div>
+      <p class="hint">R = (Vcc − Vf) / I。红色 LED 约 1.8–2.0 V，蓝/白约 3.0–3.4 V，普通 IO 建议不超过 10–15 mA。</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 定时器 ══════════ -->
+  <div class="panel" id="panel-timer" hidden>
+    <div class="card">
+      <div class="row">
+        <div class="field"><label class="sm">定时器时钟 (MHz)</label><input type="number" id="tmClk" value="72" step="1" style="width:140px"></div>
+        <div class="field"><label class="sm">目标频率 (Hz)</label><input type="number" id="tmFreq" value="1000" step="1" style="width:140px"></div>
+        <div class="field"><label class="sm">计数位宽</label>
+          <select id="tmBits">
+            <option value="16" selected>16 位 (ARR ≤ 65535)</option>
+            <option value="32">32 位</option>
+          </select>
+        </div>
+      </div>
+      <div class="out" id="tmOut"></div>
+      <p class="hint">
+        公式：<code>f = clk / ((PSC+1) × (ARR+1))</code>。工具会自动找误差最小的 PSC/ARR 组合，
+        并给出实际频率与误差百分比。PWM 频率同理，占空比由 CCR 决定。
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════ ADC ══════════ -->
+  <div class="panel" id="panel-adc" hidden>
+    <div class="card">
+      <div class="row">
+        <div class="field"><label class="sm">分辨率</label>
+          <select id="adcBits">
+            <option value="8">8 位 (0–255)</option>
+            <option value="10">10 位 (0–1023)</option>
+            <option value="12" selected>12 位 (0–4095)</option>
+            <option value="16">16 位 (0–65535)</option>
+          </select>
+        </div>
+        <div class="field"><label class="sm">参考电压 Vref (V)</label><input type="number" id="adcVref" value="3.3" step="0.01" style="width:130px"></div>
+        <div class="field"><label class="sm">原始值</label><input type="number" id="adcRaw" value="2048" step="1" style="width:130px"></div>
+      </div>
+      <div class="out" id="adcOut"></div>
+      <p class="hint">反算时直接改上面的参考电压或原始值即可。若接了分压电路，记得把分压比乘回去。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ───────── 标签切换 ───────── */
+  var tabs = document.querySelectorAll('.tabs .tab');
+  function switchTab(name) {
+    ['crc', 'bits', 'ohm', 'timer', 'adc'].forEach(function (t) {
+      var p = $('panel-' + t);
+      if (p) p.hidden = (t !== name);
+    });
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle('is-active', tabs[i].getAttribute('data-tab') === name);
+    }
+  }
+  for (var i = 0; i < tabs.length; i++) {
+    (function (b) {
+      b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
+    })(tabs[i]);
+  }
+
+  /* ───────── CRC ───────── */
+  var crcMode = 'text';
+
+  function crc8(bytes) {
+    var crc = 0x00;
+    for (var i = 0; i < bytes.length; i++) {
+      crc ^= bytes[i];
+      for (var b = 0; b < 8; b++) {
+        crc = (crc & 0x80) ? (((crc << 1) ^ 0x07) & 0xFF) : ((crc << 1) & 0xFF);
+      }
+    }
+    return crc & 0xFF;
+  }
+
+  function crc16modbus(bytes) {
+    var crc = 0xFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      crc ^= bytes[i];
+      for (var b = 0; b < 8; b++) {
+        crc = (crc & 1) ? ((crc >>> 1) ^ 0xA001) : (crc >>> 1);
+      }
+    }
+    return crc & 0xFFFF;
+  }
+
+  function crc16ccitt(bytes) {
+    var crc = 0xFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      crc ^= (bytes[i] << 8);
+      for (var b = 0; b < 8; b++) {
+        crc = (crc & 0x8000) ? (((crc << 1) ^ 0x1021) & 0xFFFF) : ((crc << 1) & 0xFFFF);
+      }
+    }
+    return crc & 0xFFFF;
+  }
+
+  function crc32(bytes) {
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      crc ^= bytes[i];
+      for (var b = 0; b < 8; b++) {
+        crc = (crc & 1) ? ((crc >>> 1) ^ 0xEDB88320) : (crc >>> 1);
+      }
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function hex2(n, w) {
+    var s = (n >>> 0).toString(16).toUpperCase();
+    while (s.length < w) s = '0' + s;
+    return s;
+  }
+
+  function textToBytes(s) {
+    return Array.prototype.slice.call(new TextEncoder().encode(s));
+  }
+
+  function hexToBytes(s) {
+    var clean = String(s).replace(/0x/gi, '').replace(/[^0-9a-fA-F]/g, '');
+    if (clean.length % 2) clean = '0' + clean;
+    var out = [];
+    for (var i = 0; i < clean.length; i += 2) out.push(parseInt(clean.substr(i, 2), 16));
+    return out;
+  }
+
+  function renderCrc() {
+    var raw = $('crcIn').value;
+    var bytes = crcMode === 'hex' ? hexToBytes(raw) : textToBytes(raw);
+
+    $('crcOut').innerHTML =
+      '<span class="line"><span class="k">字节数 </span><span class="v">' + bytes.length + '</span></span>' +
+      '<span class="line"><span class="k">CRC-8 (poly 07, init 00)        </span><span class="v">0x' + hex2(crc8(bytes), 2) + '</span></span>' +
+      '<span class="line"><span class="k">CRC-16/MODBUS (poly A001, init FFFF)</span><span class="v">0x' + hex2(crc16modbus(bytes), 4) + '</span></span>' +
+      '<span class="line"><span class="k">CRC-16/CCITT-FALSE (poly 1021)   </span><span class="v">0x' + hex2(crc16ccitt(bytes), 4) + '</span></span>' +
+      '<span class="line"><span class="k">CRC-32 (poly EDB88320)          </span><span class="v">0x' + hex2(crc32(bytes), 8) + '</span></span>';
+  }
+
+  $('crcIn').addEventListener('input', renderCrc);
+  var crcBtns = $('crcMode').querySelectorAll('button');
+  for (var k = 0; k < crcBtns.length; k++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        crcMode = b.getAttribute('data-mode');
+        for (var j = 0; j < crcBtns.length; j++) crcBtns[j].classList.toggle('on', crcBtns[j] === b);
+        renderCrc();
+      });
+    })(crcBtns[k]);
+  }
+
+  /* ───────── 进制与位 ───────── */
+  var bitVal = 0x4001080C;
+
+  function bitWidth() { return parseInt($('bitWidth').value, 10); }
+
+  function maskFor(w) { return w >= 32 ? 0xFFFFFFFF : ((1 << w) - 1) >>> 0; }
+
+  function renderBits() {
+    var w = bitWidth();
+    bitVal = (bitVal & maskFor(w)) >>> 0;
+
+    $('bitOut').innerHTML =
+      '<span class="line"><span class="k">HEX </span><span class="big">0x' + hex2(bitVal, w / 4) + '</span></span>' +
+      '<span class="line"><span class="k">DEC </span><span class="v">' + bitVal + '</span>' +
+      '&nbsp;&nbsp;<span class="k">有符号 </span><span class="w">' + signedOf(bitVal, w) + '</span></span>' +
+      '<span class="line"><span class="k">BIN </span><span class="v">' + binOf(bitVal, w) + '</span></span>' +
+      '<span class="line"><span class="k">置位数 </span><span class="v">' + countBits(bitVal) + '</span></span>';
+
+    var grid = $('bitGrid');
+    grid.innerHTML = '';
+    for (var p = w - 1; p >= 0; p--) {
+      (function (bit) {
+        var el = document.createElement('div');
+        var on = (bitVal >>> bit) & 1;
+        el.className = 'bit' + (on ? ' on' : '');
+        el.innerHTML = (on ? '1' : '0') + '<span class="idx">' + bit + '</span>';
+        el.addEventListener('click', function () {
+          bitVal = (bitVal ^ (1 << bit)) >>> 0;
+          renderBits();
+          syncBitInput();
+        });
+        grid.appendChild(el);
+      })(p);
+    }
+  }
+
+  function signedOf(v, w) {
+    var max = Math.pow(2, w);
+    return v >= max / 2 ? (v - max) : v;
+  }
+  function binOf(v, w) {
+    var s = v.toString(2);
+    while (s.length < w) s = '0' + s;
+    return s.replace(/(.{4})(?=.)/g, '$1 ');
+  }
+  function countBits(v) {
+    var c = 0;
+    while (v) { c += v & 1; v >>>= 1; }
+    return c;
+  }
+
+  function syncBitInput() {
+    $('bitIn').value = '0x' + hex2(bitVal, bitWidth() / 4);
+  }
+
+  function parseBitInput(s) {
+    s = String(s).trim().replace(/[\s_]/g, '');
+    if (!s) return 0;
+    if (/^0x/i.test(s)) return parseInt(s.slice(2), 16) || 0;
+    if (/^0b/i.test(s)) return parseInt(s.slice(2), 2) || 0;
+    if (/^[01]+$/.test(s) && s.length > 8) return parseInt(s, 2) || 0;
+    return parseInt(s, 10) || 0;
+  }
+
+  $('bitIn').addEventListener('input', function () {
+    bitVal = (parseBitInput($('bitIn').value) & maskFor(bitWidth())) >>> 0;
+    renderBits();
+  });
+  $('bitWidth').addEventListener('change', function () { renderBits(); syncBitInput(); });
+
+  var shiftBtns = $('bitShift').querySelectorAll('button');
+  for (var m = 0; m < shiftBtns.length; m++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        var op = b.getAttribute('data-op');
+        if (op === 'shl') bitVal = ((bitVal << 1) & maskFor(bitWidth())) >>> 0;
+        else if (op === 'shr') bitVal = (bitVal >>> 1) >>> 0;
+        else if (op === 'not') bitVal = ((~bitVal) & maskFor(bitWidth())) >>> 0;
+        else bitVal = 0;
+        renderBits();
+        syncBitInput();
+      });
+    })(shiftBtns[m]);
+  }
+
+  /* ───────── 电阻 ───────── */
+  var E24 = [10, 11, 12, 13, 15, 16, 18, 20, 22, 24, 27, 30, 33, 36, 39, 43, 47, 51, 56, 62, 68, 75, 82, 91];
+
+  function nearestE24(r) {
+    if (!(r > 0)) return null;
+    var best = null, bestErr = Infinity;
+    for (var dec = -1; dec <= 6; dec++) {
+      for (var i = 0; i < E24.length; i++) {
+        var v = E24[i] * Math.pow(10, dec);
+        var err = Math.abs(v - r) / r;
+        if (err < bestErr) { bestErr = err; best = v; }
+      }
+    }
+    return { value: best, err: bestErr };
+  }
+
+  function fmtOhm(r) {
+    if (r >= 1e6) return (r / 1e6).toFixed(2) + ' MΩ';
+    if (r >= 1e3) return (r / 1e3).toFixed(2) + ' kΩ';
+    return r.toFixed(1) + ' Ω';
+  }
+
+  function renderDivider() {
+    var vin = parseFloat($('dvVin').value) || 0;
+    var r1 = parseFloat($('dvR1').value) || 0;
+    var r2 = parseFloat($('dvR2').value) || 0;
+
+    var out = $('dvOut');
+    if (!(r1 > 0) || !(r2 > 0)) { out.innerHTML = '<span class="e">R1 / R2 必须大于 0</span>'; return; }
+
+    var vout = vin * r2 / (r1 + r2);
+    var i = vin / (r1 + r2);
+    var p1 = i * i * r1, p2 = i * i * r2;
+
+    out.innerHTML =
+      '<span class="line"><span class="k">输出电压 </span><span class="big">' + vout.toFixed(4) + ' V</span></span>' +
+      '<span class="line"><span class="k">分压比 </span><span class="v">' + (r2 / (r1 + r2) * 100).toFixed(2) + ' %</span></span>' +
+      '<span class="line"><span class="k">回路电流 </span><span class="v">' + (i * 1000).toFixed(3) + ' mA</span></span>' +
+      '<span class="line"><span class="k">R1 功耗 </span><span class="w">' + (p1 * 1000).toFixed(2) + ' mW</span>' +
+      '&nbsp;&nbsp;<span class="k">R2 功耗 </span><span class="w">' + (p2 * 1000).toFixed(2) + ' mW</span></span>' +
+      '<span class="line"><span class="k">建议 </span><span class="v">' +
+      (r1 + r2 > 100000 ? '阻值偏高，接 ADC 可能采样不稳，建议降到 10 kΩ 级别' :
+       r1 + r2 < 100 ? '阻值偏低，静态电流较大' : '阻值合适') + '</span></span>';
+  }
+
+  function renderLed() {
+    var vin = parseFloat($('ledVin').value) || 0;
+    var vf = parseFloat($('ledVf').value) || 0;
+    var ima = parseFloat($('ledI').value) || 0;
+
+    var out = $('ledOut');
+    if (!(ima > 0)) { out.innerHTML = '<span class="e">电流必须大于 0</span>'; return; }
+    if (vin <= vf) { out.innerHTML = '<span class="e">电源电压必须高于 LED 正向压降 Vf</span>'; return; }
+
+    var i = ima / 1000;
+    var r = (vin - vf) / i;
+    var p = i * i * r;
+    var std = nearestE24(r);
+
+    var rows = '';
+    if (std) {
+      var actualI = (vin - vf) / std.value;
+      rows = '<span class="line"><span class="k">E24 标准值 </span><span class="v">' + fmtOhm(std.value) + '</span>' +
+             '&nbsp;&nbsp;<span class="k">实际电流 </span><span class="v">' + (actualI * 1000).toFixed(1) + ' mA</span></span>' +
+             '<span class="line"><span class="k">推荐 </span><span class="w">' +
+             (std.err < 0.05 ? '误差 ' + (std.err * 100).toFixed(1) + '%，可以直接用' :
+              '误差 ' + (std.err * 100).toFixed(1) + '%，如需精确可用两颗串联/并联凑') + '</span></span>';
+    }
+
+    out.innerHTML =
+      '<span class="line"><span class="k">理论电阻 </span><span class="big">' + fmtOhm(r) + '</span></span>' +
+      '<span class="line"><span class="k">电阻功耗 </span><span class="w">' + (p * 1000).toFixed(2) + ' mW（选 1/4W 即可）</span></span>' +
+      rows;
+  }
+
+  ['dvVin', 'dvR1', 'dvR2'].forEach(function (id) { $(id).addEventListener('input', renderDivider); });
+  ['ledVin', 'ledVf', 'ledI'].forEach(function (id) { $(id).addEventListener('input', renderLed); });
+
+  /* ───────── 定时器 ───────── */
+  function renderTimer() {
+    var clkHz = (parseFloat($('tmClk').value) || 0) * 1e6;
+    var target = parseFloat($('tmFreq').value) || 0;
+    var maxArr = parseInt($('tmBits').value, 10) === 32 ? 4294967295 : 65535;
+    var out = $('tmOut');
+
+    if (!(clkHz > 0) || !(target > 0)) {
+      out.innerHTML = '<span class="e">时钟与目标频率都要大于 0</span>';
+      return;
+    }
+
+    var best = null;
+    for (var psc = 0; psc <= 65535; psc++) {
+      var arr = Math.round(clkHz / ((psc + 1) * target)) - 1;
+      if (arr < 1 || arr > maxArr) continue;
+      var actual = clkHz / ((psc + 1) * (arr + 1));
+      var err = Math.abs(actual - target) / target;
+      if (!best || err < best.err) best = { psc: psc, arr: arr, actual: actual, err: err };
+      if (err < 1e-9) break;
+    }
+
+    if (!best) {
+      out.innerHTML = '<span class="e">这个目标频率在当前时钟/位宽下无法实现，换时钟或换 32 位计数</span>';
+      return;
+    }
+
+    var periodUs = 1e6 / best.actual;
+    out.innerHTML =
+      '<span class="line"><span class="k">PSC（预分频） </span><span class="big">' + best.psc + '</span>' +
+      '&nbsp;&nbsp;<span class="k">ARR（重装载） </span><span class="big">' + best.arr + '</span></span>' +
+      '<span class="line"><span class="k">实际频率 </span><span class="v">' + best.actual.toFixed(3) + ' Hz</span>' +
+      '&nbsp;&nbsp;<span class="k">周期 </span><span class="v">' + periodUs.toFixed(3) + ' µs</span></span>' +
+      '<span class="line"><span class="k">误差 </span><span class="' + (best.err > 0.01 ? 'w' : 'v') + '">' +
+      (best.err * 100).toFixed(4) + ' %</span>' +
+      (best.err > 0.01 ? ' &nbsp;<span class="w">误差偏大，换个时钟频率会更准</span>' : '') + '</span>' +
+      '<span class="line"><span class="k">中断/更新频率 </span><span class="v">' + best.actual.toFixed(3) + ' Hz</span></span>';
+  }
+
+  ['tmClk', 'tmFreq', 'tmBits'].forEach(function (id) { $(id).addEventListener('input', renderTimer); });
+
+  /* ───────── ADC ───────── */
+  function renderAdc() {
+    var bits = parseInt($('adcBits').value, 10);
+    var vref = parseFloat($('adcVref').value) || 0;
+    var raw = parseFloat($('adcRaw').value) || 0;
+    var maxRaw = Math.pow(2, bits) - 1;
+    var out = $('adcOut');
+
+    if (!(vref > 0)) { out.innerHTML = '<span class="e">参考电压必须大于 0</span>'; return; }
+
+    raw = Math.max(0, Math.min(maxRaw, Math.round(raw)));
+    var volt = raw / maxRaw * vref;
+    var lsb = vref / maxRaw;
+
+    out.innerHTML =
+      '<span class="line"><span class="k">电压 </span><span class="big">' + volt.toFixed(6) + ' V</span></span>' +
+      '<span class="line"><span class="k">毫伏 </span><span class="v">' + (volt * 1000).toFixed(3) + ' mV</span></span>' +
+      '<span class="line"><span class="k">占比 </span><span class="v">' + (raw / maxRaw * 100).toFixed(3) + ' %</span>' +
+      '&nbsp;&nbsp;<span class="k">原始值 </span><span class="v">' + raw + ' / ' + maxRaw + '</span></span>' +
+      '<span class="line"><span class="k">1 LSB </span><span class="w">' + (lsb * 1000).toFixed(4) + ' mV</span>' +
+      '&nbsp;&nbsp;<span class="k">理论精度 </span><span class="w">±' + (lsb * 500).toFixed(3) + ' mV</span></span>' +
+      '<span class="line"><span class="k">反查 </span><span class="k">1.0V → </span><span class="v">' + Math.round(1.0 / vref * maxRaw) +
+      '</span>&nbsp;<span class="k">2.0V → </span><span class="v">' + Math.round(2.0 / vref * maxRaw) + '</span></span>';
+  }
+
+  ['adcBits', 'adcVref', 'adcRaw'].forEach(function (id) { $(id).addEventListener('input', renderAdc); });
+
+  /* ───────── 初始化 ───────── */
+  renderCrc();
+  renderBits();
+  renderDivider();
+  renderLed();
+  renderTimer();
+  renderAdc();
+})();
+</script>
+</body>
+</html>
