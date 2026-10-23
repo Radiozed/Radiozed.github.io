@@ -1,0 +1,131 @@
+---
+import { getCollection } from 'astro:content';
+import NekoLayout from '../layouts/NekoLayout.astro';
+
+interface Props {
+  title: string;
+  eyebrow: string;
+  subtitle: string;
+  /** 按标签筛选，例如「C语言」「Python」 */
+  tagName: string;
+  active?: string;
+  empty?: string;
+}
+
+const { title, eyebrow, subtitle, tagName, active = '', empty = '这个专题下还没有文章，再等等我。' } = Astro.props;
+
+const all = await getCollection('posts');
+const rows = all
+  .filter((p) => (p.data.tags ?? []).includes(tagName))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .map((p) => ({
+    slug: p.slug,
+    title: p.data.title,
+    description: p.data.description,
+    pubDate: p.data.pubDate,
+    tags: p.data.tags ?? [],
+    difficulty: p.data.difficulty ?? '进阶',
+  }));
+
+function fmt(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+---
+
+<NekoLayout title={`${title} · 樱风工房`} description={subtitle} active={active}>
+  <section class="topic-page wrap">
+    <header class="page-head">
+      <p class="eyebrow">{eyebrow} · 共 {rows.length} 篇</p>
+      <h1 class="page-title">{title}</h1>
+      <p class="page-subtitle">{subtitle}</p>
+    </header>
+
+    {rows.length === 0 && <p class="grid-empty">{empty}</p>}
+
+    <div class="posts-list">
+      {rows.map((post, i) => (
+        <a class="post-row reveal" href={`/posts/${post.slug}`}>
+          <span class="post-index">{String(i + 1).padStart(2, '0')}</span>
+
+          <div class="post-main">
+            <h2 class="post-row-title">{post.title}</h2>
+            <p class="post-row-desc">{post.description}</p>
+          </div>
+
+          <div class="post-side">
+            <div class="post-tags">
+              <span class="tag tag-topic">{tagName}</span>
+              <span class="tag tag-level">{post.difficulty}</span>
+            </div>
+            <time class="post-date" datetime={post.pubDate.toISOString()}>{fmt(post.pubDate)}</time>
+          </div>
+
+          <svg class="post-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+            <path d="M5 12h13M12.5 5.5L19 12l-6.5 6.5" stroke="var(--pink-deep)" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </a>
+      ))}
+    </div>
+
+    <div class="center-row">
+      <a class="back-link" href="/">← 返回首页</a>
+    </div>
+  </section>
+</NekoLayout>
+
+<style>
+  .topic-page { padding-bottom: 96px; }
+  .posts-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .post-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto 18px;
+    align-items: center; gap: 20px;
+    padding: 20px 26px; border-radius: 22px;
+    background: var(--surface); border: 1px solid var(--line);
+    box-shadow: var(--sh-card);
+    transition: transform .25s cubic-bezier(.2, .8, .3, 1), box-shadow .25s ease,
+                border-color .25s ease;
+  }
+  .post-row:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sh-card-hover);
+    border-color: rgba(243, 137, 174, .4);
+  }
+
+  .post-index {
+    font-family: var(--font-latin); font-size: 22px; font-weight: 800;
+    color: var(--pink-soft); line-height: 1;
+  }
+
+  .post-main { min-width: 0; }
+  .post-row-title { margin: 0 0 6px; font-size: 17px; font-weight: 700; line-height: 1.5; }
+  .post-row-desc {
+    margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2);
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .post-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .post-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+  .post-tags .tag { font-size: 10px; padding: 4px 10px; }
+  .tag-topic { background: var(--pink-soft); color: var(--pink-deep); font-family: var(--font-sans); }
+  .tag-level { background: rgba(120, 100, 160, .1); color: var(--ink-2); font-family: var(--font-sans); }
+  .post-date {
+    font-family: var(--font-latin); font-size: 12px; font-weight: 500;
+    color: var(--ink-3); white-space: nowrap;
+  }
+
+  .post-arrow { transition: transform .22s ease; }
+  .post-row:hover .post-arrow { transform: translateX(4px); }
+
+  .grid-empty { padding: 56px 0 8px; text-align: center; color: var(--ink-3); font-size: 14px; }
+  .center-row { display: flex; justify-content: center; margin-top: 52px; }
+
+  @media (max-width: 900px) {
+    .post-row { grid-template-columns: 40px minmax(0, 1fr) 18px; gap: 16px; padding: 20px; }
+    .post-side { display: none; }
+    .post-index { font-size: 18px; }
+  }
+</style>
