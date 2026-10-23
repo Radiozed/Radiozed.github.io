@@ -517,7 +517,7 @@ const countBy = (key: 'platform' | 'category', value: string) =>
       var elExtra = document.getElementById('weatherExtra');
       var elTime = document.getElementById('weatherTime');
 
-      var CACHE_KEY = 'skz_weather_v1';
+      var CACHE_KEY = 'skz_weather_v2';
       var CACHE_TTL = 30 * 60 * 1000;
 
       /* WMO 天气码 → [中文描述, 图标名] */
@@ -562,6 +562,73 @@ const countBy = (key: 'platform' | 'category', value: string) =>
             .then(function (d) { clearTimeout(timer); resolve(d); })
             .catch(function (e) { clearTimeout(timer); reject(e); });
         });
+      }
+
+      /* ── 城市名转汉字 ──────────────────────────────
+         三个定位源返回的都是英文/拼音（Shenzhen、Guangzhou…），
+         这里用内置表转成汉字；表里没有就退回省份，再没有才保留原文。 */
+      var CITY_CN = {
+        beijing: '北京', shanghai: '上海', tianjin: '天津', chongqing: '重庆',
+        shenzhen: '深圳', guangzhou: '广州', hangzhou: '杭州', nanjing: '南京',
+        wuhan: '武汉', chengdu: '成都', xian: '西安', suzhou: '苏州',
+        changsha: '长沙', zhengzhou: '郑州', dongguan: '东莞', foshan: '佛山',
+        qingdao: '青岛', shenyang: '沈阳', dalian: '大连', xiamen: '厦门',
+        fuzhou: '福州', jinan: '济南', hefei: '合肥', kunming: '昆明',
+        nanning: '南宁', guiyang: '贵阳', taiyuan: '太原', shijiazhuang: '石家庄',
+        harbin: '哈尔滨', changchun: '长春', nanchang: '南昌', lanzhou: '兰州',
+        urumqi: '乌鲁木齐', hohhot: '呼和浩特', yinchuan: '银川', xining: '西宁',
+        haikou: '海口', sanya: '三亚', lhasa: '拉萨',
+        wuxi: '无锡', ningbo: '宁波', wenzhou: '温州', jiaxing: '嘉兴',
+        shaoxing: '绍兴', jinhua: '金华', taizhou: '台州', huzhou: '湖州',
+        zhoushan: '舟山', lishui: '丽水', quzhou: '衢州',
+        zhuhai: '珠海', zhongshan: '中山', huizhou: '惠州', jiangmen: '江门',
+        shantou: '汕头', zhanjiang: '湛江', zhaoqing: '肇庆', qingyuan: '清远',
+        shaoguan: '韶关', meizhou: '梅州', shanwei: '汕尾', heyuan: '河源',
+        yangjiang: '阳江', maoming: '茂名', chaozhou: '潮州', jieyang: '揭阳',
+        yunfu: '云浮',
+        changzhou: '常州', nantong: '南通', yangzhou: '扬州', xuzhou: '徐州',
+        zhenjiang: '镇江', taizhou_js: '泰州', yancheng: '盐城', huaian: '淮安',
+        lianyungang: '连云港', suqian: '宿迁',
+        yantai: '烟台', weifang: '潍坊', zibo: '淄博', linyi: '临沂',
+        jining: '济宁', taian: '泰安', weihai: '威海', rizhao: '日照',
+        luoyang: '洛阳', kaifeng: '开封', xinxiang: '新乡', nanyang: '南阳',
+        baoding: '保定', tangshan: '唐山', qinhuangdao: '秦皇岛', langfang: '廊坊',
+        handan: '邯郸', cangzhou: '沧州',
+        datong: '大同', baotou: '包头', ordos: '鄂尔多斯',
+        mianyang: '绵阳', yibin: '宜宾', nanchong: '南充', luzhou: '泸州',
+        zunyi: '遵义', liuzhou: '柳州', guilin: '桂林', beihai: '北海',
+        ganzhou: '赣州', jiujiang: '九江', shangrao: '上饶',
+        xiangyang: '襄阳', yichang: '宜昌', jingzhou: '荆州',
+        zhuzhou: '株洲', yueyang: '岳阳', hengyang: '衡阳', changde: '常德',
+        quanzhou: '泉州', zhangzhou: '漳州', putian: '莆田', ningde: '宁德',
+        dali: '大理', lijiang: '丽江', guilin_cn: '桂林',
+        yiwu: '义乌', ruian: '瑞安', wenshang: '汶上'
+      };
+
+      var REGION_CN = {
+        guangdong: '广东', zhejiang: '浙江', jiangsu: '江苏', shandong: '山东',
+        henan: '河南', sichuan: '四川', hubei: '湖北', hunan: '湖南',
+        fujian: '福建', anhui: '安徽', hebei: '河北', shanxi: '山西',
+        shaanxi: '陕西', liaoning: '辽宁', jilin: '吉林', heilongjiang: '黑龙江',
+        jiangxi: '江西', yunnan: '云南', guizhou: '贵州', guangxi: '广西',
+        gansu: '甘肃', qinghai: '青海', ningxia: '宁夏', xinjiang: '新疆',
+        tibet: '西藏', xizang: '西藏', hainan: '海南', innermongolia: '内蒙古',
+        neimenggu: '内蒙古', beijing: '北京', shanghai: '上海', tianjin: '天津',
+        chongqing: '重庆', hongkong: '中国香港', macau: '中国澳门', taiwan: '中国台湾',
+        'hongkongsar': '中国香港', 'macaosar': '中国澳门'
+      };
+
+      function cnKey(s) {
+        return String(s || '')
+          .toLowerCase()
+          .replace(/[^a-z]/g, '')
+          .replace(/(shi|city|province|sheng)$/, '');
+      }
+
+      function toCN(name) {
+        var k = cnKey(name);
+        if (!k) return '';
+        return CITY_CN[k] || REGION_CN[k] || '';
       }
 
       var GEO = [
@@ -619,7 +686,7 @@ const countBy = (key: 'platform' | 'category', value: string) =>
             return get(url, 9000).then(function (w) {
               var c = w.current;
               return {
-                place: loc.name,
+                place: toCN(loc.name) || loc.name,
                 temp: Math.round(c.temperature_2m),
                 feels: Math.round(c.apparent_temperature),
                 code: c.weather_code,
