@@ -560,6 +560,8 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
   border-collapse: separate; border-spacing: 0;
   border: 0; border-radius: 0; font-size: 14px;
 }
+/* 长字符串（如 WKUP/USART2_CTS/ADC12_IN0）允许在列内折行，宽表也能完整放下 */
+.prose .table-scroll td { overflow-wrap: anywhere; }
 .prose thead th {
   padding: 14px 16px; text-align: left;
   background: var(--pink-soft); color: var(--pink-dark);
