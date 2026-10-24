@@ -547,11 +547,17 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
 }
 
 /* 表格 */
+/* 宽表（如 7 列引脚表）允许横向滚动，不撑破正文容器 */
 .prose table {
-  width: 100%; margin: 26px 0; border-collapse: separate; border-spacing: 0;
-  border: 1px solid var(--line-2); border-radius: 14px; overflow: hidden;
-  font-size: 14px;
+  display: block; width: 100%; margin: 26px 0;
+  border-collapse: separate; border-spacing: 0;
+  border: 1px solid var(--line-2); border-radius: 14px;
+  overflow-x: auto; overflow-y: hidden;
+  font-size: 14px; -webkit-overflow-scrolling: touch;
 }
+.prose table::-webkit-scrollbar { height: 8px; }
+.prose table::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
+.prose table::-webkit-scrollbar-track { background: transparent; }
 .prose thead th {
   padding: 14px 16px; text-align: left;
   background: var(--pink-soft); color: var(--pink-dark);
@@ -615,6 +621,12 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
 
   .footer-top { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .code-body { font-size: 12px; }
+}
+
+@media (max-width: 760px) {
+  .prose table { font-size: 12.5px; }
+  .prose thead th { padding: 10px 12px; }
+  .prose tbody td { padding: 10px 12px; }
 }
 
 @media (max-width: 560px) {
