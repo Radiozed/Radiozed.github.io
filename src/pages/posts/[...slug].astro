@@ -283,6 +283,17 @@ const readMinutes = Math.max(1, Math.round(wordCount / 400));
     });
   })();
 
+  /* ── 宽表（如 7 列引脚表）包一层横向滚动容器 ── */
+  (function tables() {
+    document.querySelectorAll('.prose table').forEach(function (t) {
+      if (t.parentElement && t.parentElement.classList.contains('table-scroll')) return;
+      var w = document.createElement('div');
+      w.className = 'table-scroll';
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    });
+  })();
+
   /* ── 侧栏更新日历 ── */
   (function calendar() {
     var panel = document.getElementById('calendarPanel');

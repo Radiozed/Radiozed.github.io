@@ -547,17 +547,19 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
 }
 
 /* 表格 */
-/* 宽表（如 7 列引脚表）允许横向滚动，不撑破正文容器 */
-.prose table {
-  display: block; width: 100%; margin: 26px 0;
-  border-collapse: separate; border-spacing: 0;
+/* 宽表（如 7 列引脚表）：外层容器横向滚动，表格保持完整列宽不被压缩 */
+.table-scroll {
+  margin: 26px 0; overflow-x: auto; -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line-2); border-radius: 14px;
-  overflow-x: auto; overflow-y: hidden;
-  font-size: 14px; -webkit-overflow-scrolling: touch;
 }
-.prose table::-webkit-scrollbar { height: 8px; }
-.prose table::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
-.prose table::-webkit-scrollbar-track { background: transparent; }
+.table-scroll::-webkit-scrollbar { height: 8px; }
+.table-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+.prose .table-scroll table {
+  width: 100%; min-width: 680px; margin: 0;
+  border-collapse: separate; border-spacing: 0;
+  border: 0; border-radius: 0; font-size: 14px;
+}
 .prose thead th {
   padding: 14px 16px; text-align: left;
   background: var(--pink-soft); color: var(--pink-dark);
