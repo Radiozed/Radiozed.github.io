@@ -556,7 +556,7 @@ a.card:hover, .card:hover { transform: translateY(-6px); box-shadow: var(--sh-ca
 .table-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; }
 .table-scroll::-webkit-scrollbar-track { background: transparent; }
 .prose .table-scroll table {
-  width: 100%; min-width: 680px; margin: 0;
+  width: 100%; margin: 0;
   border-collapse: separate; border-spacing: 0;
   border: 0; border-radius: 0; font-size: 14px;
 }
