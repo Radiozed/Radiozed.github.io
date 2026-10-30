@@ -114,6 +114,33 @@
     .sendbar{flex-wrap:wrap}
     .sendbar input{flex:1 1 100%}
   }
+  /* ── 烧录面板 ── */
+  .progress{height:8px;background:#F3ECF6;border-radius:999px;overflow:hidden;margin:14px 0 8px}
+  .progress > i{
+    display:block;height:100%;width:0;border-radius:999px;
+    background:linear-gradient(135deg,#F79AB8,var(--pink-deep));transition:width .18s;
+  }
+  .progress.ok > i{background:var(--ok)}
+  .progress.err > i{background:var(--err)}
+  .log.sm{height:230px}
+  .file-drop{
+    border:1.5px dashed #E3D8E8;border-radius:14px;padding:18px;text-align:center;
+    background:#FDFBFE;cursor:pointer;transition:.18s;
+  }
+  .file-drop:hover{border-color:var(--pink);background:var(--pink-soft)}
+  .file-drop.has{border-style:solid;border-color:#BEE8D3;background:#F5FBF8;text-align:left}
+  .file-drop .fn{font-family:var(--mono);font-size:12.5px;color:var(--ink);word-break:break-all}
+  .file-drop .fs{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .steps{counter-reset:s;margin:12px 0 0;padding:0;list-style:none}
+  .steps li{
+    counter-increment:s;position:relative;padding-left:27px;
+    font-size:12.5px;color:var(--ink-2);line-height:1.9;
+  }
+  .steps li::before{
+    content:counter(s);position:absolute;left:0;top:4px;width:18px;height:18px;
+    border-radius:50%;background:var(--pink-soft);color:var(--pink-deep);
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
 </style>
 </head>
 <body>
@@ -183,6 +210,7 @@
   <div class="tabs">
     <button class="tab is-active" data-tab="serial">串口终端</button>
     <button class="tab" data-tab="mqtt">ESP-01S · MQTT</button>
+    <button class="tab" data-tab="flash">ESP-01S · 烧录固件</button>
   </div>
 
   <!-- ═══ 面板一：串口终端 ═══ -->
@@ -390,6 +418,128 @@
     </p>
   </div>
   </div><!-- /panel-mqtt -->
+
+  <!-- ═══ 面板三：固件烧录 ═══ -->
+  <div class="panel" id="panel-flash" hidden>
+  <div class="card">
+    <div class="row mid" style="justify-content:space-between;margin-bottom:4px">
+      <h2 class="sec">ESP-01S · 固件烧录</h2>
+      <span class="tip" style="margin:0">基于 esptool-js · 全程本地，固件不上传</span>
+    </div>
+    <p class="tip" style="margin:0 0 14px">
+      支持 ESP8266 / ESP32 全系。下面按 <b>ESP-01S（1 MB Flash）</b> 预设好了参数，换别的芯片记得改 Flash 大小和烧录地址。
+    </p>
+
+    <div class="warn" style="margin-bottom:14px">
+      <b>烧之前必须做：</b>ESP-01S 没有自动下载电路，要把 <code>GPIO0</code> 用杜邦线接到 <code>GND</code>，再给模块上电（或者短一下 RST）。
+      烧完<b>把这根线拔掉</b>重新上电，程序才会正常运行。<br>
+      供电要 <b>3.3V 且能扛住 500mA</b>，多数 USB-TTL 的 3.3V 引脚带不动，典型症状是"能连上、一写就超时"。
+    </div>
+
+    <label class="sm">固件文件（.bin）</label>
+    <div class="file-drop" id="flashDrop">
+      <div id="flashDropIdle">点这里选择 <b>.bin</b> 固件，或者直接把文件拖进来</div>
+      <div id="flashDropInfo" hidden>
+        <div class="fn" id="flashFileName"></div>
+        <div class="fs" id="flashFileSize"></div>
+      </div>
+    </div>
+    <input type="file" id="flashFile" accept=".bin,application/octet-stream" hidden>
+
+    <div class="row" style="gap:10px;margin-top:14px">
+      <div style="flex:0 0 120px">
+        <label class="sm">烧录地址</label>
+        <input type="text" id="flashAddr" value="0x0" style="width:100%">
+      </div>
+      <div style="flex:0 0 110px">
+        <label class="sm">Flash 大小</label>
+        <select id="flashSizeSel" style="width:100%">
+          <option value="256KB">256 KB</option>
+          <option value="512KB">512 KB</option>
+          <option value="1MB" selected>1 MB</option>
+          <option value="2MB">2 MB</option>
+          <option value="4MB">4 MB</option>
+          <option value="8MB">8 MB</option>
+          <option value="16MB">16 MB</option>
+        </select>
+      </div>
+      <div style="flex:0 0 100px">
+        <label class="sm">Flash 模式</label>
+        <select id="flashModeSel" style="width:100%">
+          <option value="dio" selected>DIO</option>
+          <option value="qio">QIO</option>
+          <option value="dout">DOUT</option>
+          <option value="qout">QOUT</option>
+        </select>
+      </div>
+      <div style="flex:0 0 100px">
+        <label class="sm">Flash 频率</label>
+        <select id="flashFreqSel" style="width:100%">
+          <option value="80m">80 MHz</option>
+          <option value="40m" selected>40 MHz</option>
+          <option value="26m">26 MHz</option>
+          <option value="20m">20 MHz</option>
+        </select>
+      </div>
+      <div style="flex:0 0 110px">
+        <label class="sm">波特率</label>
+        <select id="flashBaud" style="width:100%">
+          <option value="115200" selected>115200</option>
+          <option value="230400">230400</option>
+          <option value="460800">460800</option>
+          <option value="921600">921600</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row mid" style="gap:8px;margin-top:16px">
+      <button class="primary" id="btnFlash">开始烧录</button>
+      <button class="ghost" id="btnFlashCancel" disabled>中断</button>
+      <label class="toggle" style="margin-left:6px">
+        <input type="checkbox" id="flashEraseAll"> 先全片擦除
+      </label>
+      <span class="tip" id="flashHint" style="margin:0 0 0 auto"></span>
+    </div>
+
+    <div class="progress" id="flashProgressWrap"><i id="flashProgressBar"></i></div>
+    <div class="stats">
+      <span><b id="flashPct">0%</b></span>
+      <span id="flashBytes">—</span>
+      <span id="flashSpeed"></span>
+    </div>
+
+    <div class="divider"></div>
+    <div class="log sm" id="flashLog"></div>
+
+    <div class="divider"></div>
+    <div class="row" style="gap:26px;align-items:flex-start">
+      <div style="flex:1 1 300px">
+        <label class="sm" style="margin-bottom:6px">接线（ESP-01S → USB-TTL）</label>
+        <ol class="steps">
+          <li>3V3 → 3.3V，GND → GND</li>
+          <li>TXD → RXD，RXD → TXD（交叉接）</li>
+          <li>EN（CH_PD）→ 3.3V，否则模块不启动</li>
+          <li>GPIO0 → GND（<b>只在烧录时接</b>，烧完必须断开）</li>
+        </ol>
+      </div>
+      <div style="flex:1 1 300px">
+        <label class="sm" style="margin-bottom:6px">卡住了怎么办</label>
+        <ol class="steps">
+          <li>停在 <code>Connecting...</code>：没进下载模式，检查 GPIO0 是否真的接地</li>
+          <li>反复超时：把波特率降到 115200，或换个供电</li>
+          <li>写到一半失败：九成是供电电流不够</li>
+          <li>烧完不运行：GPIO0 线还没拔，或 EN 没拉高</li>
+        </ol>
+      </div>
+    </div>
+
+    <p class="tip">
+      固件可以去 <a class="back" href="https://github.com/espressif/esp-at/releases" target="_blank" rel="noopener">ESP-AT Releases</a>
+      下载，ESP-01S 选 <code>ESP8266-IDF-AT_V…bin</code>（1 MB 版本），地址填 <code>0x0</code>。
+      想要 AT 指令能连 OneNET，就是烧这个固件。
+    </p>
+  </div>
+  </div><!-- /panel-flash -->
 </div>
 
 <script>
@@ -647,6 +797,12 @@
     connInfo.textContent = '未连接';
     sys('已断开');
   }
+
+  /* 烧录面板要独占串口，通过这个钩子查询状态并主动让出端口 */
+  window.__skzSerial = {
+    isConnected: function () { return !!port; },
+    disconnect: disconnect
+  };
 
   /* ───────── 发送 ───────── */
   async function send(text, silent) {
@@ -1113,7 +1269,7 @@
   }
 
   function switchTab(name, persist) {
-    ['serial', 'mqtt'].forEach(function (t) {
+    ['serial', 'mqtt', 'flash'].forEach(function (t) {
       var p = $('panel-' + t);
       if (p) p.hidden = (t !== name);
     });
@@ -1142,6 +1298,219 @@
 
   sys('准备就绪，点击「连接串口」选择你的设备');
 })();
+</script>
+
+<script type="module">
+  import { ESPLoader, Transport } from './esptool-bundle.js';
+
+  (function () {
+    'use strict';
+
+    var flashLog = document.getElementById('flashLog');
+    if (!flashLog) return;
+
+    var $ = function (id) { return document.getElementById(id); };
+    var busy = false, cancelled = false, file = null, currentPct = 0;
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function ts() {
+      var d = new Date();
+      return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    }
+    function log(kind, text) {
+      var line = document.createElement('span');
+      line.className = 'line ' + kind;
+      line.textContent = '[' + ts() + '] ' + text + '\n';
+      flashLog.appendChild(line);
+      flashLog.scrollTop = flashLog.scrollHeight;
+    }
+    function info(t) { log('sys', t); }
+    function good(t) { log('rx', t); }
+    function bad(t) { log('err', t); }
+
+    function setPct(p, cls) {
+      currentPct = Math.max(0, Math.min(100, p));
+      $('flashProgressWrap').className = 'progress' + (cls ? ' ' + cls : '');
+      $('flashProgressBar').style.width = currentPct + '%';
+      $('flashPct').textContent = currentPct.toFixed(1) + '%';
+    }
+
+    function fmt(n) {
+      if (n >= 1048576) return (n / 1048576).toFixed(2) + ' MB';
+      if (n >= 1024) return (n / 1024).toFixed(1) + ' KB';
+      return n + ' B';
+    }
+
+    function sleep(ms) {
+      return new Promise(function (r) { setTimeout(r, ms); });
+    }
+
+    if (!('serial' in navigator)) {
+      bad('当前浏览器没有 Web Serial，烧录不可用（需要桌面版 Chrome / Edge）');
+      $('btnFlash').disabled = true;
+      return;
+    }
+
+    /* ───────── 选固件 ───────── */
+    var drop = $('flashDrop'), fileInput = $('flashFile');
+
+    drop.addEventListener('click', function () { fileInput.click(); });
+    drop.addEventListener('dragover', function (e) { e.preventDefault(); });
+    drop.addEventListener('dragenter', function (e) { e.preventDefault(); });
+    drop.addEventListener('drop', function (e) {
+      e.preventDefault();
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        useFile(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput.addEventListener('change', function () {
+      if (fileInput.files && fileInput.files[0]) useFile(fileInput.files[0]);
+    });
+
+    function useFile(f) {
+      if (!/\.bin$/i.test(f.name)) { bad('只认 .bin 文件，你选的是 ' + f.name); return; }
+      file = f;
+      $('flashDropIdle').hidden = true;
+      $('flashDropInfo').hidden = false;
+      drop.classList.add('has');
+      $('flashFileName').textContent = f.name;
+      $('flashFileSize').textContent = fmt(f.size) + ' · ' + f.size.toLocaleString() + ' 字节';
+      info('已选固件：' + f.name + '（' + fmt(f.size) + '）');
+    }
+
+    /* 地址既支持 0x1000 也支持十进制 */
+    function parseAddr(s) {
+      s = String(s || '').trim().toLowerCase();
+      if (!s) return 0;
+      if (s.indexOf('0x') === 0) return parseInt(s.slice(2), 16) || 0;
+      return parseInt(s, 10) || 0;
+    }
+
+    /* ───────── 中断 ───────── */
+    $('btnFlashCancel').addEventListener('click', function () {
+      if (!busy) return;
+      cancelled = true;
+      $('flashHint').textContent = '正在中断…';
+      bad('收到中断请求，正在停止');
+    });
+
+    $('btnFlash').addEventListener('click', function () {
+      if (!busy) start();
+    });
+
+    /* ───────── 主流程 ───────── */
+    async function start() {
+      if (!file) { bad('还没选固件文件'); return; }
+
+      var hook = window.__skzSerial;
+      if (hook && hook.isConnected && hook.isConnected()) {
+        info('串口终端还占着端口，先把它断开');
+        try { await hook.disconnect(); } catch (e) {}
+        await sleep(400);
+      }
+
+      busy = true;
+      cancelled = false;
+      $('btnFlash').disabled = true;
+      $('btnFlashCancel').disabled = false;
+      $('flashHint').textContent = '请选择串口…';
+      setPct(0);
+      $('flashBytes').textContent = '—';
+      $('flashSpeed').textContent = '';
+      info('════════ 开始烧录 ════════');
+
+      var port = null, transport = null;
+
+      try {
+        port = await navigator.serial.requestPort();
+      } catch (e) {
+        if (e && (e.name === 'NotFoundError' || /No port selected/i.test(e.message || ''))) {
+          info('已取消选择串口');
+        } else {
+          bad('打开串口失败：' + (e && e.message ? e.message : e));
+        }
+        finish();
+        return;
+      }
+
+      try {
+        var addr = parseAddr($('flashAddr').value);
+        var baud = parseInt($('flashBaud').value, 10);
+
+        transport = new Transport(port, true);
+        var loader = new ESPLoader({
+          transport: transport,
+          baudrate: baud,
+          terminal: {
+            clean: function () {},
+            writeLine: function (d) { if (d) info(String(d)); },
+            write: function (d) {
+              var s = String(d || '');
+              if (!s || !s.trim() || /^[.\s]+$/.test(s)) return;
+              info(s.trim());
+            }
+          }
+        });
+
+        $('flashHint').textContent = '正在连接芯片…';
+        info('连接芯片中。没反应就检查 GPIO0 是否接地、模块是否刚上电');
+
+        var chip = await loader.main();
+        good('已连接：' + chip);
+
+        var data = new Uint8Array(await file.arrayBuffer());
+        info('固件 ' + fmt(data.length) + ' → 地址 0x' + addr.toString(16).toUpperCase());
+
+        $('flashHint').textContent = '烧录中…';
+        var t0 = Date.now();
+
+        await loader.writeFlash({
+          fileArray: [{ data: data, address: addr }],
+          flashSize: $('flashSizeSel').value,
+          flashMode: $('flashModeSel').value,
+          flashFreq: $('flashFreqSel').value,
+          eraseAll: $('flashEraseAll').checked,
+          compress: true,
+          reportProgress: function (fileIndex, written, total) {
+            if (cancelled) throw new Error('用户中断');
+            setPct(total ? (written / total) * 100 : 0);
+            $('flashBytes').textContent = fmt(written) + ' / ' + fmt(total);
+            var sec = (Date.now() - t0) / 1000;
+            if (sec > 0.4) $('flashSpeed').textContent = (written / 1024 / sec).toFixed(1) + ' KB/s';
+          }
+        });
+
+        setPct(100, 'ok');
+        good('烧录完成');
+
+        $('flashHint').textContent = '复位中…';
+        try { await loader.after('hard_reset'); } catch (e) {}
+
+        good('已复位。把 GPIO0 那根地线拔掉，重新上电，新固件就跑起来了。');
+        $('flashHint').textContent = '完成';
+      } catch (e) {
+        setPct(currentPct, 'err');
+        var msg = e && e.message ? e.message : String(e);
+        bad('烧录失败：' + msg);
+        if (/timeout|timed out|Failed to connect|sync|Packet loss/i.test(msg)) {
+          bad('多半是没进下载模式（GPIO0 没接地）或者供电电流不够');
+        }
+        $('flashHint').textContent = cancelled ? '已中断' : '失败';
+      } finally {
+        try { if (transport) await transport.disconnect(); } catch (e) {}
+        finish();
+      }
+    }
+
+    function finish() {
+      busy = false;
+      cancelled = false;
+      $('btnFlash').disabled = false;
+      $('btnFlashCancel').disabled = true;
+    }
+
+    info('烧录模块就绪 · esptool-js + Web Serial');
+  })();
 </script>
 </body>
 </html>
