@@ -10,6 +10,14 @@ difficulty: "进阶"
 
 今天来教大家如何使用 ESP32 连接 OneNET 物联网平台，通过 MQTT 协议上报温湿度数据~
 
+> **先分清两种接入方式，别串了**
+>
+> 本文讲的是 **Arduino 编程方式**：把下面的 C++ 代码编译、烧进 ESP32，由程序自己完成 WiFi 连接和 MQTT 收发。
+>
+> 如果你是想在串口助手里手打 `AT+MQTTUSERCFG`、`AT+MQTTCONN` 这类指令，那是 **ESP-AT 固件方式**，属于另一条路，见文末《附：串口 AT 指令方式》。
+>
+> 两者不能混用：板子里烧着本文的程序时，串口里发 AT 是不会有任何反应的；而只烧了 AT 固件、没写代码的板子，也跑不了本文的例程。
+
 ## 准备工作
 
 ### 1. 硬件准备
@@ -160,6 +168,58 @@ OneNET 使用固定格式的主题进行设备通信：
 - `device_id`：设备详情页获取
 - `token`：设备详情页点击"获取Token"生成
 
+### 2.1 Token 是怎么算出来的
+
+平台上点"获取 Token"能直接拿一串现成的，但知道它是怎么来的，连不上时才能自己查。[官方算法文档](https://open.iot.10086.cn/doc/aiot/fuse/detail/1486) 是这样的：
+
+```
+sign = base64(hmac_<method>(base64decode(key), utf-8(StringForSignature)))
+```
+
+待签名字符串按**参数名排序**，用 `\n` 连接：
+
+```
+StringForSignature = et + '\n' + method + '\n' + res + '\n' + version
+```
+
+| 参数 | 含义 | 示例 |
+|------|------|------|
+| `version` | 版本号，目前固定 | `2018-10-31` |
+| `res` | 访问资源，设备级为 `products/{产品ID}/devices/{设备名}` | `products/aGLGgWW0AG/devices/LED` |
+| `et` | 过期时间，**unix 秒级**时间戳 | `1793943490` |
+| `method` | 签名算法，支持 `md5` / `sha1` / `sha256` | `sha1` |
+| `sign` | 上面算出来的 base64 签名 | `VT6Nq...%3D` |
+
+**三个最容易错的地方：**
+
+1. **key 要先 base64 解码**再用。直接拿控制台上那串密钥去 HMAC，算出来必然不对
+2. **`res` 参与签名时用真斜杠**，签名算完拼成 token 时才做 URL 编码（`/` → `%2F`、`=` → `%3D`、`+` → `%2B`）
+3. **`et` 是秒不是毫秒**。写成毫秒会得到一个几万年后的过期时间，看着"永不过期"，实际平台直接判无效
+
+Python 版（改改就能用）：
+
+```python
+import base64, hmac, hashlib, time
+from urllib.parse import quote
+
+def gen_token(product_id, device_name, access_key, method="sha1", expire=24*3600*30):
+    et = int(time.time()) + expire
+    res = f"products/{product_id}/devices/{device_name}"
+    version = "2018-10-31"
+    string_for_sign = f"{et}\n{method}\n{res}\n{version}"
+
+    key = base64.b64decode(access_key)          # 注意：key 要 base64 解码
+    h = {"md5": hashlib.md5, "sha1": hashlib.sha1, "sha256": hashlib.sha256}[method]
+    sign = base64.b64encode(hmac.new(key, string_for_sign.encode(), h).digest()).decode()
+
+    return (f"version={version}&res={quote(res, safe='')}"
+            f"&et={et}&method={method}&sign={quote(sign, safe='')}")
+
+print(gen_token("你的产品ID", "你的设备名", "你的access_key"))
+```
+
+> `access_key` 在 OneNET 控制台产品详情页的"鉴权信息"里，是一串 base64 形态的密钥。它和最终拼出来的设备 token 不是一个东西，别混。
+
 ### 3. WiFi 和 MQTT 配置
 
 ```cpp
@@ -186,7 +246,7 @@ const int mqtt_port = 1883;//MQTT服务器端口
 //设备属性上报响应,OneNET---->设备
 #define ONENET_TOPIC_PROP_SET_REPLY "$sys/" product_id "/" device_id "/thing/property/set_reply"
 //设备属性设置响应,设备---->OneNET
-#define ONENET_TOPIC_PROP_FORMAT "{\"id\":\"%u\",\"version\":\"1.0\",\"params\":%s}"
+#define ONENET_TOPIC_PROP_FORMAT "{\"id\":\"%d\",\"version\":\"1.0\",\"params\":%s}"
 //属性上报消息格式
 ```
 
@@ -467,7 +527,7 @@ const int mqtt_port = 1883;
 #define ONENET_TOPIC_PROP_SET "$sys/" product_id "/" device_id "/thing/property/set"
 #define ONENET_TOPIC_PROP_POST_REPLY "$sys/" product_id "/" device_id "/thing/property/post/reply"
 #define ONENET_TOPIC_PROP_SET_REPLY "$sys/" product_id "/" device_id "/thing/property/set_reply"
-#define ONENET_TOPIC_PROP_FORMAT "{\"id\":\"%u\",\"version\":\"1.0\",\"params\":%s}"
+#define ONENET_TOPIC_PROP_FORMAT "{\"id\":\"%d\",\"version\":\"1.0\",\"params\":%s}"
 
 // 全局变量
 int postMsgId = 0;
@@ -492,7 +552,9 @@ void setup() {
   digitalWrite(LED, LOW);
   
   Serial.begin(9600);
-  while (!Serial); // 等待串口连接
+  // 仅适用于 ESP32-WROOM 这类外挂 USB-UART 芯片的板子
+  // ESP32-S3 / C3 等原生 USB 的板子，没插电脑打开串口时这行会一直卡住，直接删掉
+  while (!Serial);
   
   Serial.println("\n=== ESP32 OneNET MQTT Demo ===");
   
@@ -500,6 +562,8 @@ void setup() {
   OneNet_Connect();
   
   // 设置定时上报（每10秒）
+  // 注意：Ticker 回调跑在定时器任务里，函数内不要再调用 delay() 或阻塞式网络操作
+  // 本例的 LED_Flash() 内部有 delay，实际项目建议换成非阻塞写法
   ticker.attach(10, OneNet_Prop_Post);
 }
 
@@ -557,8 +621,10 @@ void WiFi_Connect() {
 void OneNet_Connect() {
   client.setServer(mqtt_server, mqtt_port);
   
-  // 设置连接超时
-  client.setConnectionTimeout(10);
+  // 设置 socket 超时（单位：秒）
+  // 注意：PubSubClient 没有 setConnectionTimeout()，写成那个会编译报错
+  // 'class PubSubClient' has no member named 'setConnectionTimeout'
+  client.setSocketTimeout(10);
   
   if(client.connect(device_id, product_id, token)) {
     LED_Flash(500);
@@ -760,12 +826,22 @@ const char* password = "你的WiFi密码";
 | Token 失效 | Token 过期 | 在平台重新生成 Token |
 | 网络不稳定 | WiFi 信号弱 | 靠近路由器或使用信号增强器 |
 
-**MQTT 连接错误码说明：**
-- **-4**：连接超时
-- **-3**：服务器不可达
-- **-2**：协议错误
-- **-1**：客户端断开
-- **0**：连接成功
+**MQTT 连接错误码说明**（`client.state()` 的返回值，PubSubClient 完整码表）：
+
+| 返回值 | 宏定义 | 含义 | 连 OneNET 时的常见原因 |
+|-------|--------|------|----------------------|
+| -4 | `MQTT_CONNECTION_TIMEOUT` | 连接超时 | 网络不通、端口被封、1883 被防火墙拦 |
+| -3 | `MQTT_CONNECTION_LOST` | 连接丢失 | 中途断网、WiFi 掉线 |
+| -2 | `MQTT_CONNECT_FAILED` | TCP 连接失败 | 域名解析失败、服务器地址写错 |
+| -1 | `MQTT_DISCONNECTED` | 客户端已断开 | 主动 disconnect |
+| 0 | `MQTT_CONNECTED` | 连接成功 | — |
+| 1 | `MQTT_CONNECT_BAD_PROTOCOL` | 协议版本被拒 | 极少数固件兼容问题 |
+| 2 | `MQTT_CONNECT_BAD_CLIENT_ID` | clientId 被拒 | 设备ID 写错，或同一设备ID 被别处占用 |
+| 3 | `MQTT_CONNECT_UNAVAILABLE` | 服务端不可用 | 平台侧故障，稍后重试 |
+| **4** | `MQTT_CONNECT_BAD_CREDENTIALS` | **用户名或密码错** | **token 过期/填错，或 username 没填产品ID** |
+| **5** | `MQTT_CONNECT_UNAUTHORIZED` | **未授权** | **token 与设备不匹配、设备被禁用** |
+
+> 连不上时先看 `state()`：**4 和 5 基本都是 token 的锅**。OneNET 的 token 带有效期（`et=` 后面那串时间戳），过期后在平台上重新生成一份换上即可。很多人卡在"昨天还能用，今天连不上"，就是这个原因。
 
 ## 扩展功能建议
 
@@ -775,6 +851,74 @@ const char* password = "你的WiFi密码";
 4. **低功耗模式**：使用 ESP32 的深度睡眠功能延长电池寿命
 5. **本地显示**：连接 OLED 显示屏实时显示数据
 6. **告警功能**：当数据超过阈值时发送告警通知
+
+## 附：串口 AT 指令方式
+
+前面讲的是"自己写代码"。还有一条路：在串口助手里直接敲 AT 指令，让模块自己连。适合不想写代码、或者用别的 MCU 通过串口带一个 WiFi 模块的场景。
+
+### 前提：模块里必须烧了 ESP-AT 固件
+
+`AT+MQTTUSERCFG`、`AT+MQTTCONN`、`AT+MQTTPUBRAW` 这一整套命令，是 **ESP-AT 固件**提供的，跟 Arduino 程序毫无关系。
+
+- 官方 ESP32-DevKitC 出厂**不带** AT 固件，串口里只有一行启动日志，发 AT 没反应
+- 市面上的 ESP8266 模块多数烧的是很老的 AT 固件，**没有 MQTT 命令集**，发过去直接回 `ERROR`
+- 所以第一步不是抄指令，而是确认固件支不支持
+
+```text
+AT+GMR              // 看固件版本
+AT+MQTTUSERCFG=?    // 测试 MQTT 命令是否存在
+```
+
+`AT+MQTTUSERCFG=?` 回 `OK` 加参数说明 → 支持，可以往下走；
+回 `ERROR` → 固件里没这条命令，需要重新烧 ESP-AT 固件（注意选 2.x 以上版本）。
+
+### 完整指令序列
+
+```text
+AT                                     // 测试通信，回 OK 再继续
+AT+CWMODE=1                            // STA 模式
+AT+CWJAP="WiFi名称","WiFi密码"          // 连 WiFi，ESP32/ESP8266 都只支持 2.4G
+AT+MQTTUSERCFG=0,1,"设备ID","产品ID","token",0,0,""
+AT+MQTTCONN=0,"mqtts.heclouds.com",1883,0
+AT+MQTTSUB=0,"$sys/产品ID/设备ID/thing/property/post/reply",0
+AT+MQTTPUBRAW=0,"$sys/产品ID/设备ID/thing/property/post",46,0,0
+// 等到出现 ">" 之后再发下面这行，不要带换行
+{"id":"123","params":{"Temp":{"value":28.5}}}
+```
+
+### 参数怎么填
+
+`AT+MQTTUSERCFG=<LinkID>,<scheme>,<"client_id">,<"username">,<"password">,<cert_key_ID>,<CA_ID>,<"path">`
+
+| 参数 | 填什么 |
+|------|--------|
+| `LinkID` | 链接号，填 `0` |
+| `scheme` | `1` = 明文 TCP（配 1883）<br>`2` = TLS 不校验证书（配 8883）<br>`3` = TLS 校验证书（配 8883，需烧 CA） |
+| `client_id` | 设备ID |
+| `username` | 产品ID |
+| `password` | 设备 token（就是本文前面那个长串） |
+| `cert_key_ID` / `CA_ID` | 不用证书都填 `0` |
+| `path` | 不用就填 `""` |
+
+> `AT+MQTTCONN` 最后一个参数是**自动重连开关**（0 关闭 / 1 开启），不是加密开关。加密靠 `scheme` 和端口配合。
+
+### 为什么 `AT+MQTTUSERCFG` 会回 ERROR
+
+按出现概率从高到低：
+
+1. **固件根本没有这条命令** —— 先发 `AT+MQTTUSERCFG=?` 验证，这是最快的一刀切
+2. **参数个数不对** —— 旧版 ESP-AT 只有 7 个参数，末尾没有 `,""`，多给一个就报错
+3. **指令超长被截断** —— ESP-AT 的命令行缓冲只有 256 字节，而 OneNET 的 token 本身就有 160 多个字符，整条 220 字节往上，个别固件会吃掉尾部
+4. **引号是全角的** —— 从网页复制经常变成中文引号 `"..."`，AT 解析不了
+5. **token 过期** —— 这种不会报 ERROR，而是能连上又被服务器踢掉（对应 `state()` 的 4/5）
+
+排查顺序：先 `AT` → 再 `AT+GMR` → 再 `AT+MQTTUSERCFG=?` → 最后才怀疑 token。
+
+### 两个容易翻车的细节
+
+**`AT+MQTTPUBRAW` 的长度**要填 payload 的 **UTF-8 字节数**，不是字符数。出现 `>` 之后发的内容**不能带换行**，多一个字节就会卡住等超时。
+
+**token 里的 `&`、`%2F`、`=`** 是 URL 编码的正常形态，AT 指令里原样粘贴即可，不用额外转义。但如果 token 里出现**逗号**，得写成 `\,`，否则会被当成参数分隔符。
 
 ---
 
