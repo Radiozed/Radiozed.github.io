@@ -13,6 +13,8 @@
     --mono:ui-monospace,"JetBrains Mono",Consolas,"Courier New",monospace;
   }
   *{box-sizing:border-box}
+  /* .row 之类的 display 会盖掉 hidden 属性，这里统一兜住 */
+  [hidden]{display:none !important}
   body{
     margin:0;padding:0;background:var(--bg);color:var(--ink);
     font:15px/1.7 system-ui,-apple-system,"Noto Sans SC","Microsoft YaHei",sans-serif;
@@ -141,6 +143,20 @@
     border-radius:50%;background:var(--pink-soft);color:var(--pink-deep);
     font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
   }
+  /* ── 物模型属性表 ── */
+  .prop-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .prop-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .prop-row input{min-width:0}
+  .prop-row .p-name{flex:1 1 120px;font-family:var(--mono);font-size:12.5px}
+  .prop-row .p-type{flex:0 0 100px;font-family:var(--mono);font-size:12.5px}
+  .prop-row .p-value{flex:1 1 110px;font-family:var(--mono);font-size:12.5px}
+  .prop-row .p-del{
+    flex:none;width:30px;height:30px;padding:0;border-radius:50%;
+    background:#fff;border:1px solid var(--line);color:var(--ink-3);
+    font-size:15px;line-height:1;font-weight:400;
+  }
+  .prop-row .p-del:hover:not(:disabled){background:#FDE9ED;border-color:#F5BCC8;color:var(--err)}
+  .prop-empty{margin:0;font-size:12px;color:var(--ink-3)}
 </style>
 </head>
 <body>
@@ -350,6 +366,19 @@
           <option value="365">1 年</option>
         </select>
       </div>
+    </div>
+
+    <!-- OneNET 物模型属性表 -->
+    <div id="onenetProps" hidden style="margin-bottom:14px">
+      <div class="prop-head">
+        <label class="sm" style="margin:0">上报属性 · 物模型标识符</label>
+        <button class="ghost" id="btnAddProp" style="font-size:12px;padding:5px 13px">+ 添加属性</button>
+      </div>
+      <div id="propList"></div>
+      <p class="tip" style="margin-top:8px">
+        属性名必须和 OneNET 控制台「物模型」里的标识符逐字一致，大小写也算。
+        生成指令时按这里选定的类型拼 JSON：<code>int</code>/<code>float</code> 直接写数字，<code>string</code> 加引号，<code>bool</code> 出 <code>true</code>/<code>false</code>。
+      </p>
     </div>
 
     <div class="row" style="gap:10px">
@@ -997,6 +1026,153 @@
   /* ═════════ ESP-01S MQTT 指令测试 ═════════ */
   var MQTT_STEPS = [];
 
+  /* ═════════ OneNET 物模型属性表 ═════════ */
+  var LS_PROPS = 'skz-onenet-props-v1';
+  var PROP_TYPES = ['int', 'float', 'string', 'bool'];
+  var ONENET_PROPS = [{ name: 'temperature', type: 'float', value: '25.6' }];
+
+  function saveProps() {
+    try { localStorage.setItem(LS_PROPS, JSON.stringify(ONENET_PROPS)); } catch (e) {}
+  }
+
+  function loadProps() {
+    var raw = null;
+    try { raw = localStorage.getItem(LS_PROPS); } catch (e) {}
+    if (!raw) return;
+    var arr;
+    try { arr = JSON.parse(raw); } catch (e) { return; }
+    if (!Array.isArray(arr) || !arr.length) return;
+    ONENET_PROPS = arr.map(function (p) {
+      return {
+        name: String((p && p.name) || ''),
+        type: PROP_TYPES.indexOf(p && p.type) >= 0 ? p.type : 'float',
+        value: String((p && p.value) == null ? '' : p.value)
+      };
+    });
+  }
+
+  /* 属性值按类型转成 JSON 里该有的样子 */
+  function propValue(p, raw) {
+    var v = String(raw == null ? '' : raw).trim();
+    if (p.type === 'int') {
+      var n = parseInt(v, 10);
+      return isNaN(n) ? 0 : n;
+    }
+    if (p.type === 'float') {
+      var f = parseFloat(v);
+      return isNaN(f) ? 0 : f;
+    }
+    if (p.type === 'bool') {
+      return /^(true|1|on|yes|开|高|true)$/i.test(v);
+    }
+    return v;
+  }
+
+  /* 把所有属性拼成 params 对象，名字空的行跳过 */
+  function buildParams() {
+    var params = {}, used = 0;
+    ONENET_PROPS.forEach(function (p) {
+      var key = String(p.name || '').trim();
+      if (!key) return;
+      params[key] = { value: propValue(p, p.value) };
+      used++;
+    });
+    /* 一个都没填就退回默认，免得生成空 params 上报被平台拒 */
+    if (!used) params.temperature = { value: 25.6 };
+    return params;
+  }
+
+  /* 改了属性就让旧指令作废，避免照着过期结果发 */
+  function propChanged() {
+    saveProps();
+    MQTT_STEPS = [];
+    $('mqttCmds').innerHTML = '';
+    $('btnMqttRun').disabled = true;
+    $('btnMqttCopy').disabled = true;
+  }
+
+  function propRowEl(p) {
+    var row = document.createElement('div');
+    row.className = 'prop-row';
+
+    var name = document.createElement('input');
+    name.type = 'text';
+    name.className = 'p-name';
+    name.placeholder = '属性名';
+    name.value = p.name || '';
+    name.addEventListener('input', function () { p.name = name.value; propChanged(); });
+
+    var type = document.createElement('select');
+    type.className = 'p-type';
+    PROP_TYPES.forEach(function (t) {
+      var o = document.createElement('option');
+      o.value = t;
+      o.textContent = t;
+      if (t === p.type) o.selected = true;
+      type.appendChild(o);
+    });
+
+    var val = document.createElement('input');
+    val.type = 'text';
+    val.className = 'p-value';
+    val.value = p.value || '';
+    val.placeholder = p.type === 'bool' ? 'true / false' : '值';
+
+    type.addEventListener('change', function () {
+      p.type = type.value;
+      val.placeholder = p.type === 'bool' ? 'true / false' : '值';
+      /* 从别的类型切到 bool，值不是 true/false 就补一个，免得上报成 false 还不自知 */
+      if (p.type === 'bool' && !/^(true|false|1|0|on|off|yes|no|开|关|高|低)$/i.test(String(p.value).trim())) {
+        p.value = 'true';
+        val.value = 'true';
+      }
+      propChanged();
+    });
+
+    val.addEventListener('input', function () { p.value = val.value; propChanged(); });
+
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'p-del';
+    del.title = '删掉这个属性';
+    del.textContent = '×';
+    del.addEventListener('click', function () {
+      var i = ONENET_PROPS.indexOf(p);
+      if (i >= 0) ONENET_PROPS.splice(i, 1);
+      renderProps();
+      propChanged();
+    });
+
+    row.appendChild(name);
+    row.appendChild(type);
+    row.appendChild(val);
+    row.appendChild(del);
+    return row;
+  }
+
+  function renderProps() {
+    var box = $('propList');
+    if (!box) return;
+    box.innerHTML = '';
+    ONENET_PROPS.forEach(function (p) { box.appendChild(propRowEl(p)); });
+    if (!ONENET_PROPS.length) {
+      var empty = document.createElement('p');
+      empty.className = 'prop-empty';
+      empty.textContent = '还没有属性，点右上角「+ 添加属性」加一个';
+      box.appendChild(empty);
+    }
+  }
+
+  if ($('btnAddProp')) {
+    $('btnAddProp').addEventListener('click', function () {
+      ONENET_PROPS.push({ name: '', type: 'float', value: '' });
+      renderProps();
+      saveProps();
+      var names = $('propList').querySelectorAll('.p-name');
+      if (names.length) names[names.length - 1].focus();
+    });
+  }
+
   /* AT 参数里的双引号需要转义，否则 ESP-AT 解析失败 */
   function mqttQ(s) {
     return '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
@@ -1085,7 +1261,7 @@
     var payload = JSON.stringify({
       id: String(Date.now()),
       version: '1.0',
-      params: { temperature: { value: 25.6 } }
+      params: buildParams()
     });
 
     /* 回填到表单，方便肉眼核对 */
@@ -1208,6 +1384,7 @@
   $('mPreset').addEventListener('change', function () {
     var on = $('mPreset').value === 'onenet';
     $('onenetFields').hidden = !on;
+    $('onenetProps').hidden = !on;
     $('mPresetTip').textContent = on
       ? '填产品 ID、设备名称、设备密钥，Token 由浏览器现场算出'
       : '公共测试服务器，改自己的 Broker 记得填账号密码';
@@ -1290,6 +1467,9 @@
   /* 初始化 */
   loadPrefs();
   loadHistory();
+  loadProps();
+  renderProps();
+  $('onenetProps').hidden = $('mPreset').value !== 'onenet';
   setSigEnabled(false);
 
   var savedTab = 'serial';
