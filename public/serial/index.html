@@ -434,8 +434,17 @@
       <button class="primary" id="btnMqttGen">生成指令</button>
       <button class="ghost" id="btnMqttRun" disabled>按顺序执行</button>
       <button class="ghost" id="btnMqttCopy" disabled>复制全部</button>
+      <select id="mPubMode" style="font-size:12px" title="发布方式">
+        <option value="pub" selected>AT+MQTTPUB</option>
+        <option value="raw">AT+MQTTPUBRAW</option>
+      </select>
       <span class="tip" id="mqttHint" style="margin:0 0 0 auto"></span>
     </div>
+
+    <p class="tip" id="mPubModeTip" style="margin-top:6px">
+      <b>AT+MQTTPUB</b>：一条指令发完，但 JSON 里的 <code>"</code> 要写成 <code>\"</code>、<code>,</code> 要写成 <code>\,</code>，整条超过 256 字节会回 ERROR。<br>
+      发不出去就换 <b>AT+MQTTPUBRAW</b>：先报长度，等出现 <code>&gt;</code> 再把原始 JSON 贴进去，一个字符都不用转义。
+    </p>
 
     <div class="cmds" id="mqttCmds"></div>
 
@@ -1173,9 +1182,41 @@
     });
   }
 
-  /* AT 参数里的双引号需要转义，否则 ESP-AT 解析失败 */
+  /*
+   * AT 字符串参数的转义规则（ESP-AT 的解析器把 , " \ 都当分隔/转义符）：
+   *   \  →  \\
+   *   "  →  \"
+   *   ,  →  \,
+   * 少转义一个逗号，AT+MQTTPUB 就会因为"参数个数不对"直接回 ERROR。
+   */
   function mqttQ(s) {
-    return '"' + String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    return '"' + String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/,/g, '\\,') + '"';
+  }
+
+  /* MQTTPUBRAW 要的是 UTF-8 字节数，不是字符数 */
+  function byteLen(s) {
+    return new TextEncoder().encode(String(s == null ? '' : s)).length;
+  }
+
+  /*
+   * 按选定方式产出发布指令。
+   * pub  ：一条 AT+MQTTPUB 发完，payload 必须转义，且整条指令受 256 字节限制
+   * raw  ：先报长度，等 ">" 出来再原样发 payload —— 不转义、不受长度限制
+   */
+  function pubSteps(topic, payload) {
+    var mode = ($('mPubMode') && $('mPubMode').value) || 'pub';
+
+    if (mode === 'raw') {
+      return [
+        { cmd: 'AT+MQTTPUBRAW=0,' + mqttQ(topic) + ',' + byteLen(payload) + ',0,0', wait: 800, note: '等 > 提示' },
+        { cmd: String(payload), wait: 800, note: '原始数据', noEol: true }
+      ];
+    }
+
+    return [{ cmd: 'AT+MQTTPUB=0,' + mqttQ(topic) + ',' + mqttQ(payload) + ',1,0', wait: 1200, note: '发布' }];
   }
 
   function mqttBuild() {
@@ -1205,7 +1246,7 @@
     });
     steps.push({ cmd: 'AT+MQTTCONN=0,' + mqttQ(host) + ',' + port + ',1', wait: 5000, note: '连 Broker' });
     if (sub) steps.push({ cmd: 'AT+MQTTSUB=0,' + mqttQ(sub) + ',1', wait: 1000, note: '订阅' });
-    if (pub) steps.push({ cmd: 'AT+MQTTPUB=0,' + mqttQ(pub) + ',' + mqttQ(payload) + ',1,0', wait: 1000, note: '发布' });
+    if (pub) steps = steps.concat(pubSteps(pub, payload));
 
     return steps;
   }
@@ -1285,7 +1326,7 @@
     steps.push({ cmd: 'AT+MQTTUSERCFG=0,1,' + mqttQ(dev) + ',' + mqttQ(pid) + ',' + mqttQ(token) + ',0,0,""', wait: 600 });
     steps.push({ cmd: 'AT+MQTTCONN=0,' + mqttQ(host) + ',' + port + ',1', wait: 5000 });
     steps.push({ cmd: 'AT+MQTTSUB=0,' + mqttQ(topicSet) + ',1', wait: 1000 });
-    steps.push({ cmd: 'AT+MQTTPUB=0,' + mqttQ(topicPost) + ',' + mqttQ(payload) + ',1,0', wait: 1200 });
+    steps = steps.concat(pubSteps(topicPost, payload));
 
     sys('OneNET Token 已生成（有效期 ' + days + ' 天）');
     return steps;
@@ -1350,11 +1391,13 @@
       var s = MQTT_STEPS[i];
       if (!s || !port) { resolve(false); return; }
 
-      /* AT 指令必须以 CRLF 结尾，这里强制切一下行尾设置 */
-      $('lineEnding').value = '\\r\\n';
+      /* AT 指令以 CRLF 结尾；RAW 的 payload 不能带任何行尾，否则长度对不上 */
+      var prevEol = $('lineEnding').value;
+      $('lineEnding').value = s.noEol ? '' : '\\r\\n';
 
       if (s.row) { s.row.classList.remove('done'); s.row.classList.add('running'); }
       send(s.cmd, silent).then(function (ok) {
+        $('lineEnding').value = prevEol;
         if (s.row) {
           s.row.classList.remove('running');
           if (ok) s.row.classList.add('done');
@@ -1378,6 +1421,16 @@
 
     sys('序列执行完毕。某步返回 ERROR 时，看日志里 ESP-AT 的原始回显定位。');
     $('btnMqttRun').disabled = !port;
+  }
+
+  /* 换发布方式后旧指令就不适用了，清掉 */
+  if ($('mPubMode')) {
+    $('mPubMode').addEventListener('change', function () {
+      MQTT_STEPS = [];
+      $('mqttCmds').innerHTML = '';
+      $('btnMqttRun').disabled = true;
+      $('btnMqttCopy').disabled = true;
+    });
   }
 
   /* 平台预设切换 */
